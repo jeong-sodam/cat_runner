@@ -9,8 +9,8 @@
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
 | P01 | "done" | 로컬 서버, SQLite, Entra ID 세션, 사용자 온보딩 기반 | [P01](../phases/2026-09-21-cat-runner/P01-foundation-auth-data/phase.md) |
-| P02 | "in_progress" | Canvas 게임 루프, 물리, 패턴, 렌더링, 오디오 | [P02](../phases/2026-09-21-cat-runner/P02-game-engine/phase.md) |
-| P03 | "pending" | 런 저장·복구, 서버 검증, 최고 점수, 리더보드 | [P03](../phases/2026-09-21-cat-runner/P03-run-leaderboard-resume/phase.md) |
+| P02 | "done" | Canvas 게임 루프, 물리, 패턴, 렌더링, 오디오 | [P02](../phases/2026-09-21-cat-runner/P02-game-engine/phase.md) |
+| P03 | "in_progress" | 런 저장·복구, 서버 검증, 최고 점수, 리더보드 | [P03](../phases/2026-09-21-cat-runner/P03-run-leaderboard-resume/phase.md) |
 | P04 | "pending" | 전체 플로우 통합, 오류 처리, 테스트, 로컬 실행 문서 | [P04](../phases/2026-09-21-cat-runner/P04-integration-verification/phase.md) |
 
 ## Global Technical Decisions

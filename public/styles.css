@@ -63,3 +63,78 @@ body {
 #screen-root p {
   font-size: clamp(1rem, 2vw, 1.5rem);
 }
+
+.pause-button {
+  position: absolute;
+  z-index: 3;
+  top: 18px;
+  right: 18px;
+}
+
+.pause-overlay {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(46 33 31 / 42%);
+}
+
+.pause-card {
+  display: grid;
+  min-width: min(320px, 90%);
+  gap: 12px;
+  padding: 28px;
+  border: 4px solid #6d4c41;
+  border-radius: 22px;
+  background: #fffaf5;
+  box-shadow: 0 16px 32px rgb(63 43 43 / 24%);
+}
+
+.pause-card h2,
+.settings-panel h3 {
+  margin: 0 0 4px;
+}
+
+.game-button {
+  cursor: pointer;
+  border: 2px solid #8d6e63;
+  border-radius: 999px;
+  padding: 9px 16px;
+  color: #3f2b2b;
+  background: #f3dfcf;
+  font: inherit;
+  font-weight: 700;
+}
+
+.game-button:hover,
+.game-button:focus-visible {
+  background: #ead0bb;
+}
+
+.game-button.primary {
+  color: #fffaf5;
+  border-color: #d2693c;
+  background: #d2693c;
+}
+
+.settings-panel {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #ead7c8;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.settings-row input[type="range"] {
+  width: 100%;
+}

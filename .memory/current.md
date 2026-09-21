@@ -1,16 +1,16 @@
 # Current Context
 
 ## Active Plan
-[고양이 러너 게임 (cat-runner)](./plans/2026-09-21-cat-runner.md)
+[Cat Runner](./plans/2026-09-21-cat-runner.md)
 
 ## Active Phase
-[P02 Canvas 게임 엔진](./phases/2026-09-21-cat-runner/P02-game-engine/phase.md)
+[P03 Run, leaderboard, and resume](./phases/2026-09-21-cat-runner/P03-run-leaderboard-resume/phase.md)
 
 ## Active Task
-[T04 일시정지·Web Audio·설정](./phases/2026-09-21-cat-runner/P02-game-engine/T04-pause-audio-settings.md)
+[T01 Login, character selection, and game flow](./phases/2026-09-21-cat-runner/P03-run-leaderboard-resume/T01-game-flow-character-selection.md)
 
 ## Status
-- P01 전체와 P02-T01~T03 게임 엔진·패턴·충돌·점수·Canvas 렌더러 구현 및 검증 완료
+- P01 and P02-T01 through P02-T04 are complete: game engine, patterns, collisions, scoring, Canvas rendering, pause, and Web Audio are implemented and validated.
 
 ## Next Step (IMPORTANT)
-P02-T04 청사진을 읽고 P 키·화면 버튼 일시정지, Web Audio 음악·효과음, 개별 음량 설정을 구현하고 test/audio-pause.test.js를 실행
+Read P03-T01 and connect the login/start screen, six-cat selection, game screen, Canvas, menu, and pause controls.
