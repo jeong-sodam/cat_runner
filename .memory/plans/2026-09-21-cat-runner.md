@@ -15,6 +15,11 @@
 
 ## Global Technical Decisions
 
+## Execution Update
+
+- P03 is complete: results submission, personal rank, and the authenticated top-ten leaderboard are implemented and validated.
+- P04 is now active at T01 for final integration and security regression coverage.
+
 - Runtime: Node.js LTS. 서버는 CommonJS, public JavaScript는 type=module을 사용한다.
 - Server: Express 단일 프로세스가 public 정적 파일과 API를 함께 제공한다.
 - Authentication: @azure/msal-node authorization-code flow, organizations authority, 서버 측 express-session, SQLite-backed custom session store.

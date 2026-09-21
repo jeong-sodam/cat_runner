@@ -4,13 +4,13 @@
 [Cat Runner](./plans/2026-09-21-cat-runner.md)
 
 ## Active Phase
-[P03 Run, leaderboard, and resume](./phases/2026-09-21-cat-runner/P03-run-leaderboard-resume/phase.md)
+[P04 Integration, verification, and local run](./phases/2026-09-21-cat-runner/P04-integration-verification/phase.md)
 
 ## Active Task
-[T04 Results screen and leaderboard integration](./phases/2026-09-21-cat-runner/P03-run-leaderboard-resume/T04-results-leaderboard-integration.md)
+[T01 Integration tests and error handling](./phases/2026-09-21-cat-runner/P04-integration-verification/T01-integration-tests-errors.md)
 
 ## Status
-- P01 and P02-T01 through P02-T04 are complete. P03-T01 through P03-T03 are complete: authenticated onboarding, six-cat selection, run resume, authoritative event validation, personal bests, and leaderboard rank calculation are implemented and validated.
+- P01 through P03 are complete: authenticated onboarding, six-cat selection, run resume, authoritative event validation, personal bests, results, and top-ten leaderboard are implemented and validated.
 
 ## Next Step (IMPORTANT)
-Read P03-T04 and connect the results screen, top-ten leaderboard, and final run completion flow.
+Read P04-T01 and add the final local integration and security regression coverage.

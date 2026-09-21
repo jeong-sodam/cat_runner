@@ -12,6 +12,8 @@ import { createSettingsPanel } from "../ui/settings-panel.js";
 import { renderAuthConfigError, renderAuthScreen, renderLoadingScreen } from "../ui/auth-screen.js";
 import { createNicknameScreen } from "../ui/nickname-screen.js";
 import { createCharacterSelect } from "../ui/character-select.js";
+import { createLeaderboardPanel } from "../ui/leaderboard.js";
+import { createResultScreen } from "../ui/result-screen.js";
 import { createLocalRunStore } from "../sync/local-run-store.js";
 import { createNetworkMonitor } from "../sync/network-monitor.js";
 import { createRunApiClient } from "../sync/run-api-client.js";
@@ -24,6 +26,8 @@ const SCREEN_NAMES = Object.freeze({
   NICKNAME: "nickname",
   CHARACTER_SELECT: "character-select",
   GAME: "game",
+  RESULT: "result",
+  LEADERBOARD: "leaderboard",
 });
 
 function createAppController(options = {}) {
@@ -38,6 +42,7 @@ function createAppController(options = {}) {
     user: null,
     catId: null,
     gameState: null,
+    lastResult: null,
   };
   let gameLoop = null;
   let input = null;
@@ -50,6 +55,8 @@ function createAppController(options = {}) {
   let reconnectBanner = null;
   let pausedForNetwork = false;
   let lastSnapshotAt = -Infinity;
+  let completionInProgress = false;
+  let finalGameState = null;
 
   function setScreen(screen) {
     state.screen = screen;
@@ -238,6 +245,78 @@ function createAppController(options = {}) {
     void checkForResume();
   }
 
+  function showResult(result) {
+    destroyGame();
+    state.lastResult = result;
+    setScreen(SCREEN_NAMES.RESULT);
+    showRoot();
+    const resultScreen = createResultScreen(
+      result,
+      {
+        onRetry: () => void completeGameover(),
+        onRestart: () => showCharacterSelect(),
+        onLeaderboard: () => showLeaderboard(),
+      },
+      { documentRef },
+    );
+    resultScreen.mount(screenRoot);
+  }
+
+  function showLeaderboard() {
+    destroyGame();
+    setScreen(SCREEN_NAMES.LEADERBOARD);
+    showRoot();
+    setupRunSync();
+    const leaderboard = createLeaderboardPanel(
+      runApiClient,
+      {
+        onBack: () => showResult(state.lastResult || { saved: false }),
+        onRestart: () => showCharacterSelect(),
+      },
+      { documentRef },
+    );
+    leaderboard.mount(screenRoot);
+  }
+
+  async function completeGameover() {
+    if (completionInProgress || (!state.gameState && !finalGameState)) {
+      return;
+    }
+    completionInProgress = true;
+    const completedState = state.gameState || finalGameState;
+    const localResult = {
+      score: completedState.score,
+      distanceM: completedState.distanceM,
+      mouseCount: completedState.mouseCount,
+      isPersonalBest: false,
+      rank: null,
+      saved: false,
+    };
+    try {
+      runSync?.saveSnapshot?.(completedState);
+      const activeRun = runSync?.getState?.().activeRun;
+      const flushed = activeRun ? await runSync.flush() : false;
+      const currentRun = runSync?.getState?.().activeRun;
+      if (!flushed || !currentRun?.runId || !runApiClient?.completeRun) {
+        throw new Error("The completed run is not ready to submit.");
+      }
+      const response = await runApiClient.completeRun(
+        currentRun.runId,
+        [],
+        Date.now(),
+      );
+      runSync.complete();
+      showResult({ ...response.result, saved: true });
+    } catch (error) {
+      showResult({
+        ...localResult,
+        errorMessage: error?.message || "The result could not be submitted.",
+      });
+    } finally {
+      completionInProgress = false;
+    }
+  }
+
   function playEventSound(event) {
     runSync?.recordEvent(
       event.type,
@@ -258,12 +337,18 @@ function createAppController(options = {}) {
     if (event.type.endsWith?.("_activated")) {
       audioManager?.playSfx?.("effect");
     }
+    if (event.type === "run_gameover") {
+      finalGameState = snapshotGameState();
+      void completeGameover();
+    }
   }
 
   function startGame(catId = "black", runOptions = {}) {
     destroyGame();
     state.catId = catId;
-    state.screen = SCREEN_NAMES.GAME;
+    setScreen(SCREEN_NAMES.GAME);
+    completionInProgress = false;
+    finalGameState = null;
     const seed = runOptions.seed || String(Date.now()) + ":" + catId;
     const gameState = createGameState({ catId, seed });
     if (runOptions.snapshot && typeof runOptions.snapshot === "object") {

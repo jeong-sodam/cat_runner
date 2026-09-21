@@ -40,6 +40,12 @@ function createRunApiClient(fetchFn = globalThis.fetch) {
         method: "POST",
         body: JSON.stringify({}),
       }),
+    completeRun: (runId, events = [], clientFinishedAt = Date.now()) =>
+      request("/api/runs/" + encodeURIComponent(runId) + "/complete", {
+        method: "POST",
+        body: JSON.stringify({ events, clientFinishedAt }),
+      }),
+    getLeaderboard: () => request("/api/leaderboard"),
   };
 }
 

@@ -72,4 +72,33 @@ function getTopScores(db, limit = 10) {
     .map(mapScore);
 }
 
-module.exports = { getBestScore, getRankForUser, upsertIfBetter, getTopScores };
+function getTopLeaderboardEntries(db, limit = 10) {
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 10;
+  return db
+    .prepare(
+      "SELECT best_scores.user_id, " +
+        "COALESCE(users.nickname, '이름 없음') AS nickname, " +
+        "users.email, best_scores.score, best_scores.distance_m, " +
+        "best_scores.achieved_at " +
+        "FROM best_scores INNER JOIN users ON users.id = best_scores.user_id " +
+        "ORDER BY best_scores.score DESC, best_scores.distance_m DESC, " +
+        "best_scores.achieved_at ASC LIMIT ?",
+    )
+    .all(safeLimit)
+    .map((row) => ({
+      userId: row.user_id,
+      nickname: row.nickname,
+      email: row.email,
+      score: row.score,
+      distanceM: row.distance_m,
+      achievedAt: row.achieved_at,
+    }));
+}
+
+module.exports = {
+  getBestScore,
+  getRankForUser,
+  getTopLeaderboardEntries,
+  upsertIfBetter,
+  getTopScores,
+};

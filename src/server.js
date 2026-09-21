@@ -10,6 +10,7 @@ const { createMsalClient } = require("./auth/msal-client");
 const { registerAuthRoutes } = require("./auth/auth-routes");
 const { registerUserRoutes } = require("./routes/user-routes");
 const { registerRunRoutes } = require("./routes/run-routes");
+const { registerLeaderboardRoutes } = require("./routes/leaderboard-routes");
 
 function apiError(code, message, status = 500) {
   const error = new Error(message);
@@ -60,6 +61,10 @@ function createApp(config = loadConfig(), dependencies = {}) {
     db: database,
     runService: dependencies.runService,
     clock: dependencies.clock,
+  });
+  registerLeaderboardRoutes(app, {
+    db: database,
+    leaderboardRepository: dependencies.leaderboardRepository,
   });
   app.use(express.static(publicDirectory));
 

@@ -200,3 +200,73 @@ test("character selection renders six cats and defaults each new run to black", 
   section.children[3].dispatch("click");
   assert.deepEqual(started, { catId: "mackerel" });
 });
+
+test("result screen shows local retry state without claiming an unsaved rank", async () => {
+  const { createResultScreen } = await import("../public/js/ui/result-screen.js");
+  const documentRef = createAppDocument();
+  const root = documentRef.createElement("section");
+  let retries = 0;
+  let restarted = 0;
+  let opened = 0;
+  createResultScreen(
+    {
+      score: 42,
+      distanceM: 12.5,
+      mouseCount: 3,
+      rank: 2,
+      saved: false,
+      errorMessage: "not saved",
+    },
+    {
+      onRetry: () => { retries += 1; },
+      onRestart: () => { restarted += 1; },
+      onLeaderboard: () => { opened += 1; },
+    },
+    { documentRef },
+  ).mount(root);
+
+  assert.match(textOf(root), /not saved/);
+  assert.doesNotMatch(textOf(root), /Leaderboard rank/);
+  const buttons = findAll(root, (element) => element.tagName === "BUTTON");
+  buttons[0].dispatch("click");
+  buttons[1].dispatch("click");
+  buttons[2].dispatch("click");
+  assert.deepEqual({ retries, restarted, opened }, { retries: 1, restarted: 1, opened: 1 });
+});
+
+test("leaderboard renders full email and XSS-like values as text, with retry", async () => {
+  const { createLeaderboardPanel } = await import("../public/js/ui/leaderboard.js");
+  const documentRef = createAppDocument();
+  const root = documentRef.createElement("section");
+  let calls = 0;
+  const panel = createLeaderboardPanel(
+    {
+      getLeaderboard: async () => {
+        calls += 1;
+        if (calls === 1) {
+          throw new Error("temporary");
+        }
+        return {
+          entries: [{
+            rank: 1,
+            nickname: "<script>alert(1)</script>",
+            email: "full-address@example.com",
+            score: 99,
+            distanceM: 25.5,
+          }],
+        };
+      },
+    },
+    {},
+    { documentRef },
+  );
+  panel.mount(root);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.match(textOf(root), /Leaderboard could not be loaded/);
+  const retry = findAll(root, (element) => element.tagName === "BUTTON")[0];
+  retry.dispatch("click");
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.match(textOf(root), /<script>alert\(1\)<\/script>/);
+  assert.match(textOf(root), /full-address@example.com/);
+  assert.equal(findAll(root, (element) => element.tagName === "TR").length, 2);
+});
