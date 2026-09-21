@@ -1,5 +1,7 @@
 const crypto = require("node:crypto");
 const runRepository = require("../db/repositories/run-repository");
+const leaderboardRepository = require("../db/repositories/leaderboard-repository");
+const { calculateVerifiedResult } = require("./run-validation-service");
 
 const CAT_IDS = new Set([
   "black",
@@ -115,11 +117,83 @@ function abandonRun(db, { runId, userId, now = Date.now() } = {}) {
   return abandoned || runRepository.findById(db, runId);
 }
 
+function completeVerifiedRun(
+  db,
+  {
+    runId,
+    userId,
+    events = [],
+    clientFinishedAt,
+    now = Date.now(),
+  } = {},
+  ) {
+  const run = getOwnedRun(db, runId, userId, { now });
+  const existingEvents = runRepository.findEvents(db, runId);
+  if (!Array.isArray(events)) {
+    const invalid = serviceError("SCORE_EVENT_INVALID", "Events must be an array.", 422);
+    invalid.reason = "EVENT_BATCH_INVALID";
+    throw invalid;
+  }
+  const allEvents = existingEvents.concat(events);
+  let verified;
+  try {
+    verified = calculateVerifiedResult(run, allEvents, { clientFinishedAt });
+  } catch (error) {
+    if (error.code === "SCORE_EVENT_INVALID") {
+      throw error;
+    }
+    throw serviceError("SCORE_EVENT_INVALID", error.message, 422);
+  }
+
+  if (events.length) {
+    try {
+      runRepository.appendEvents(db, runId, events, now);
+    } catch (error) {
+      const invalid = serviceError("SCORE_EVENT_INVALID", error.message, 422);
+      invalid.reason = /sequence/.test(error.message) ? "SEQ_REPLAYED" : "EVENT_APPEND_FAILED";
+      throw invalid;
+    }
+  }
+  const completed = runRepository.completeRun(db, runId, {
+    score: verified.score,
+    distanceM: verified.distanceM,
+    mouseCount: verified.mouseCount,
+    completedAt: now,
+  });
+  if (!completed) {
+    throw serviceError("RUN_NOT_ACTIVE", "Run is not active.", 409);
+  }
+  const previousBest = leaderboardRepository.getBestScore(db, userId);
+  leaderboardRepository.upsertIfBetter(db, userId, {
+    score: verified.score,
+    distanceM: verified.distanceM,
+    achievedAt: now,
+  });
+  const isPersonalBest =
+    !previousBest ||
+    verified.score > previousBest.score ||
+    (verified.score === previousBest.score && verified.distanceM > previousBest.distanceM) ||
+    (verified.score === previousBest.score &&
+      verified.distanceM === previousBest.distanceM &&
+      now < previousBest.achievedAt);
+  return {
+    accepted: true,
+    result: {
+      score: verified.score,
+      distanceM: verified.distanceM,
+      mouseCount: verified.mouseCount,
+      isPersonalBest,
+      rank: leaderboardRepository.getRankForUser(db, userId),
+    },
+  };
+}
+
 module.exports = {
   CAT_IDS,
   RUN_TTL_MS,
   abandonRun,
   appendRunEvents,
+  completeVerifiedRun,
   getResumableRun,
   saveRunSnapshot,
   startRun,

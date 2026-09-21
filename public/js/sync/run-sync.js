@@ -62,7 +62,14 @@ function createRunSync(apiClient, localStore, options = {}) {
       expiresAt: result.expiresAt,
       snapshotVersion: 1,
       snapshot,
-      pendingEvents: [],
+      pendingEvents: [
+        {
+          seq: 0,
+          type: "run_started",
+          occurredAtMs: 0,
+          payload: { seed: result.seed, catId: result.catId || catId },
+        },
+      ],
       savedAt: now(),
     };
     offline = false;

@@ -4,6 +4,7 @@ const { createApp } = require("../src/server");
 const { closeDatabase } = require("../src/db/database");
 const { getOrCreateUserFromClaims } = require("../src/services/user-service");
 const runService = require("../src/services/run-service");
+const { createServerManifest } = require("../src/game/server-pattern-manifest");
 
 const fixtures = new Set();
 
@@ -150,6 +151,45 @@ test("expired runs are abandoned and cannot be resumed", () => {
   closeDatabase(db);
 });
 
+test("completion endpoint stores an authoritative score and personal best", async () => {
+  const fixture = await startApp();
+  const cookie = await signIn(fixture);
+  const headers = { Cookie: cookie, "Content-Type": "application/json" };
+  const created = await fetch(fixture.baseUrl + "/api/runs", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ catId: "black" }),
+  });
+  const run = await created.json();
+  const manifest = createServerManifest(run.seed);
+  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 3);
+  const events = [
+    { seq: 0, type: "run_started", occurredAtMs: 0, payload: { seed: run.seed, catId: run.catId } },
+    { seq: 1, type: "distance_checkpoint", occurredAtMs: 100, payload: { distanceM: 12 } },
+    ...obstacles.map((obstacle, index) => ({
+      seq: index + 2,
+      type: "obstacle_collision",
+      occurredAtMs: 200 + index * 10,
+      payload: { entityId: obstacle.id },
+    })),
+    { seq: 5, type: "run_gameover", occurredAtMs: 240, payload: {} },
+  ];
+  const completed = await fetch(fixture.baseUrl + "/api/runs/" + run.runId + "/complete", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ events, clientFinishedAt: Date.now(), score: 999999, distanceM: 999999 }),
+  });
+  assert.equal(completed.status, 200);
+  const payload = await completed.json();
+  assert.deepEqual(payload.result, {
+    score: 12,
+    distanceM: 12,
+    mouseCount: 0,
+    isPersonalBest: true,
+    rank: 1,
+  });
+});
+
 test("run sync preserves event order and flushes events before snapshots", async () => {
   const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
   const { createRunSync } = await import("../public/js/sync/run-sync.js");
@@ -179,11 +219,11 @@ test("run sync preserves event order and flushes events before snapshots", async
   sync.recordEvent("run_started", 0, { seed: "seed" });
   sync.recordEvent("mouse_collected", 25, { points: 10 });
   sync.saveSnapshot({ catId: "black", worldOffset: 300, score: 10 });
-  assert.deepEqual(store.load().pendingEvents.map((event) => event.seq), [0, 1]);
+  assert.deepEqual(store.load().pendingEvents.map((event) => event.seq), [0, 1, 2]);
 
   assert.equal(await sync.flush(), true);
   assert.deepEqual(calls.map((call) => call.type), ["events", "snapshot"]);
-  assert.deepEqual(calls[0].events.map((event) => event.seq), [0, 1]);
+  assert.deepEqual(calls[0].events.map((event) => event.seq), [0, 1, 2]);
   assert.deepEqual(store.load().pendingEvents, []);
 });
 
@@ -203,8 +243,8 @@ test("offline sync pauses persistence and resumes after a successful reconnect",
       startRun: async () => ({ runId: "offline-run", catId: "white", seed: "seed", expiresAt: 5000 }),
       appendEvents: async (_runId, events) => {
         eventCalls += 1;
-        assert.deepEqual(events.map((event) => event.seq), [0]);
-        return { acceptedThroughSeq: 0 };
+        assert.deepEqual(events.map((event) => event.seq), [0, 1]);
+        return { acceptedThroughSeq: 1 };
       },
       saveSnapshot: async () => {},
     },

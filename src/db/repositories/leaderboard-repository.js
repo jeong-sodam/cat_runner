@@ -30,10 +30,35 @@ function upsertIfBetter(
       "achieved_at = excluded.achieved_at " +
       "WHERE excluded.score > best_scores.score " +
       "OR (excluded.score = best_scores.score " +
-      "AND excluded.distance_m > best_scores.distance_m)",
+      "AND (excluded.distance_m > best_scores.distance_m " +
+      "OR (excluded.distance_m = best_scores.distance_m " +
+      "AND excluded.achieved_at < best_scores.achieved_at)))",
   ).run(userId, score, distanceM, achievedAt);
 
   return getBestScore(db, userId);
+}
+
+function getRankForUser(db, userId) {
+  const best = getBestScore(db, userId);
+  if (!best) {
+    return null;
+  }
+  const row = db
+    .prepare(
+      "SELECT COUNT(*) + 1 AS rank FROM best_scores " +
+        "WHERE score > ? " +
+        "OR (score = ? AND distance_m > ?) " +
+        "OR (score = ? AND distance_m = ? AND achieved_at < ?)",
+    )
+    .get(
+      best.score,
+      best.score,
+      best.distanceM,
+      best.score,
+      best.distanceM,
+      best.achievedAt,
+    );
+  return row.rank;
 }
 
 function getTopScores(db, limit = 10) {
@@ -47,4 +72,4 @@ function getTopScores(db, limit = 10) {
     .map(mapScore);
 }
 
-module.exports = { getBestScore, upsertIfBetter, getTopScores };
+module.exports = { getBestScore, getRankForUser, upsertIfBetter, getTopScores };

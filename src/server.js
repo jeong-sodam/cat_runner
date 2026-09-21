@@ -90,12 +90,14 @@ function createApp(config = loadConfig(), dependencies = {}) {
 
   app.use((error, _request, response, _next) => {
     const status = Number.isInteger(error.status) ? error.status : 500;
-    response.status(status).json({
-      error: {
-        code: error.code || "INTERNAL_ERROR",
-        message: status >= 500 ? "Internal server error." : error.message,
-      },
-    });
+    const errorBody = {
+      code: error.code || "INTERNAL_ERROR",
+      message: status >= 500 ? "Internal server error." : error.message,
+    };
+    if (error.reason) {
+      errorBody.reason = error.reason;
+    }
+    response.status(status).json({ error: errorBody });
   });
 
   return app;

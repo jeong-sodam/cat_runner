@@ -201,6 +201,9 @@ test("leaderboard keeps only better score and orders ties by distance then time"
     leaderboardRepository.getTopScores(db).map((row) => row.userId),
     [third.id, second.id, first.id],
   );
+  assert.equal(leaderboardRepository.getRankForUser(db, third.id), 1);
+  assert.equal(leaderboardRepository.getRankForUser(db, second.id), 2);
+  assert.equal(leaderboardRepository.getRankForUser(db, first.id), 3);
   assert.equal(leaderboardRepository.getBestScore(db, first.id).score, 100);
 });
 

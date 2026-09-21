@@ -98,6 +98,21 @@ function registerRunRoutes(app, dependencies = {}) {
       return next(error);
     }
   });
+
+  app.post("/api/runs/:runId/complete", requireAuth, (request, response, next) => {
+    try {
+      const result = service.completeVerifiedRun(dependencies.db, {
+        runId: request.params.runId,
+        userId: userIdFrom(request),
+        events: request.body?.events,
+        clientFinishedAt: request.body?.clientFinishedAt,
+        now: now(),
+      });
+      return response.json(result);
+    } catch (error) {
+      return next(error);
+    }
+  });
 }
 
 module.exports = { registerRunRoutes };
