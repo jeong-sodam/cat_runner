@@ -11,13 +11,12 @@ const { registerAuthRoutes } = require("./auth/auth-routes");
 const { registerUserRoutes } = require("./routes/user-routes");
 const { registerRunRoutes } = require("./routes/run-routes");
 const { registerLeaderboardRoutes } = require("./routes/leaderboard-routes");
-
-function apiError(code, message, status = 500) {
-  const error = new Error(message);
-  error.code = code;
-  error.status = status;
-  return error;
-}
+const { closeDatabase } = require("./db/database");
+const {
+  apiError,
+  errorHandler,
+  notFoundHandler,
+} = require("./middleware/error-handler");
 
 function createApp(config = loadConfig(), dependencies = {}) {
   const appConfig = { ...loadConfig(), ...config };
@@ -34,7 +33,7 @@ function createApp(config = loadConfig(), dependencies = {}) {
       : dependencies.msalClient;
 
   app.disable("x-powered-by");
-  app.use(express.json({ limit: "64kb" }));
+  app.use(express.json({ limit: "16kb" }));
   app.use(
     session({
       store: sessionStore,
@@ -75,10 +74,6 @@ function createApp(config = loadConfig(), dependencies = {}) {
     response.status(200).json({ ok: true, service: "cat-runner" });
   });
 
-  app.use("/api", (_request, _response, next) => {
-    next(apiError("NOT_FOUND", "API endpoint not found.", 404));
-  });
-
   app.use((request, response, next) => {
     if (request.method !== "GET" || request.path.startsWith("/api/")) {
       return next();
@@ -86,33 +81,34 @@ function createApp(config = loadConfig(), dependencies = {}) {
     return response.sendFile(path.join(publicDirectory, "index.html"));
   });
 
-  app.use((request, _response, next) => {
-    if (request.path.startsWith("/api/")) {
-      return next(apiError("NOT_FOUND", "API endpoint not found.", 404));
-    }
-    return next(apiError("NOT_FOUND", "Page not found.", 404));
-  });
-
-  app.use((error, _request, response, _next) => {
-    const status = Number.isInteger(error.status) ? error.status : 500;
-    const errorBody = {
-      code: error.code || "INTERNAL_ERROR",
-      message: status >= 500 ? "Internal server error." : error.message,
-    };
-    if (error.reason) {
-      errorBody.reason = error.reason;
-    }
-    response.status(status).json({ error: errorBody });
-  });
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
   return app;
 }
 
 function startServer(config = loadConfig()) {
   const app = createApp(config);
-  return app.listen(config.port, () => {
+  const server = app.listen(config.port, () => {
     console.log("Cat Runner listening on http://localhost:" + config.port);
   });
+  const signals = ["SIGINT", "SIGTERM"];
+  const shutdown = () => {
+    server.close(() => {
+      if (app.locals.ownsDatabase) {
+        closeDatabase(app.locals.database);
+      }
+    });
+  };
+  for (const signal of signals) {
+    process.once(signal, shutdown);
+  }
+  server.once("close", () => {
+    for (const signal of signals) {
+      process.removeListener(signal, shutdown);
+    }
+  });
+  return server;
 }
 
 if (require.main === module) {

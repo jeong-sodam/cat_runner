@@ -44,6 +44,7 @@ test("me endpoint exposes missing auth configuration to the app shell", async ()
     error: {
       code: "AUTH_CONFIG_MISSING",
       message: "Microsoft Entra ID configuration is missing.",
+      retryable: true,
     },
   });
 });
@@ -55,6 +56,7 @@ test("unknown API routes use the JSON error contract", async () => {
     error: {
       code: "NOT_FOUND",
       message: "API endpoint not found.",
+      retryable: false,
     },
   });
 });

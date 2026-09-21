@@ -204,6 +204,22 @@ body {
   font-size: 0.9rem;
 }
 
+.error-banner {
+  pointer-events: auto;
+  display: grid;
+  gap: 8px;
+  border: 2px solid #c96c5a;
+  border-radius: 14px;
+  padding: 12px 16px;
+  color: #7a312d;
+  background: #fff0e3;
+}
+
+.error-banner p {
+  margin: 0;
+  font-size: 0.95rem !important;
+}
+
 .cat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

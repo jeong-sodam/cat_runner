@@ -1,6 +1,7 @@
 const { getSessionUser, requireAuth } = require("../auth/auth-middleware");
 const { setNickname } = require("../services/user-service");
 const userRepository = require("../db/repositories/user-repository");
+const { sendApiError } = require("../middleware/error-handler");
 
 function publicUser(user) {
   return {
@@ -15,12 +16,12 @@ function registerUserRoutes(app, { db, config }) {
     const sessionUser = getSessionUser(request);
     if (!sessionUser) {
       if (config && !config.authConfigured) {
-        return response.status(503).json({
-          error: {
-            code: "AUTH_CONFIG_MISSING",
-            message: "Microsoft Entra ID configuration is missing.",
-          },
-        });
+        return sendApiError(
+          response,
+          503,
+          "AUTH_CONFIG_MISSING",
+          "Microsoft Entra ID configuration is missing.",
+        );
       }
       return response.json({ authenticated: false });
     }

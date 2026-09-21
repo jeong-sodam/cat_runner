@@ -3,9 +3,10 @@ const {
   redeemAuthorizationCode,
 } = require("./msal-client");
 const { getOrCreateUserFromClaims } = require("../services/user-service");
+const { sendApiError } = require("../middleware/error-handler");
 
 function sendError(response, status, code, message) {
-  return response.status(status).json({ error: { code, message } });
+  return sendApiError(response, status, code, message);
 }
 
 function registerAuthRoutes(app, dependencies) {

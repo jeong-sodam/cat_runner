@@ -70,6 +70,7 @@ test("missing Entra configuration returns a setup error", async () => {
     error: {
       code: "AUTH_CONFIG_MISSING",
       message: "Microsoft Entra ID configuration is missing.",
+      retryable: true,
     },
   });
 });
@@ -164,6 +165,7 @@ test("callback and protected nickname API reject invalid authentication states",
     error: {
       code: "AUTH_CLAIMS_MISSING",
       message: "Required Entra claims are missing.",
+      retryable: false,
     },
   });
 
@@ -177,6 +179,7 @@ test("callback and protected nickname API reject invalid authentication states",
     error: {
       code: "AUTH_REQUIRED",
       message: "Authentication is required.",
+      retryable: false,
     },
   });
 });
@@ -214,7 +217,11 @@ test("empty nickname is rejected while duplicate nicknames remain allowed", asyn
   });
   assert.equal(empty.status, 400);
   assert.deepEqual(await empty.json(), {
-    error: { code: "NICKNAME_REQUIRED", message: "Nickname is required." },
+    error: {
+      code: "NICKNAME_REQUIRED",
+      message: "Nickname is required.",
+      retryable: false,
+    },
   });
 
   const valid = await fetch(fixture.baseUrl + "/api/me/nickname", {

@@ -270,3 +270,28 @@ test("leaderboard renders full email and XSS-like values as text, with retry", a
   assert.match(textOf(root), /full-address@example.com/);
   assert.equal(findAll(root, (element) => element.tagName === "TR").length, 2);
 });
+
+test("API client preserves a pending result and signals sign-in on 401", async () => {
+  const {
+    createApiClient,
+    loadPendingResult,
+  } = await import("../public/js/app/api-client.js");
+  const storage = new Map();
+  const localStorage = {
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key),
+  };
+  let redirected = 0;
+  const api = createApiClient(
+    async () => jsonResponse({ error: { code: "AUTH_REQUIRED" } }, 401),
+    { storage: localStorage, onUnauthorized: () => { redirected += 1; } },
+  );
+
+  await assert.rejects(
+    api.post("/api/runs/complete", {}, { pendingResult: { score: 55 } }),
+    (error) => error.code === "AUTH_REQUIRED" && error.retryable === false,
+  );
+  assert.deepEqual(loadPendingResult(localStorage), { score: 55 });
+  assert.equal(redirected, 1);
+});

@@ -48,6 +48,12 @@ function setNickname(db, userId, nickname) {
     error.status = 400;
     throw error;
   }
+  if (normalized.length > 80) {
+    const error = new Error("Nickname must be 80 characters or fewer.");
+    error.code = "NICKNAME_TOO_LONG";
+    error.status = 400;
+    throw error;
+  }
   return userRepository.updateNickname(db, userId, normalized);
 }
 

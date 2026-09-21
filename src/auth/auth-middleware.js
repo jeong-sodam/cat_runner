@@ -8,6 +8,7 @@ function requireAuth(request, response, next) {
       error: {
         code: "AUTH_REQUIRED",
         message: "Authentication is required.",
+        retryable: false,
       },
     });
   }
