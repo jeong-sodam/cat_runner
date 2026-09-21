@@ -7,10 +7,10 @@
 [P02 Canvas 게임 엔진](./phases/2026-09-21-cat-runner/P02-game-engine/phase.md)
 
 ## Active Task
-[T03 Canvas 카툰 렌더러와 HUD](./phases/2026-09-21-cat-runner/P02-game-engine/T03-canvas-renderer-hud.md)
+[T04 일시정지·Web Audio·설정](./phases/2026-09-21-cat-runner/P02-game-engine/T04-pause-audio-settings.md)
 
 ## Status
-- P01 전체와 P02-T01~T02 게임 엔진 기반·패턴·충돌·점수 구현 및 검증 완료
+- P01 전체와 P02-T01~T03 게임 엔진·패턴·충돌·점수·Canvas 렌더러 구현 및 검증 완료
 
 ## Next Step (IMPORTANT)
-P02-T03 청사진을 읽고 Canvas 카툰 렌더러·3개 배경·HUD를 구현하고 test/render.test.js를 실행
+P02-T04 청사진을 읽고 P 키·화면 버튼 일시정지, Web Audio 음악·효과음, 개별 음량 설정을 구현하고 test/audio-pause.test.js를 실행
