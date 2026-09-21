@@ -4,9 +4,11 @@ const { createApp } = require("../src/server");
 
 let server;
 let baseUrl;
+let app;
 
 before(async () => {
-  server = createApp({ port: 0 }).listen(0);
+  app = createApp({ port: 0, databasePath: ":memory:" });
+  server = app.listen(0);
   await new Promise((resolve) => server.once("listening", resolve));
   const { port } = server.address();
   baseUrl = "http://127.0.0.1:" + port;
@@ -16,6 +18,7 @@ after(async () => {
   await new Promise((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
   });
+  app.locals.database.close();
 });
 
 test("health endpoint returns the service status", async () => {

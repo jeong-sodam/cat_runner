@@ -4,13 +4,13 @@
 [고양이 러너 게임 (cat-runner)](./plans/2026-09-21-cat-runner.md)
 
 ## Active Phase
-[P01 로컬 기반·인증·데이터](./phases/2026-09-21-cat-runner/P01-foundation-auth-data/phase.md)
+[P02 Canvas 게임 엔진](./phases/2026-09-21-cat-runner/P02-game-engine/phase.md)
 
 ## Active Task
-[T03 Microsoft Entra 인증과 사용자 온보딩](./phases/2026-09-21-cat-runner/P01-foundation-auth-data/T03-entra-auth-user.md)
+[T01 게임 상태·입력·물리·메인 루프](./phases/2026-09-21-cat-runner/P02-game-engine/T01-game-loop-physics.md)
 
 ## Status
-- T01 프로젝트 스캐폴드와 T02 SQLite 데이터 계층 구현 및 검증 완료
+- P01의 T01~T03 로컬 기반·SQLite·Entra 인증 구현 및 검증 완료
 
 ## Next Step (IMPORTANT)
-T03 청사진을 읽고 Microsoft Entra authorization-code 인증·SQLite 세션·사용자 닉네임 API를 구현하고 test/auth.test.js를 실행
+P02-T01 청사진을 읽고 Canvas 게임 상태·입력·물리·고정 timestep 메인 루프를 구현하고 test/game-core.test.js를 실행
