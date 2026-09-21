@@ -208,10 +208,13 @@ function createAppController(options = {}) {
     }
   }
 
-  function showAuth() {
+  function showAuth(options = {}) {
     destroyGame();
     setScreen(SCREEN_NAMES.AUTH);
-    renderAuthScreen(screenRoot, { documentRef });
+    renderAuthScreen(screenRoot, {
+      documentRef,
+      guestMode: options.guestMode === true,
+    });
   }
 
   function showAuthConfigError() {
@@ -424,15 +427,17 @@ function createAppController(options = {}) {
       const response = await fetchFn("/api/me", { credentials: "same-origin" });
       const payload = await response.json();
       if (!response.ok) {
-        if (payload.error?.code === "AUTH_CONFIG_MISSING") {
+        if (payload.error?.code === "AUTH_CONFIG_MISSING" && !payload.guestMode) {
           showAuthConfigError();
+        } else if (payload.error?.code === "AUTH_CONFIG_MISSING") {
+          showAuth({ guestMode: payload.guestMode });
         } else {
-          showAuth();
+          showAuth({ guestMode: payload.guestMode });
         }
         return state;
       }
       if (!payload.authenticated || !payload.user) {
-        showAuth();
+        showAuth({ guestMode: payload.guestMode });
         return state;
       }
       state.user = payload.user;

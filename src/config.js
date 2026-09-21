@@ -23,6 +23,9 @@ function loadConfig(env = process.env) {
   const entraRedirectUri =
     optionalValue(env.ENTRA_REDIRECT_URI) ||
     "http://localhost:3000/auth/callback";
+  const guestMode =
+    env.NODE_ENV !== "production" &&
+    String(env.ENABLE_GUEST_MODE || "").toLowerCase() === "true";
 
   return {
     port: parsePort(env.PORT),
@@ -33,6 +36,7 @@ function loadConfig(env = process.env) {
     entraAuthority,
     entraRedirectUri,
     authConfigured: Boolean(entraClientId && entraClientSecret && entraAuthority),
+    guestMode,
   };
 }
 

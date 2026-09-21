@@ -75,6 +75,30 @@ test("missing Entra configuration returns a setup error", async () => {
   });
 });
 
+test("local guest mode creates a playable session without Entra", async () => {
+  const fixture = await startApp({
+    config: { guestMode: true },
+  });
+  const meBefore = await fetch(fixture.baseUrl + "/api/me");
+  assert.deepEqual(await meBefore.json(), {
+    authenticated: false,
+    guestMode: true,
+  });
+
+  const guest = await fetch(fixture.baseUrl + "/auth/guest", {
+    redirect: "manual",
+  });
+  assert.equal(guest.status, 302);
+  const cookie = cookieFrom(guest);
+  const meAfter = await fetch(fixture.baseUrl + "/api/me", {
+    headers: { Cookie: cookie },
+  });
+  const payload = await meAfter.json();
+  assert.equal(payload.authenticated, true);
+  assert.equal(payload.user.nickname, "Guest Cat");
+  assert.match(payload.user.email, /^guest-[a-f0-9]{8}@local\.invalid$/);
+});
+
 test("configured sign-in redirects and callback creates a session user", async () => {
   const fixture = await startApp({
     config: {

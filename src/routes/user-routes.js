@@ -16,6 +16,9 @@ function registerUserRoutes(app, { db, config }) {
     const sessionUser = getSessionUser(request);
     if (!sessionUser) {
       if (config && !config.authConfigured) {
+        if (config.guestMode) {
+          return response.json({ authenticated: false, guestMode: true });
+        }
         return sendApiError(
           response,
           503,
@@ -23,7 +26,10 @@ function registerUserRoutes(app, { db, config }) {
           "Microsoft Entra ID configuration is missing.",
         );
       }
-      return response.json({ authenticated: false });
+      return response.json({
+        authenticated: false,
+        ...(config?.guestMode ? { guestMode: true } : {}),
+      });
     }
 
     const user = userRepository.findById(db, sessionUser.userId);

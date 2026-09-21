@@ -36,6 +36,13 @@ function renderAuthScreen(root, options = {}) {
   signIn.href = "/auth/signin";
   signIn.textContent = "Microsoft Entra ID로 로그인";
   section.append(signIn);
+  if (options.guestMode) {
+    const guest = documentRef.createElement("a");
+    guest.className = "game-button auth-link";
+    guest.href = "/auth/guest";
+    guest.textContent = "게스트로 플레이";
+    section.append(guest);
+  }
   appendText(documentRef, section, "small", "게임을 시작하려면 조직 계정 로그인이 필요합니다.");
   root.append(section);
   return section;

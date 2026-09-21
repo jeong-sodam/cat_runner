@@ -55,6 +55,16 @@ ENTRA_TENANT_AUTHORITY=https://login.microsoftonline.com/organizations
 ENTRA_REDIRECT_URI=http://localhost:3000/auth/callback
 ```
 
+### Guest play mode
+
+For local gameplay without Entra credentials, set this development-only flag in `.env`:
+
+```dotenv
+ENABLE_GUEST_MODE=true
+```
+
+Restart the server, open the game, and choose **게스트로 플레이**. A temporary local account is created with a `.local.invalid` email and follows the same run, score, resume, and leaderboard flow. Guest mode is automatically disabled when `NODE_ENV=production`; never enable it on a public deployment.
+
 If the Entra values are missing, the server still starts and serves the game shell. Sign-in and protected API calls show a configuration/authentication error instead of exposing a secret or stack trace.
 
 ## Game rules

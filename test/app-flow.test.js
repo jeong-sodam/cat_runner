@@ -148,6 +148,23 @@ test("missing auth configuration renders setup guidance without a secret", async
   assert.doesNotMatch(textOf(screen), /client-secret-value/);
 });
 
+test("guest mode adds a local play button to the auth screen", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  const controller = createAppController({
+    documentRef,
+    fetchFn: async () => jsonResponse({ authenticated: false, guestMode: true }),
+  });
+
+  await controller.bootstrap();
+
+  const screen = documentRef.getElementById("screen-root");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
+  const links = findAll(screen, (element) => element.tagName === "A");
+  assert.equal(links.length, 2);
+  assert.equal(links[1].href, "/auth/guest");
+});
+
 test("authenticated users without a nickname receive nickname onboarding", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
