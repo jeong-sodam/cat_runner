@@ -72,6 +72,7 @@ function appendEvents(db, runId, events, now = Date.now()) {
   }
 
   const seen = new Set();
+  let previousSeq = null;
   for (const event of events) {
     if (
       !Number.isInteger(event.seq) ||
@@ -84,7 +85,11 @@ function appendEvents(db, runId, events, now = Date.now()) {
     ) {
       throw new TypeError("invalid run event");
     }
+    if (previousSeq !== null && event.seq <= previousSeq) {
+      throw new TypeError("events must be ordered by sequence");
+    }
     seen.add(event.seq);
+    previousSeq = event.seq;
   }
 
   const transaction = db.transaction(() => {
@@ -139,6 +144,15 @@ function findResumableRun(db, userId, now = Date.now()) {
   );
 }
 
+function expireActiveRuns(db, now = Date.now()) {
+  return db
+    .prepare(
+      "UPDATE runs SET status = 'abandoned', updated_at = ? " +
+        "WHERE status = 'active' AND expires_at <= ?",
+    )
+    .run(now, now).changes;
+}
+
 function completeRun(
   db,
   runId,
@@ -173,6 +187,7 @@ module.exports = {
   appendEvents,
   findEvents,
   findResumableRun,
+  expireActiveRuns,
   completeRun,
   abandonRun,
 };

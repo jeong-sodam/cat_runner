@@ -255,6 +255,29 @@ body {
   min-width: 220px;
 }
 
+.reconnect-banner {
+  position: absolute;
+  z-index: 5;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
+  margin: 0;
+  border: 2px solid #d2693c;
+  border-radius: 999px;
+  padding: 10px 16px;
+  color: #fffaf5;
+  background: rgb(74 54 50 / 88%);
+  text-align: center;
+}
+
+.resume-modal {
+  position: absolute;
+  z-index: 6;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 @media (max-width: 760px) {
   .cat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

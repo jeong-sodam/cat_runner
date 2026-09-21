@@ -9,6 +9,7 @@ const { SQLiteSessionStore } = require("./auth/sqlite-session-store");
 const { createMsalClient } = require("./auth/msal-client");
 const { registerAuthRoutes } = require("./auth/auth-routes");
 const { registerUserRoutes } = require("./routes/user-routes");
+const { registerRunRoutes } = require("./routes/run-routes");
 
 function apiError(code, message, status = 500) {
   const error = new Error(message);
@@ -55,6 +56,11 @@ function createApp(config = loadConfig(), dependencies = {}) {
     codeRedeemer: dependencies.codeRedeemer,
   });
   registerUserRoutes(app, { db: database, config: appConfig });
+  registerRunRoutes(app, {
+    db: database,
+    runService: dependencies.runService,
+    clock: dependencies.clock,
+  });
   app.use(express.static(publicDirectory));
 
   app.locals.database = database;
