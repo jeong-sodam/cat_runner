@@ -54,7 +54,7 @@ function createApp(config = loadConfig(), dependencies = {}) {
     authUrlBuilder: dependencies.authUrlBuilder,
     codeRedeemer: dependencies.codeRedeemer,
   });
-  registerUserRoutes(app, { db: database });
+  registerUserRoutes(app, { db: database, config: appConfig });
   app.use(express.static(publicDirectory));
 
   app.locals.database = database;

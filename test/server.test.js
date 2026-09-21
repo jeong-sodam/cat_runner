@@ -37,6 +37,17 @@ test("index fallback serves the static game shell", async () => {
   assert.match(await response.text(), /고양이 러너/);
 });
 
+test("me endpoint exposes missing auth configuration to the app shell", async () => {
+  const response = await fetch(baseUrl + "/api/me");
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    error: {
+      code: "AUTH_CONFIG_MISSING",
+      message: "Microsoft Entra ID configuration is missing.",
+    },
+  });
+});
+
 test("unknown API routes use the JSON error contract", async () => {
   const response = await fetch(baseUrl + "/api/unknown");
   assert.equal(response.status, 404);

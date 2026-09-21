@@ -1,6 +1,6 @@
 # Task: T01 로그인 플로우와 캐릭터 선택
 
-## Status: in_progress
+## Status: done
 
 ## Goal
 
@@ -61,10 +61,10 @@
 
 ## Acceptance Criteria
 
-- [ ] Unauthenticated users cannot reach character selection or game state.
-- [ ] Missing Entra configuration produces a setup message, not a blank screen.
-- [ ] Nickname setup is required once and duplicate nicknames work.
-- [ ] Every new run starts with a selectable cat and defaults to black without saving the previous choice.
+- [x] Unauthenticated users cannot reach character selection or game state.
+- [x] Missing Entra configuration produces a setup message, not a blank screen.
+- [x] Nickname setup is required once and duplicate nicknames work.
+- [x] Every new run starts with a selectable cat and defaults to black without saving the previous choice.
 
 ## Validation
 

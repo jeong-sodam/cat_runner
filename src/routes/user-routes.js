@@ -10,10 +10,18 @@ function publicUser(user) {
   };
 }
 
-function registerUserRoutes(app, { db }) {
+function registerUserRoutes(app, { db, config }) {
   app.get("/api/me", (request, response) => {
     const sessionUser = getSessionUser(request);
     if (!sessionUser) {
+      if (config && !config.authConfigured) {
+        return response.status(503).json({
+          error: {
+            code: "AUTH_CONFIG_MISSING",
+            message: "Microsoft Entra ID configuration is missing.",
+          },
+        });
+      }
       return response.json({ authenticated: false });
     }
 
