@@ -33,6 +33,10 @@ function createGameState({ catId, seed }) {
     worldOffset: 0,
     worldSpeed: GAME_CONFIG.baseWorldSpeed * cat.speedMultiplier,
     zoneId: "home_day",
+    worldEntities: [],
+    nextPatternX: GAME_CONFIG.canvasWidth + 300,
+    lastPatternId: null,
+    patternIndex: 0,
     activeEffect: null,
     input: {
       leftUnused: false,

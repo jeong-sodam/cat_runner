@@ -1,0 +1,62 @@
+import { GAME_CONFIG } from "./constants.js";
+import { ZONE_DEFINITIONS } from "./patterns.js";
+
+function spawnNextPattern(state, patternStream) {
+  let pattern;
+  for (let attempts = 0; attempts < 10; attempts += 1) {
+    const candidate = patternStream.next(state.zoneId);
+    if (
+      candidate.minGap >= GAME_CONFIG.playerWidth * 1.5 &&
+      candidate.entities.every((entity) => entity.x >= 0)
+    ) {
+      pattern = candidate;
+      break;
+    }
+  }
+  if (!pattern) {
+    throw new Error("Unable to spawn a safe pattern.");
+  }
+
+  const startX = Math.max(
+    state.nextPatternX,
+    state.worldOffset + GAME_CONFIG.canvasWidth + 200,
+  );
+  const entities = pattern.entities.map((entity) => ({
+    ...entity,
+    x: startX + entity.x,
+    patternId: pattern.id,
+    patternIndex: pattern.patternIndex,
+  }));
+  state.worldEntities.push(...entities);
+  state.nextPatternX = startX + pattern.width + pattern.minGap;
+  state.lastPatternId = pattern.id;
+  state.patternIndex = pattern.patternIndex + 1;
+
+  return { ...pattern, startX, entities };
+}
+
+function updateWorldEntities(state, patternStream) {
+  while (
+    state.nextPatternX <
+    state.worldOffset + GAME_CONFIG.canvasWidth * 2
+  ) {
+    spawnNextPattern(state, patternStream);
+  }
+
+  state.worldEntities = state.worldEntities.filter(
+    (entity) => entity.x - state.worldOffset > state.player.x - 200,
+  );
+  return state.worldEntities;
+}
+
+function selectZoneForScore(score) {
+  if (score >= ZONE_DEFINITIONS.home_night.minScore) {
+    return "home_night";
+  }
+  if (score >= ZONE_DEFINITIONS.outside.minScore) {
+    return "outside";
+  }
+  return "home_day";
+}
+
+export { selectZoneForScore, spawnNextPattern, updateWorldEntities };

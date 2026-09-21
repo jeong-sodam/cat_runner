@@ -3,6 +3,8 @@ import {
   GAME_CONFIG,
   GAME_STATUSES,
 } from "./constants.js";
+import { updateActiveEffect, getEffectSpeedMultiplier } from "./effects.js";
+import { calculateDifficulty, updateScore } from "./scoring.js";
 import { transitionGameState } from "./state.js";
 
 function defaultClock() {
@@ -13,8 +15,8 @@ function defaultClock() {
   };
 }
 
-function difficultyMultiplier(distanceM) {
-  return Math.min(1.5, 1 + Math.max(0, distanceM) / 2000 * 0.5);
+function difficultyMultiplier(distanceM, zoneId = "home_day") {
+  return calculateDifficulty(distanceM, zoneId);
 }
 
 function createGameLoop({
@@ -22,6 +24,7 @@ function createGameLoop({
   input,
   onStateChange = () => {},
   onEvent = () => {},
+  onStep = () => {},
   clock = defaultClock(),
 }) {
   let frameId = null;
@@ -49,7 +52,8 @@ function createGameLoop({
 
     const dt = stepMs / 1000;
     const cat = CAT_DEFINITIONS[state.catId];
-    const speed = difficultyMultiplier(state.distanceM);
+    updateActiveEffect(state, state.elapsedMs, state.worldEntities);
+    const speed = difficultyMultiplier(state.distanceM, state.zoneId);
     const isSliding = input.isSliding() && state.player.isGrounded;
     const jumpPressed = input.consumeJumpPress();
 
@@ -89,7 +93,11 @@ function createGameLoop({
       ? cat.slideMultiplier
       : 1;
     state.worldSpeed =
-      GAME_CONFIG.baseWorldSpeed * cat.speedMultiplier * speed * slideMultiplier;
+      GAME_CONFIG.baseWorldSpeed *
+      cat.speedMultiplier *
+      speed *
+      slideMultiplier *
+      getEffectSpeedMultiplier(state);
     state.worldOffset += state.worldSpeed * dt;
     state.elapsedMs += stepMs;
     state.distanceM = state.worldOffset / GAME_CONFIG.pixelsPerMeter;
@@ -99,6 +107,9 @@ function createGameLoop({
       lastCheckpoint += 1;
       emit("distance_checkpoint", { distanceM: lastCheckpoint });
     }
+
+    onStep(state, stepMs);
+    updateScore(state);
 
     if (state.health <= 0) {
       state.health = 0;
