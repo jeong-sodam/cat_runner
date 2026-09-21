@@ -1,0 +1,214 @@
+const assert = require("node:assert/strict");
+const { test } = require("node:test");
+
+async function loadGameModules() {
+  const [constants, stateModule, inputModule, loopModule] = await Promise.all([
+    import("../public/js/game/constants.js"),
+    import("../public/js/game/state.js"),
+    import("../public/js/game/input-controller.js"),
+    import("../public/js/game/game-loop.js"),
+  ]);
+  return { ...constants, ...stateModule, ...inputModule, ...loopModule };
+}
+
+class FakeEventTarget {
+  constructor() {
+    this.listeners = new Map();
+  }
+
+  addEventListener(type, listener) {
+    const listeners = this.listeners.get(type) || new Set();
+    listeners.add(listener);
+    this.listeners.set(type, listeners);
+  }
+
+  removeEventListener(type, listener) {
+    this.listeners.get(type)?.delete(listener);
+  }
+
+  dispatch(type, key, repeat = false) {
+    const event = {
+      key,
+      repeat,
+      prevented: false,
+      preventDefault() {
+        this.prevented = true;
+      },
+    };
+    for (const listener of this.listeners.get(type) || []) {
+      listener(event);
+    }
+    return event;
+  }
+}
+
+function createHarness(modules, catId = "black") {
+  const target = new FakeEventTarget();
+  const canvas = { ownerDocument: { defaultView: target } };
+  const state = modules.createGameState({ catId, seed: "fixed-seed" });
+  let loop;
+  const events = [];
+  const input = modules.createInputController(canvas, () => loop.togglePause());
+  loop = modules.createGameLoop({
+    state,
+    input,
+    onEvent: (event) => events.push(event),
+    clock: {
+      now: () => 0,
+      requestFrame: () => 1,
+      cancelFrame: () => {},
+    },
+  });
+  loop.start();
+
+  return {
+    state,
+    loop,
+    input,
+    events,
+    target,
+    destroy() {
+      input.destroy();
+      loop.destroy();
+    },
+  };
+}
+
+test("game state contains the six cats and valid lifecycle transitions", async () => {
+  const modules = await loadGameModules();
+  const expectedCats = ["black", "white", "calico", "cheese", "mackerel", "chaos"];
+  assert.deepEqual(Object.keys(modules.CAT_DEFINITIONS), expectedCats);
+  for (const cat of Object.values(modules.CAT_DEFINITIONS)) {
+    const multipliers = [
+      cat.jumpMultiplier,
+      cat.speedMultiplier,
+      cat.slideMultiplier,
+      cat.itemDurationMultiplier,
+      cat.healthMultiplier,
+    ];
+    assert.equal(multipliers.filter((value) => value === 1.1).length, 1);
+    assert.equal(multipliers.filter((value) => value === 0.9).length, 1);
+  }
+
+  const state = modules.createGameState({ catId: "black", seed: 123 });
+  assert.equal(state.status, modules.GAME_STATUSES.READY);
+  modules.transitionGameState(state, modules.GAME_STATUSES.RUNNING);
+  modules.transitionGameState(state, modules.GAME_STATUSES.PAUSED);
+  modules.transitionGameState(state, modules.GAME_STATUSES.RUNNING);
+  assert.throws(
+    () => modules.transitionGameState(state, modules.GAME_STATUSES.READY),
+    /Invalid game state transition/,
+  );
+});
+
+test("W produces at most two jumps and holding W does not repeat", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules);
+
+  harness.target.dispatch("keydown", "w");
+  harness.target.dispatch("keydown", "w", true);
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  assert.equal(harness.state.player.jumpsUsed, 1);
+  assert.equal(harness.events.filter((event) => event.type === "player_jump").length, 1);
+
+  harness.target.dispatch("keydown", "w");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  assert.equal(harness.state.player.jumpsUsed, 2);
+
+  harness.target.dispatch("keydown", "w");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  assert.equal(harness.state.player.jumpsUsed, 2);
+  assert.equal(harness.events.filter((event) => event.type === "player_jump").length, 2);
+  harness.destroy();
+});
+
+test("S changes the hitbox only while grounded", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules);
+
+  const down = harness.target.dispatch("keydown", "s");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  assert.equal(down.prevented, true);
+  assert.equal(harness.state.player.isSliding, true);
+  assert.equal(harness.state.player.height, modules.GAME_CONFIG.slideHeight);
+  assert.equal(
+    harness.state.player.y + harness.state.player.height,
+    modules.GAME_CONFIG.groundY,
+  );
+
+  harness.target.dispatch("keyup", "s");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  assert.equal(harness.state.player.isSliding, false);
+  assert.equal(harness.state.player.height, modules.GAME_CONFIG.playerHeight);
+
+  harness.target.dispatch("keydown", "w");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  harness.target.dispatch("keydown", "s");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  assert.equal(harness.state.player.isSliding, false);
+  assert.equal(harness.state.player.height, modules.GAME_CONFIG.playerHeight);
+  harness.destroy();
+});
+
+test("P pauses and resumes without advancing the simulation while paused", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules);
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs * 3);
+  const elapsedBeforePause = harness.state.elapsedMs;
+  const distanceBeforePause = harness.state.distanceM;
+
+  const pauseEvent = harness.target.dispatch("keydown", "p");
+  assert.equal(pauseEvent.prevented, true);
+  assert.equal(harness.state.status, modules.GAME_STATUSES.PAUSED);
+  harness.loop.advance(1000);
+  assert.equal(harness.state.elapsedMs, elapsedBeforePause);
+  assert.equal(harness.state.distanceM, distanceBeforePause);
+
+  harness.target.dispatch("keydown", "p");
+  assert.equal(harness.state.status, modules.GAME_STATUSES.RUNNING);
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  assert.ok(harness.state.elapsedMs > elapsedBeforePause);
+  harness.destroy();
+});
+
+test("health zero transitions to gameover and emits a run event", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules);
+  harness.state.health = 0;
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+
+  assert.equal(harness.state.status, modules.GAME_STATUSES.GAMEOVER);
+  assert.equal(harness.state.health, 0);
+  assert.equal(
+    harness.events.filter((event) => event.type === "run_gameover").length,
+    1,
+  );
+  harness.destroy();
+});
+
+test("identical seed, inputs, and timestamps produce identical state", async () => {
+  const modules = await loadGameModules();
+  const first = createHarness(modules, "white");
+  const second = createHarness(modules, "white");
+
+  for (let frame = 0; frame < 90; frame += 1) {
+    if (frame === 1 || frame === 20) {
+      first.target.dispatch("keydown", "w");
+      second.target.dispatch("keydown", "w");
+    }
+    if (frame >= 45 && frame < 55) {
+      first.target.dispatch("keydown", "s");
+      second.target.dispatch("keydown", "s");
+    } else {
+      first.target.dispatch("keyup", "s");
+      second.target.dispatch("keyup", "s");
+    }
+    first.loop.advance(1000 / 60);
+    second.loop.advance(1000 / 60);
+  }
+
+  assert.deepEqual(first.state, second.state);
+  assert.deepEqual(first.events, second.events);
+  first.destroy();
+  second.destroy();
+});

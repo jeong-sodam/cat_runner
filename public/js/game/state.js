@@ -1,0 +1,71 @@
+import {
+  CAT_DEFINITIONS,
+  GAME_CONFIG,
+  GAME_STATUSES,
+} from "./constants.js";
+
+function createGameState({ catId, seed }) {
+  if (!CAT_DEFINITIONS[catId]) {
+    throw new Error("Unknown cat id: " + catId);
+  }
+
+  const cat = CAT_DEFINITIONS[catId];
+  const playerHeight = GAME_CONFIG.playerHeight;
+  return {
+    status: GAME_STATUSES.READY,
+    catId,
+    seed: String(seed),
+    elapsedMs: 0,
+    distanceM: 0,
+    score: 0,
+    mouseCount: 0,
+    health: Math.round(GAME_CONFIG.maxHealth * cat.healthMultiplier),
+    player: {
+      x: 240,
+      y: GAME_CONFIG.groundY - playerHeight,
+      vy: 0,
+      width: GAME_CONFIG.playerWidth,
+      height: playerHeight,
+      isGrounded: true,
+      jumpsUsed: 0,
+      isSliding: false,
+    },
+    worldOffset: 0,
+    worldSpeed: GAME_CONFIG.baseWorldSpeed * cat.speedMultiplier,
+    zoneId: "home_day",
+    activeEffect: null,
+    input: {
+      leftUnused: false,
+      jumpPressed: false,
+      slideHeld: false,
+    },
+  };
+}
+
+function resetRunState(state, { catId, seed }) {
+  const next = createGameState({ catId, seed });
+  Object.keys(state).forEach((key) => {
+    delete state[key];
+  });
+  Object.assign(state, next);
+  return state;
+}
+
+function transitionGameState(state, nextStatus) {
+  const allowed = {
+    [GAME_STATUSES.READY]: [GAME_STATUSES.RUNNING],
+    [GAME_STATUSES.RUNNING]: [GAME_STATUSES.PAUSED, GAME_STATUSES.GAMEOVER],
+    [GAME_STATUSES.PAUSED]: [GAME_STATUSES.RUNNING, GAME_STATUSES.READY],
+    [GAME_STATUSES.GAMEOVER]: [],
+  };
+
+  if (!allowed[state.status]?.includes(nextStatus)) {
+    throw new Error(
+      "Invalid game state transition: " + state.status + " -> " + nextStatus,
+    );
+  }
+  state.status = nextStatus;
+  return state;
+}
+
+export { createGameState, resetRunState, transitionGameState };

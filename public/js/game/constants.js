@@ -1,0 +1,102 @@
+const GAME_CONFIG = Object.freeze({
+  canvasWidth: 1600,
+  canvasHeight: 900,
+  groundY: 700,
+  baseWorldSpeed: 360,
+  gravity: 2400,
+  jumpVelocity: -900,
+  maxJumps: 2,
+  playerWidth: 90,
+  playerHeight: 110,
+  slideHeight: 60,
+  maxHealth: 30,
+  collisionDamage: 10,
+  pixelsPerMeter: 100,
+  fixedStepMs: 1000 / 120,
+  maxFrameDeltaMs: 50,
+});
+
+const CAT_DEFINITIONS = Object.freeze({
+  black: Object.freeze({
+    id: "black",
+    label: "검정",
+    jumpMultiplier: 1,
+    speedMultiplier: 1.1,
+    slideMultiplier: 1,
+    itemDurationMultiplier: 1,
+    healthMultiplier: 0.9,
+    advantage: "이동 속도",
+    weakness: "체력",
+  }),
+  white: Object.freeze({
+    id: "white",
+    label: "하양",
+    jumpMultiplier: 1.1,
+    speedMultiplier: 1,
+    slideMultiplier: 0.9,
+    itemDurationMultiplier: 1,
+    healthMultiplier: 1,
+    advantage: "점프력",
+    weakness: "슬라이딩 속도",
+  }),
+  calico: Object.freeze({
+    id: "calico",
+    label: "삼색",
+    jumpMultiplier: 1,
+    speedMultiplier: 0.9,
+    slideMultiplier: 1,
+    itemDurationMultiplier: 1,
+    healthMultiplier: 1.1,
+    advantage: "체력",
+    weakness: "이동 속도",
+  }),
+  cheese: Object.freeze({
+    id: "cheese",
+    label: "치즈",
+    jumpMultiplier: 0.9,
+    speedMultiplier: 1,
+    slideMultiplier: 1,
+    itemDurationMultiplier: 1.1,
+    healthMultiplier: 1,
+    advantage: "아이템 지속 시간",
+    weakness: "점프력",
+  }),
+  mackerel: Object.freeze({
+    id: "mackerel",
+    label: "고등어",
+    jumpMultiplier: 1,
+    speedMultiplier: 1,
+    slideMultiplier: 1.1,
+    itemDurationMultiplier: 0.9,
+    healthMultiplier: 1,
+    advantage: "슬라이딩 속도",
+    weakness: "아이템 지속 시간",
+  }),
+  chaos: Object.freeze({
+    id: "chaos",
+    label: "카오스",
+    jumpMultiplier: 0.9,
+    speedMultiplier: 1.1,
+    slideMultiplier: 1,
+    itemDurationMultiplier: 1,
+    healthMultiplier: 1,
+    advantage: "이동 속도",
+    weakness: "점프력",
+  }),
+});
+
+const EFFECT_TYPES = Object.freeze({
+  MAGNET: "magnet",
+  INVINCIBLE: "invincible",
+  DOUBLE_SCORE: "double_score",
+  SLOW_MISS: "slow_miss",
+});
+
+const GAME_STATUSES = Object.freeze({
+  READY: "ready",
+  RUNNING: "running",
+  PAUSED: "paused",
+  GAMEOVER: "gameover",
+});
+
+export { CAT_DEFINITIONS, EFFECT_TYPES, GAME_CONFIG, GAME_STATUSES };
