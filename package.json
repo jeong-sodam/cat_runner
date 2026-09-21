@@ -1,0 +1,22 @@
+{
+  "name": "cat-runner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A cartoon cat endless runner for the web",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@azure/msal-node": "^3.8.1",
+    "better-sqlite3": "^11.10.0",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2"
+  }
+}
