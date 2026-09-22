@@ -11,7 +11,7 @@ Cat Runner is a browser endless runner. Choose one of six cats, jump over indoor
 ## Local setup
 
 ```powershell
-npm install
+npm.cmd install
 Copy-Item .env.example .env
 ```
 
@@ -20,10 +20,10 @@ Open `.env` and fill in the Entra values described below. Never commit `.env`, c
 Run the checks and start the server:
 
 ```powershell
-npm test
-npm run dev       # development mode with Node watch
-# or
-npm start
+npm.cmd test
+npm.cmd start
+# or, during development:
+npm.cmd run dev   # development mode with Node watch
 ```
 
 Open <http://localhost:3000>. The default database is `data/cat-runner.sqlite`. Stop the server before resetting local progress, then remove the database files:
@@ -33,6 +33,17 @@ Remove-Item data/cat-runner.sqlite, data/cat-runner.sqlite-shm, data/cat-runner.
 ```
 
 The database is recreated automatically on the next start. This deletes local runs, sessions, and leaderboard data only.
+
+When a local `.env` enables guest mode or contains Entra values, run the suite in a clean authentication process so configuration-specific tests keep their expected setup:
+
+```powershell
+$env:ENABLE_GUEST_MODE = "false"
+$env:ENTRA_CLIENT_ID = ""
+$env:ENTRA_CLIENT_SECRET = ""
+$env:ENTRA_TENANT_AUTHORITY = ""
+$env:ENTRA_REDIRECT_URI = ""
+npm.cmd test
+```
 
 ## Microsoft Entra ID
 
@@ -88,11 +99,20 @@ The server replays the event stream and calculates the authoritative result. Onl
 
 ## Manual acceptance
 
-Use [docs/manual-acceptance.md](docs/manual-acceptance.md) for the complete repeatable gameplay and recovery checklist. Automated integration and security coverage can be run with:
+Use [docs/manual-acceptance.md](docs/manual-acceptance.md) for the complete repeatable gameplay and recovery checklist. For the visual refresh smoke test, verify the following at <http://localhost:3000>:
+
+- A fresh run opens without a visible pause modal; `P` and the pause button toggle pause/resume.
+- All visible screen copy is Korean, including auth, nickname, character, pause, result, and leaderboard screens.
+- All six cat cards show distinct previews and remain selectable if one preview request is blocked or fails.
+- `W` shows jump, `S` shows slide, and the three zones visibly change as the run progresses.
+- Blocking one `/assets/cat-runner/` image in browser DevTools still leaves the run playable through the vector fallback.
+- At a narrow viewport around 500px, actions remain reachable and wide panels/tables can scroll.
+
+Automated integration and security coverage can be run with:
 
 ```powershell
 node --test test/integration.test.js test/security-regression.test.js
-npm test
+npm.cmd test
 ```
 
 Cloud Cosmos DB migration is not part of the local implementation; the current runtime uses SQLite and remains ready for a future repository-backed migration.

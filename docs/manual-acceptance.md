@@ -1,6 +1,18 @@
 # Cat Runner manual acceptance checklist
 
-Run the app locally with `npm run dev`, open `http://localhost:3000`, and use a fresh browser session when a case says “fresh session”. Record the result of each case before moving to the next one.
+Run the app locally with `npm.cmd install` and `npm.cmd start`, open `http://localhost:3000`, and use a fresh browser session when a case says “fresh session”. Record the result of each case before moving to the next one.
+
+## Visual refresh smoke test
+
+- [ ] On a fresh load, no pause modal is visible before the first pause action.
+- [ ] Press `P`, confirm the Korean pause panel appears, then press `P` again and confirm the run resumes.
+- [ ] Click the on-screen pause button and confirm it has the same behavior as `P`.
+- [ ] Confirm auth, nickname, character selection, pause, result, and leaderboard copy is Korean.
+- [ ] Confirm all six character cards show distinct preview images and the black card is selected by default.
+- [ ] In DevTools Network request blocking, block one `/assets/cat-runner/` image; reload and confirm the affected card or scene remains usable through its fallback.
+- [ ] Press `W` during a run and confirm the jump pose; hold `S` on the ground and confirm the slide pose.
+- [ ] Inspect the daytime home, outside, and nighttime home zones and confirm their backgrounds differ.
+- [ ] Resize to about 500px wide and confirm buttons remain reachable, cards remain selectable, and wide panels/tables scroll instead of clipping actions.
 
 ## Authentication and onboarding
 
