@@ -313,7 +313,7 @@ function createAppController(options = {}) {
     } catch (error) {
       showResult({
         ...localResult,
-        errorMessage: error?.message || "The result could not be submitted.",
+        errorMessage: "기록을 저장하지 못했습니다. 다시 시도해주세요.",
       });
     } finally {
       completionInProgress = false;

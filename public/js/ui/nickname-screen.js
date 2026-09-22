@@ -28,7 +28,7 @@ function createNicknameScreen(onSaved, options = {}) {
       });
       const payload = await response.json();
       if (!response.ok || !payload.user) {
-        showError(payload.error?.message || "닉네임을 저장하지 못했습니다.");
+        showError("닉네임을 저장하지 못했습니다. 다시 시도해주세요.");
         return;
       }
       onSaved?.(payload.user);

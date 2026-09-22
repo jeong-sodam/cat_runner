@@ -1,6 +1,7 @@
 const PENDING_RESULT_KEY = "cat-runner.pending-result";
 
 const ERROR_MESSAGES = Object.freeze({
+  UNKNOWN_ERROR: "요청을 처리하지 못했습니다. 다시 시도해주세요.",
   AUTH_REQUIRED: "로그인이 필요합니다.",
   BAD_JSON: "요청 형식이 올바르지 않습니다.",
   NICKNAME_TOO_LONG: "닉네임은 80자 이하로 입력해 주세요.",
@@ -56,7 +57,8 @@ function clearPendingResult(storage) {
 }
 
 function mapApiError(error = {}) {
-  const code = error.code || (error.status ? "HTTP_ERROR" : "NETWORK_ERROR");
+  const rawCode = error.code || (error.status ? "HTTP_ERROR" : "NETWORK_ERROR");
+  const code = ERROR_MESSAGES[rawCode] ? rawCode : "UNKNOWN_ERROR";
   const status = Number.isInteger(error.status) ? error.status : null;
   const retryable =
     typeof error.retryable === "boolean"

@@ -40,7 +40,7 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
       return true;
     } catch {
       if (errorElement) {
-        errorElement.textContent = "Leaderboard could not be loaded. Try again.";
+        errorElement.textContent = "순위표를 불러오지 못했습니다. 다시 시도해주세요.";
         errorElement.hidden = false;
       }
       if (retryButton) {
@@ -60,14 +60,14 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
     const section = documentRef.createElement("section");
     section.className = "flow-card wide-card leaderboard-screen";
     const heading = documentRef.createElement("h1");
-    heading.textContent = "Leaderboard";
+    heading.textContent = "순위표";
     const intro = documentRef.createElement("p");
-    intro.textContent = "Top ten personal best scores";
+    intro.textContent = "상위 10개 개인 최고 기록";
     const table = documentRef.createElement("table");
     table.className = "leaderboard-table";
     const head = documentRef.createElement("thead");
     const headerRow = documentRef.createElement("tr");
-    for (const label of ["Rank", "Cat name", "Email", "Score", "Distance"]) {
+    for (const label of ["순위", "고양이 이름", "이메일", "점수", "거리"]) {
       const cell = documentRef.createElement("th");
       cell.scope = "col";
       cell.textContent = label;
@@ -82,7 +82,7 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
     retryButton = documentRef.createElement("button");
     retryButton.type = "button";
     retryButton.className = "game-button primary";
-    retryButton.textContent = "Retry";
+    retryButton.textContent = "다시 시도";
     retryButton.hidden = true;
     retryButton.addEventListener("click", () => void load());
     const actions = documentRef.createElement("div");
@@ -90,12 +90,12 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
     const backButton = documentRef.createElement("button");
     backButton.type = "button";
     backButton.className = "game-button";
-    backButton.textContent = "Back";
+    backButton.textContent = "뒤로";
     backButton.addEventListener("click", () => callbacks.onBack?.());
     const restartButton = documentRef.createElement("button");
     restartButton.type = "button";
     restartButton.className = "game-button primary";
-    restartButton.textContent = "Choose cat";
+    restartButton.textContent = "캐릭터 선택";
     restartButton.addEventListener("click", () => callbacks.onRestart?.());
     actions.append(backButton, restartButton);
     section.append(heading, intro, table, errorElement, retryButton, actions);

@@ -130,6 +130,7 @@ test("unauthenticated bootstrap shows sign-in and never enters character selecti
   assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
   assert.equal(documentRef.getElementById("screen-root").children[0].className, "auth-screen flow-card");
   assert.equal(findAll(documentRef.getElementById("screen-root"), (element) => element.tagName === "A").length, 1);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /Microsoft Entra ID로 로그인/);
 });
 
 test("missing auth configuration renders setup guidance without a secret", async () => {
@@ -163,6 +164,7 @@ test("guest mode adds a local play button to the auth screen", async () => {
   const links = findAll(screen, (element) => element.tagName === "A");
   assert.equal(links.length, 2);
   assert.equal(links[1].href, "/auth/guest");
+  assert.match(textOf(screen), /게스트로 플레이/);
 });
 
 test("authenticated users without a nickname receive nickname onboarding", async () => {
@@ -211,6 +213,8 @@ test("character selection renders six cats and defaults each new run to black", 
   assert.deepEqual(select.getCatIds(), ["black", "white", "calico", "cheese", "mackerel", "chaos"]);
   assert.equal(cards.length, 6);
   assert.match(cards[0].className, /selected/);
+  assert.match(textOf(section), /이번 달리기의 고양이를 골라주세요/);
+  assert.match(textOf(section), /이 고양이로 달리기/);
 
   cards[4].dispatch("click");
   assert.match(section.children[2].children[4].className, /selected/);
@@ -232,7 +236,7 @@ test("result screen shows local retry state without claiming an unsaved rank", a
       mouseCount: 3,
       rank: 2,
       saved: false,
-      errorMessage: "not saved",
+      errorMessage: "저장하지 못했습니다.",
     },
     {
       onRetry: () => { retries += 1; },
@@ -242,8 +246,8 @@ test("result screen shows local retry state without claiming an unsaved rank", a
     { documentRef },
   ).mount(root);
 
-  assert.match(textOf(root), /not saved/);
-  assert.doesNotMatch(textOf(root), /Leaderboard rank/);
+  assert.match(textOf(root), /저장하지 못했습니다/);
+  assert.doesNotMatch(textOf(root), /순위표 순위/);
   const buttons = findAll(root, (element) => element.tagName === "BUTTON");
   buttons[0].dispatch("click");
   buttons[1].dispatch("click");
@@ -279,12 +283,14 @@ test("leaderboard renders full email and XSS-like values as text, with retry", a
   );
   panel.mount(root);
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.match(textOf(root), /Leaderboard could not be loaded/);
+  assert.match(textOf(root), /순위표를 불러오지 못했습니다/);
   const retry = findAll(root, (element) => element.tagName === "BUTTON")[0];
   retry.dispatch("click");
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.match(textOf(root), /<script>alert\(1\)<\/script>/);
   assert.match(textOf(root), /full-address@example.com/);
+  assert.match(textOf(root), /순위표/);
+  assert.match(textOf(root), /이메일/);
   assert.equal(findAll(root, (element) => element.tagName === "TR").length, 2);
 });
 
@@ -292,6 +298,7 @@ test("API client preserves a pending result and signals sign-in on 401", async (
   const {
     createApiClient,
     loadPendingResult,
+    mapApiError,
   } = await import("../public/js/app/api-client.js");
   const storage = new Map();
   const localStorage = {
@@ -311,4 +318,10 @@ test("API client preserves a pending result and signals sign-in on 401", async (
   );
   assert.deepEqual(loadPendingResult(localStorage), { score: 55 });
   assert.equal(redirected, 1);
+  assert.deepEqual(mapApiError({ code: "NEW_SERVER_ERROR", message: "English error" }), {
+    code: "UNKNOWN_ERROR",
+    status: null,
+    message: "요청을 처리하지 못했습니다. 다시 시도해주세요.",
+    retryable: true,
+  });
 });

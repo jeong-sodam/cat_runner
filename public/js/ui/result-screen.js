@@ -32,28 +32,28 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
     const section = documentRef.createElement("section");
     section.className = "flow-card result-screen";
     const heading = documentRef.createElement("h1");
-    heading.textContent = "Run complete";
+    heading.textContent = "달리기 완료";
     const stats = documentRef.createElement("dl");
     stats.className = "result-stats";
-    addStat(documentRef, stats, "Score", numberText(result.score));
-    addStat(documentRef, stats, "Distance", numberText(result.distanceM, 1) + " m");
-    addStat(documentRef, stats, "Mouse toys", numberText(result.mouseCount));
+    addStat(documentRef, stats, "점수", numberText(result.score));
+    addStat(documentRef, stats, "거리", numberText(result.distanceM, 1) + "m");
+    addStat(documentRef, stats, "쥐 인형", numberText(result.mouseCount));
 
     const status = documentRef.createElement("p");
     status.className = result.saved === false ? "result-status unsaved" : "result-status";
     if (result.saved === false) {
-      status.textContent = result.errorMessage || "The result is saved locally. Retry to submit it.";
+      status.textContent = result.errorMessage || "기록을 기기에 저장했습니다. 다시 저장해주세요.";
     } else if (result.isPersonalBest) {
-      status.textContent = "Personal best!";
+      status.textContent = "개인 최고 기록!";
     } else {
-      status.textContent = "Run recorded.";
+      status.textContent = "기록이 저장되었습니다.";
     }
     section.append(heading, stats, status);
 
     if (result.saved !== false && result.rank !== null && result.rank !== undefined) {
       const rank = documentRef.createElement("p");
       rank.className = "result-rank";
-      rank.textContent = "Leaderboard rank: " + numberText(result.rank);
+      rank.textContent = "순위표 순위: " + numberText(result.rank);
       section.append(rank);
     }
 
@@ -63,19 +63,19 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
       const retryButton = documentRef.createElement("button");
       retryButton.type = "button";
       retryButton.className = "game-button primary";
-      retryButton.textContent = "Retry save";
+      retryButton.textContent = "저장 재시도";
       retryButton.addEventListener("click", () => callbacks.onRetry());
       actions.append(retryButton);
     }
     const restartButton = documentRef.createElement("button");
     restartButton.type = "button";
     restartButton.className = "game-button";
-    restartButton.textContent = "Choose cat";
+    restartButton.textContent = "캐릭터 선택";
     restartButton.addEventListener("click", () => callbacks.onRestart?.());
     const leaderboardButton = documentRef.createElement("button");
     leaderboardButton.type = "button";
     leaderboardButton.className = "game-button primary";
-    leaderboardButton.textContent = "Leaderboard";
+    leaderboardButton.textContent = "순위표";
     leaderboardButton.addEventListener("click", () => callbacks.onLeaderboard?.());
     actions.append(restartButton, leaderboardButton);
     section.append(actions);
