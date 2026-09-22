@@ -52,7 +52,11 @@ class FakeEventTarget {
 function createHarness(modules, catId = "black", options = {}) {
   const target = new FakeEventTarget();
   const canvas = { ownerDocument: { defaultView: target } };
-  const state = modules.createGameState({ catId, seed: "fixed-seed" });
+  const state = modules.createGameState({
+    catId,
+    seed: "fixed-seed",
+    randomSource: () => 0.5,
+  });
   let loop;
   const events = [];
   const input = modules.createInputController(canvas, () => loop.togglePause());
@@ -196,6 +200,40 @@ test("health zero transitions to gameover and emits a run event", async () => {
     harness.events.filter((event) => event.type === "run_gameover").length,
     1,
   );
+  harness.destroy();
+});
+
+test("rhythm timers pause and gameover includes the rhythm summary once", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules);
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  const target = harness.state.rhythm.targets[0];
+  assert.equal(target.status, "active");
+
+  harness.target.dispatch("keydown", "p");
+  harness.loop.advance(1000);
+  assert.equal(target.status, "active");
+  assert.equal(harness.state.rhythm.missCount, 0);
+
+  harness.target.dispatch("keydown", "p");
+  for (let frame = 0; frame < 12; frame += 1) {
+    harness.loop.advance(50);
+  }
+  assert.equal(harness.state.rhythm.missCount, 1);
+  harness.state.health = 0;
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+
+  const gameovers = harness.events.filter((event) => event.type === "run_gameover");
+  assert.equal(gameovers.length, 1);
+  assert.deepEqual(Object.keys(gameovers[0].payload).sort(), [
+    "distanceM",
+    "rhythmAccuracy",
+    "rhythmBonusHits",
+    "rhythmBonusPoints",
+    "rhythmHitCount",
+    "rhythmMissCount",
+  ]);
+  assert.equal(typeof gameovers[0].payload.rhythmAccuracy, "number");
   harness.destroy();
 });
 

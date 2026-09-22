@@ -4,8 +4,9 @@ import {
   GAME_STATUSES,
   getMaxHealthForRating,
 } from "./constants.js";
+import { createRhythmState } from "./rhythm-targets.js";
 
-function createGameState({ catId, seed }) {
+function createGameState({ catId, seed, randomSource } = {}) {
   if (!CAT_DEFINITIONS[catId]) {
     throw new Error("Unknown cat id: " + catId);
   }
@@ -46,6 +47,7 @@ function createGameState({ catId, seed }) {
     lastPatternId: null,
     patternIndex: 0,
     activeEffect: null,
+    rhythm: createRhythmState({ randomSource }),
     input: {
       leftUnused: false,
       jumpPressed: false,

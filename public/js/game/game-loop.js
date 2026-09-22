@@ -5,6 +5,7 @@ import {
 } from "./constants.js";
 import { updateActiveEffect, getEffectSpeedMultiplier } from "./effects.js";
 import { calculateDifficulty, updateScore } from "./scoring.js";
+import { createRhythmState, getRhythmSummary, updateRhythmTargets } from "./rhythm-targets.js";
 import { transitionGameState } from "./state.js";
 
 function defaultClock() {
@@ -52,6 +53,7 @@ function createGameLoop({
 
     const dt = stepMs / 1000;
     const cat = CAT_DEFINITIONS[state.catId];
+    state.rhythm ||= createRhythmState();
     updateActiveEffect(state, state.elapsedMs, state.worldEntities);
     const speed = difficultyMultiplier(state.distanceM, state.zoneId);
     const isSliding =
@@ -111,6 +113,12 @@ function createGameLoop({
     state.worldOffset += state.worldSpeed * dt;
     state.elapsedMs += stepMs;
     state.distanceM = state.worldOffset / GAME_CONFIG.pixelsPerMeter;
+    updateRhythmTargets(state.rhythm, {
+      nowMs: state.elapsedMs,
+      zoneId: state.zoneId,
+      canvasWidth: GAME_CONFIG.canvasWidth,
+      canvasHeight: GAME_CONFIG.canvasHeight,
+    });
 
     if (state.player.isFalling) {
       const fallGap = (state.worldGaps || []).find(
@@ -143,7 +151,15 @@ function createGameLoop({
     if (state.health <= 0) {
       state.health = 0;
       transitionGameState(state, GAME_STATUSES.GAMEOVER);
-      emit("run_gameover", { distanceM: state.distanceM });
+      const rhythm = getRhythmSummary(state.rhythm);
+      emit("run_gameover", {
+        distanceM: state.distanceM,
+        rhythmAccuracy: rhythm.accuracy,
+        rhythmHitCount: rhythm.hitCount,
+        rhythmMissCount: rhythm.missCount,
+        rhythmBonusHits: rhythm.bonusHitCount,
+        rhythmBonusPoints: rhythm.bonusPoints,
+      });
     }
   }
 

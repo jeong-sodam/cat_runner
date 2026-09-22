@@ -10,13 +10,13 @@
 
 ## Active Task
 
-[T03 osu 타겟 엔진](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/T03-rhythm-target-engine.md)
+[T04 Canvas 리듬 입력](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/T04-canvas-rhythm-input.md)
 
 ## Status
 
-- T02 구역·장애물 패턴과 클라이언트/서버 v4 parity 완료
-- Validation: `npm.cmd test -- test/game-systems.test.js test/score-validation.test.js test/security-regression.test.js`
+- T03 osu 타겟 엔진·판정·정확도·gameover 요약 완료
+- Validation: `npm.cmd test -- test/game-systems.test.js test/game-core.test.js` (20 tests)
 
 ## Next Step (IMPORTANT)
 
-T03 청사진을 읽고 `public/js/game/rhythm-targets.js`, `public/js/game/state.js`, `public/js/game/scoring.js`, `src/services/run-validation-service.js`에 osu 스타일 타겟 상태·판정·보너스 점수 계약을 구현한다.
+T04 청사진을 읽고 Canvas 타겟 렌더링, 마우스 좌클릭 입력, 5칸 HUD와 타겟 콤보를 연결한다.

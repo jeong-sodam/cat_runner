@@ -10,6 +10,7 @@ async function loadSystems() {
     collision,
     effects,
     scoring,
+    rhythm,
   ] = await Promise.all([
     import("../public/js/game/constants.js"),
     import("../public/js/game/state.js"),
@@ -18,6 +19,7 @@ async function loadSystems() {
     import("../public/js/game/collision.js"),
     import("../public/js/game/effects.js"),
     import("../public/js/game/scoring.js"),
+    import("../public/js/game/rhythm-targets.js"),
   ]);
   return {
     ...constants,
@@ -27,6 +29,7 @@ async function loadSystems() {
     ...collision,
     ...effects,
     ...scoring,
+    ...rhythm,
   };
 }
 
@@ -411,4 +414,56 @@ test("score doubles mouse points but never distance and zones switch at threshol
   assert.ok(Math.abs(modules.calculateDifficulty(2000, "home_day") - 1.65) < 1e-9);
   assert.ok(Math.abs(modules.calculateDifficulty(2000, "outside") - 1.98) < 1e-9);
   assert.ok(Math.abs(modules.calculateDifficulty(5000, "home_night") - 2.475) < 1e-9);
+});
+
+test("rhythm targets use bounded zone counts, expiry, button matching, and bonus points", async () => {
+  const modules = await loadSystems();
+  const home = modules.createRhythmState({ randomSource: () => 0.9 });
+  modules.updateRhythmTargets(home, {
+    nowMs: 0,
+    zoneId: "home_day",
+    canvasWidth: 200,
+    canvasHeight: 120,
+  });
+  assert.equal(home.targets.filter((target) => target.status === "active").length, 1);
+  assert.equal(home.targets[0].button, "primary");
+  assert.equal(home.targets[0].expiresAtMs, 500);
+  assert.ok(home.targets[0].x >= home.targets[0].radius && home.targets[0].x <= 200 - home.targets[0].radius);
+  assert.ok(home.targets[0].y >= home.targets[0].radius && home.targets[0].y <= 120 - home.targets[0].radius);
+
+  const outside = modules.createRhythmState({ randomSource: () => 0.9 });
+  modules.updateRhythmTargets(outside, { nowMs: 0, zoneId: "outside", canvasWidth: 800, canvasHeight: 600 });
+  assert.equal(outside.targets.filter((target) => target.status === "active").length, 2);
+  assert.ok(outside.targets[0].radius < home.targets[0].radius);
+  const wrongButton = modules.resolveRhythmTarget(outside, {
+    x: outside.targets[0].x,
+    y: outside.targets[0].y,
+    button: "secondary",
+    nowMs: 100,
+  });
+  assert.equal(wrongButton, null);
+  assert.equal(outside.hitCount, 0);
+  modules.resolveRhythmTarget(outside, {
+    x: outside.targets[0].x,
+    y: outside.targets[0].y,
+    button: outside.targets[0].button,
+    nowMs: 100,
+  });
+  modules.updateRhythmTargets(outside, { nowMs: 500, zoneId: "outside", canvasWidth: 800, canvasHeight: 600 });
+  assert.equal(outside.missCount, 1);
+
+  const bonus = modules.createRhythmState({ randomSource: () => 0.1 });
+  modules.updateRhythmTargets(bonus, { nowMs: 0, zoneId: "home_day", canvasWidth: 200, canvasHeight: 120 });
+  assert.equal(bonus.targets[0].button, "secondary");
+  modules.resolveRhythmTarget(bonus, {
+    x: bonus.targets[0].x,
+    y: bonus.targets[0].y,
+    button: "secondary",
+    nowMs: 100,
+  });
+  const summary = modules.getRhythmSummary(bonus);
+  assert.equal(summary.bonusHitCount, 1);
+  assert.equal(summary.bonusPoints, 5);
+  assert.equal(summary.accuracy, 1);
+  assert.equal(summary.scoreMultiplier, 1.2);
 });
