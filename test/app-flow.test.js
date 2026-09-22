@@ -219,6 +219,40 @@ test("authenticated users without a nickname receive nickname onboarding", async
   assert.equal(controller.getState().screen, SCREEN_NAMES.CHARACTER_SELECT);
 });
 
+test("gameover character selection skips resume lookup while normal selection keeps it", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  let resumeLookups = 0;
+  const controller = createAppController({
+    documentRef,
+    fetchFn: async () => jsonResponse({
+      authenticated: true,
+      user: { id: "user-1", nickname: "runner" },
+    }),
+    runApiClient: {
+      getResumableRun: async () => {
+        resumeLookups += 1;
+        return { run: null };
+      },
+    },
+  });
+
+  await controller.bootstrap();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const bootstrapLookups = resumeLookups;
+  assert.equal(controller.getState().screen, SCREEN_NAMES.CHARACTER_SELECT);
+
+  controller.showCharacterSelect({ allowResume: false });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(resumeLookups, bootstrapLookups);
+  assert.equal(findAll(documentRef.getElementById("screen-root"), (element) => element.className === "resume-modal flow-card").length, 0);
+
+  controller.showCharacterSelect();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(resumeLookups, bootstrapLookups + 1);
+  controller.destroy();
+});
+
 test("character selection renders six cats and defaults each new run to black", async () => {
   const { createCharacterSelect } = await import("../public/js/ui/character-select.js");
   const documentRef = createAppDocument();

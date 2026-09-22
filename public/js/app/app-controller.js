@@ -317,7 +317,7 @@ function createAppController(options = {}) {
     nicknameScreen.mount(screenRoot, state.user);
   }
 
-  function showCharacterSelect() {
+  function showCharacterSelect({ allowResume = true } = {}) {
     destroyGame();
     setScreen(SCREEN_NAMES.CHARACTER_SELECT);
     setupRunSync();
@@ -326,7 +326,9 @@ function createAppController(options = {}) {
       { documentRef },
     );
     characterSelect.mount(screenRoot);
-    void checkForResume();
+    if (allowResume) {
+      void checkForResume();
+    }
   }
 
   function showResult(result) {
@@ -338,7 +340,7 @@ function createAppController(options = {}) {
       result,
       {
         onRetry: () => void completeGameover(),
-        onRestart: () => showCharacterSelect(),
+        onRestart: () => showCharacterSelect({ allowResume: false }),
         onLeaderboard: () => showLeaderboard(),
       },
       { documentRef },
