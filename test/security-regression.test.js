@@ -140,7 +140,7 @@ test("malformed, oversized, invalid, and expired requests use stable safe errors
           payload: {
             seed: run.seed,
             catId: run.catId,
-            patternVersion: "cat-runner-patterns-v2",
+            patternVersion: "cat-runner-patterns-v3",
           },
         },
         {

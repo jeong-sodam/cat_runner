@@ -1,6 +1,6 @@
 # Task: T03 서버 패턴 매니페스트 parity 및 버전 검증
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -73,6 +73,7 @@ Task: T03-server-pattern-parity
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과: score validation 6개, security regression 3개, game systems 11개
+- [x] 전체 suite: 74개 통과, `run-resume.test.js`의 기존 native cleanup abort 기록
 - commit: pending

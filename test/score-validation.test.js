@@ -22,7 +22,7 @@ function makeGameoverEvents(run, options = {}) {
     seq: 0,
     type: "run_started",
     occurredAtMs: 0,
-    payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v2" },
+    payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v3" },
   }];
   let seq = 1;
   if (grass) {
@@ -86,6 +86,22 @@ test("valid deterministic stream derives score and ignores fake damage/score fie
   assert.equal(result.health, 0);
 });
 
+test("pattern version is validated when present and remains optional for legacy events", () => {
+  const run = makeRun("pattern-version-seed");
+  const mismatched = makeGameoverEvents(run);
+  mismatched[0].payload.patternVersion = "cat-runner-patterns-v2";
+  assert.throws(
+    () => calculateVerifiedResult(run, mismatched, { clientFinishedAt: 5000 }),
+    (error) => error.reason === "PATTERN_VERSION_INVALID",
+  );
+
+  const legacy = makeGameoverEvents(run);
+  delete legacy[0].payload.patternVersion;
+  assert.doesNotThrow(() =>
+    calculateVerifiedResult(run, legacy, { clientFinishedAt: 5000 }),
+  );
+});
+
 test("tampered, duplicated, out-of-order, and impossible events are rejected", () => {
   const cases = [
     ["ENTITY_UNKNOWN", (events) => { events[1].payload.entityId = "unknown"; }],
@@ -139,7 +155,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
       payload: {
         seed: invincible.seed,
         catId: "black",
-        patternVersion: "cat-runner-patterns-v2",
+        patternVersion: "cat-runner-patterns-v3",
       },
     },
     { seq: 1, type: "grass_collected", occurredAtMs: 100, payload: { entityId: invincible.grass.id, effectType: "invincible" } },
@@ -155,7 +171,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
   assert.equal(calculateVerifiedResult(invincibleRun, events, { clientFinishedAt: 10000 }).health, 0);
 });
 
-test("server v2 manifest mirrors client gap ids, widths, and entity ids", async () => {
+test("server v3 manifest mirrors client gap ids, widths, and entity ids", async () => {
   const client = await import("../public/js/game/patterns.js");
   const seed = "manifest-parity-seed";
   const server = createServerManifest(seed, { patternCount: 32 });
@@ -167,6 +183,7 @@ test("server v2 manifest mirrors client gap ids, widths, and entity ids", async 
   }
 
   assert.equal(server.version, client.PATTERN_VERSION);
+  assert.ok(server.patterns.some((pattern) => pattern.id.startsWith("combo-")));
   assert.deepEqual(
     server.patterns.map((pattern) => pattern.id),
     clientPatterns.map((pattern) => pattern.id),
@@ -178,6 +195,7 @@ test("server v2 manifest mirrors client gap ids, widths, and entity ids", async 
       serverPattern.entities.map((entity) => [entity.id, entity.width, entity.height]),
       clientPattern.entities.map((entity) => [entity.id, entity.width, entity.height]),
     );
+    assert.deepEqual(serverPattern.requiredActions, clientPattern.requiredActions);
     for (const clientGap of clientPattern.gaps) {
       const serverGap = server.getGap(clientGap.id);
       assert.ok(serverGap);
@@ -185,6 +203,9 @@ test("server v2 manifest mirrors client gap ids, widths, and entity ids", async 
       assert.equal(serverGap.x - serverPattern.startX, clientGap.x);
     }
   }
+
+  const homeDay = createServerManifest(seed, { patternCount: 32, zoneId: "home_day" });
+  assert.ok(homeDay.patterns.every((pattern) => !pattern.id.startsWith("combo-")));
 });
 
 test("fall damage validates known gaps, ignores fake damage, and rejects replayed ids", () => {
@@ -196,7 +217,7 @@ test("fall damage validates known gaps, ignores fake damage, and rejects replaye
       seq: 0,
       type: "run_started",
       occurredAtMs: 0,
-      payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v2" },
+      payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v3" },
     },
     ...gaps.map((gap, index) => ({
       seq: index + 1,

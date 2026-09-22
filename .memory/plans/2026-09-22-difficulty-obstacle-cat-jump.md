@@ -8,4 +8,4 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | zone별 장애물 밀도, 복합 패턴, 점프 애니메이션, 서버 매니페스트 parity를 구현한다. | [P01](../phases/2026-09-22-difficulty-obstacle-cat-jump/P01-difficulty-obstacle-cat-jump/phase.md) |
+| P01 | `done` | zone별 장애물 밀도, 복합 패턴, 점프 애니메이션, 서버 매니페스트 parity를 구현한다. | [P01](../phases/2026-09-22-difficulty-obstacle-cat-jump/P01-difficulty-obstacle-cat-jump/phase.md) |
