@@ -22,7 +22,7 @@ function makeGameoverEvents(run, options = {}) {
     seq: 0,
     type: "run_started",
     occurredAtMs: 0,
-    payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v1" },
+    payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v2" },
   }];
   let seq = 1;
   if (grass) {
@@ -130,16 +130,106 @@ test("double score and invincibility are recalculated from grass rolls", () => {
   const invincibleRun = makeRun(invincible.seed);
   const manifest = createServerManifest(invincible.seed);
   const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 4);
+  const invincibleGap = manifest.gaps[0];
   const events = [
-    { seq: 0, type: "run_started", occurredAtMs: 0, payload: { seed: invincible.seed, catId: "black" } },
+    {
+      seq: 0,
+      type: "run_started",
+      occurredAtMs: 0,
+      payload: {
+        seed: invincible.seed,
+        catId: "black",
+        patternVersion: "cat-runner-patterns-v2",
+      },
+    },
     { seq: 1, type: "grass_collected", occurredAtMs: 100, payload: { entityId: invincible.grass.id, effectType: "invincible" } },
+    { seq: 2, type: "fall_damage", occurredAtMs: 200, payload: { gapId: invincibleGap.id, damage: 999 } },
     ...obstacles.map((obstacle, index) => ({
-      seq: index + 2,
+      seq: index + 3,
       type: "obstacle_collision",
       occurredAtMs: index === 0 ? 200 : 6000 + index * 100,
       payload: { entityId: obstacle.id },
     })),
-    { seq: 6, type: "run_gameover", occurredAtMs: 6500, payload: {} },
+    { seq: 7, type: "run_gameover", occurredAtMs: 6500, payload: {} },
   ];
   assert.equal(calculateVerifiedResult(invincibleRun, events, { clientFinishedAt: 10000 }).health, 0);
+});
+
+test("server v2 manifest mirrors client gap ids, widths, and entity ids", async () => {
+  const client = await import("../public/js/game/patterns.js");
+  const seed = "manifest-parity-seed";
+  const server = createServerManifest(seed, { patternCount: 32 });
+  const stream = client.createPatternStream(seed);
+  const clientPatterns = [];
+
+  for (let index = 0; index < 32; index += 1) {
+    clientPatterns.push(stream.next("outside"));
+  }
+
+  assert.equal(server.version, client.PATTERN_VERSION);
+  assert.deepEqual(
+    server.patterns.map((pattern) => pattern.id),
+    clientPatterns.map((pattern) => pattern.id),
+  );
+  for (let index = 0; index < clientPatterns.length; index += 1) {
+    const clientPattern = clientPatterns[index];
+    const serverPattern = server.patterns[index];
+    assert.deepEqual(
+      serverPattern.entities.map((entity) => [entity.id, entity.width, entity.height]),
+      clientPattern.entities.map((entity) => [entity.id, entity.width, entity.height]),
+    );
+    for (const clientGap of clientPattern.gaps) {
+      const serverGap = server.getGap(clientGap.id);
+      assert.ok(serverGap);
+      assert.equal(serverGap.width, clientGap.width);
+      assert.equal(serverGap.x - serverPattern.startX, clientGap.x);
+    }
+  }
+});
+
+test("fall damage validates known gaps, ignores fake damage, and rejects replayed ids", () => {
+  const run = makeRun("fall-validation-seed");
+  const manifest = createServerManifest(run.seed);
+  const gaps = manifest.gaps.slice(0, 3);
+  const events = [
+    {
+      seq: 0,
+      type: "run_started",
+      occurredAtMs: 0,
+      payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v2" },
+    },
+    ...gaps.map((gap, index) => ({
+      seq: index + 1,
+      type: "fall_damage",
+      occurredAtMs: 100 + index * 100,
+      payload: { gapId: gap.id, damage: 999, health: 999 },
+    })),
+    { seq: 4, type: "run_gameover", occurredAtMs: 500, payload: {} },
+  ];
+
+  const result = calculateVerifiedResult(run, events, { clientFinishedAt: 5000 });
+  assert.equal(result.health, 0);
+
+  const repeated = [...events];
+  repeated[2] = { ...repeated[1], seq: 2, occurredAtMs: 150 };
+  assert.throws(
+    () => calculateVerifiedResult(run, repeated, { clientFinishedAt: 5000 }),
+    (error) => error.reason === "GAP_REPEATED",
+  );
+
+  for (const [payload, reason] of [
+    [{}, "GAP_INVALID"],
+    [{ gapId: 42 }, "GAP_INVALID"],
+    [{ gapId: "missing-gap" }, "GAP_UNKNOWN"],
+  ]) {
+    const invalid = [
+      events[0],
+      { seq: 1, type: "fall_damage", occurredAtMs: 100, payload },
+      { seq: 2, type: "run_gameover", occurredAtMs: 200, payload: {} },
+    ];
+    assert.throws(
+      () => calculateVerifiedResult(run, invalid, { clientFinishedAt: 5000 }),
+      (error) => error.reason === reason,
+    );
+  }
 });

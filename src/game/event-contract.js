@@ -6,6 +6,7 @@ const EVENT_TYPES = Object.freeze([
   "mouse_collected",
   "grass_collected",
   "obstacle_collision",
+  "fall_damage",
   "distance_checkpoint",
   "run_gameover",
 ]);

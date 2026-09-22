@@ -8,5 +8,4 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 아이템 에셋 파이프라인, 장애물 다각형 충돌, 낙사 게임플레이와 서버 권위 이벤트를 구현하고 검증한다. | [P01](../phases/2026-09-22-obstacle-item-fall-hazard/P01-assets-collision-fall/phase.md) |
-
+| P01 | `complete` | 아이템 에셋 파이프라인, 장애물 다각형 충돌, 낙사 게임플레이와 서버 권위 이벤트를 구현하고 검증한다. | [P01](../phases/2026-09-22-obstacle-item-fall-hazard/P01-assets-collision-fall/phase.md) |

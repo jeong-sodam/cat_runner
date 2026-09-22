@@ -10,13 +10,13 @@
 
 ## Active Task
 
-[T03 server fall event validation](./phases/2026-09-22-obstacle-item-fall-hazard/P01-assets-collision-fall/T03-server-fall-event-validation.md)
+No remaining task in P01.
 
 ## Status
 
-- T02 completed: polygon obstacle hitboxes, deterministic floor gaps, fall damage, and recovery
-- Validation passed: 29 core tests; clean-auth regression passed 70 tests, with the full runner's native cleanup abort isolated to the multi-file server test process
+- Plan complete: item art, polygon obstacle hitboxes, deterministic floor gaps, fall recovery, and server `fall_damage` validation
+- Validation passed: T03 targeted tests; full clean-auth run has 70 passing tests with a pre-existing native cleanup abort in `run-resume.test.js`
 
 ## Next Step (IMPORTANT)
 
-Execute T03: add the server pattern manifest and `fall_damage` event validation.
+No next task is defined for this plan. Review the browser gameplay visually before starting a new plan.

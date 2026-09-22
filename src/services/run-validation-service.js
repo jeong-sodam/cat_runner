@@ -38,6 +38,7 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
   const manifest = createServerManifest(run.seed);
   const catStats = CAT_STATS[run.catId] || CAT_STATS.black;
   const collected = new Set();
+  const usedGaps = new Set();
   let activeEffect = null;
   let health = MAX_HEALTH;
   let mouseCount = 0;
@@ -71,6 +72,31 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
       }
       if (payload.patternVersion && payload.patternVersion !== PATTERN_VERSION) {
         throw validationError("PATTERN_VERSION_INVALID", "The client pattern version is not supported.");
+      }
+      continue;
+    }
+
+    if (event.type === "fall_damage") {
+      if (
+        typeof payload.gapId !== "string" ||
+        payload.gapId.length === 0
+      ) {
+        throw validationError("GAP_INVALID", "fall_damage requires only a gapId.");
+      }
+      const gap = manifest.getGap(payload.gapId);
+      if (!gap) {
+        throw validationError("GAP_UNKNOWN", "Fall gap does not exist in the server manifest.");
+      }
+      if (usedGaps.has(gap.id)) {
+        throw validationError("GAP_REPEATED", "A fall gap cannot be used more than once.");
+      }
+      usedGaps.add(gap.id);
+      if (activeEffect?.type !== "invincible") {
+        health -= COLLISION_DAMAGE;
+        if (health <= 0) {
+          health = 0;
+          depletedAt = event.occurredAtMs;
+        }
       }
       continue;
     }

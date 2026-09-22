@@ -128,6 +128,39 @@ test("malformed, oversized, invalid, and expired requests use stable safe errors
     reason: "EVENT_TYPE_INVALID",
   });
 
+  const invalidFall = await fetch(fixture.baseUrl + "/api/runs/" + run.runId + "/complete", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      events: [
+        {
+          seq: 0,
+          type: "run_started",
+          occurredAtMs: 0,
+          payload: {
+            seed: run.seed,
+            catId: run.catId,
+            patternVersion: "cat-runner-patterns-v2",
+          },
+        },
+        {
+          seq: 1,
+          type: "fall_damage",
+          occurredAtMs: 1,
+          payload: { gapId: "unknown-gap", damage: 999 },
+        },
+      ],
+      clientFinishedAt: Date.now(),
+    }),
+  });
+  assert.equal(invalidFall.status, 422);
+  assert.deepEqual((await invalidFall.json()).error, {
+    code: "SCORE_EVENT_INVALID",
+    message: "Fall gap does not exist in the server manifest.",
+    retryable: false,
+    reason: "GAP_UNKNOWN",
+  });
+
   await fetch(fixture.baseUrl + "/auth/signout", {
     headers: { Cookie: cookie },
     redirect: "manual",

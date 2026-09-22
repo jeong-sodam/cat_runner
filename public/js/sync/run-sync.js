@@ -1,3 +1,5 @@
+import { PATTERN_VERSION } from "../game/patterns.js";
+
 const RETRY_DELAYS_MS = [500, 1000, 2000, 4000, 5000];
 
 function createRunSync(apiClient, localStore, options = {}) {
@@ -67,7 +69,11 @@ function createRunSync(apiClient, localStore, options = {}) {
           seq: 0,
           type: "run_started",
           occurredAtMs: 0,
-          payload: { seed: result.seed, catId: result.catId || catId },
+          payload: {
+            seed: result.seed,
+            catId: result.catId || catId,
+            patternVersion: PATTERN_VERSION,
+          },
         },
       ],
       savedAt: now(),

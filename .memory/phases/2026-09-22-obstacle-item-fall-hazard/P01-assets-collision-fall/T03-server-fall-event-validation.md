@@ -1,6 +1,6 @@
 # Task: T03 서버 낙사 이벤트 및 회귀 검증
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -74,6 +74,6 @@ Task: T03-server-fall-event-validation
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

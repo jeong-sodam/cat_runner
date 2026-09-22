@@ -21,6 +21,8 @@ const ZONE_DEFINITIONS = Object.freeze({
   }),
 });
 
+const PATTERN_VERSION = "cat-runner-patterns-v2";
+
 const PATTERN_LIBRARY = Object.freeze([
   Object.freeze({
     id: "jump-basic",
@@ -248,6 +250,7 @@ function createPatternStream(seed) {
 
 export {
   PATTERN_LIBRARY,
+  PATTERN_VERSION,
   ZONE_DEFINITIONS,
   createPatternStream,
   isValidPattern,
