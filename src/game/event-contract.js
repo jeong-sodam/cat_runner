@@ -11,6 +11,13 @@ const EVENT_TYPES = Object.freeze([
   "run_gameover",
 ]);
 const EVENT_TYPE_SET = new Set(EVENT_TYPES);
+const RHYTHM_FIELDS = Object.freeze([
+  "rhythmAccuracy",
+  "rhythmHitCount",
+  "rhythmMissCount",
+  "rhythmBonusHits",
+  "rhythmBonusPoints",
+]);
 
 function contractError(reason, message) {
   const error = new Error(message || reason);
@@ -18,6 +25,38 @@ function contractError(reason, message) {
   error.reason = reason;
   error.status = 422;
   return error;
+}
+
+function hasOwn(object, key) {
+  return Object.prototype.hasOwnProperty.call(object, key);
+}
+
+function validateRhythmPayload(payload) {
+  const hasRhythmSummary = RHYTHM_FIELDS.some((field) => hasOwn(payload, field));
+  if (!hasRhythmSummary) {
+    return;
+  }
+  if (hasOwn(payload, "rhythmAccuracy") &&
+      (!Number.isFinite(payload.rhythmAccuracy) || payload.rhythmAccuracy < 0 || payload.rhythmAccuracy > 1)) {
+    throw contractError("RHYTHM_ACCURACY_INVALID", "Rhythm accuracy must be a finite number between 0 and 1.");
+  }
+  for (const field of ["rhythmHitCount", "rhythmMissCount", "rhythmBonusHits"]) {
+    if (hasOwn(payload, field) && (!Number.isInteger(payload[field]) || payload[field] < 0)) {
+      throw contractError("RHYTHM_COUNT_INVALID", "Rhythm counts must be non-negative integers.");
+    }
+  }
+  if (hasOwn(payload, "rhythmBonusPoints") &&
+      (!Number.isInteger(payload.rhythmBonusPoints) || payload.rhythmBonusPoints < 0)) {
+    throw contractError("RHYTHM_BONUS_INVALID", "Rhythm bonus points must be a non-negative integer.");
+  }
+  const hitCount = payload.rhythmHitCount ?? 0;
+  const bonusHits = payload.rhythmBonusHits ?? 0;
+  if (bonusHits > hitCount) {
+    throw contractError("RHYTHM_BONUS_COUNT_INVALID", "Rhythm bonus hits cannot exceed hit count.");
+  }
+  if (hasOwn(payload, "rhythmBonusPoints") && payload.rhythmBonusPoints !== bonusHits * 5) {
+    throw contractError("RHYTHM_BONUS_POINTS_INVALID", "Rhythm bonus points must equal bonus hits multiplied by 5.");
+  }
 }
 
 function validateEvent(event, context = {}) {
@@ -47,6 +86,9 @@ function validateEvent(event, context = {}) {
   }
   if (!event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) {
     throw contractError("PAYLOAD_INVALID", "Event payload must be an object.");
+  }
+  if (event.type === "run_gameover") {
+    validateRhythmPayload(event.payload);
   }
   return event;
 }

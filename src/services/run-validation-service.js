@@ -6,6 +6,13 @@ const COLLISION_DAMAGE = 1;
 const FALL_DAMAGE = 1;
 const POSITIVE_EFFECTS = new Set(["magnet", "invincible", "double_score"]);
 const EFFECT_ORDER = ["magnet", "invincible", "double_score", "slow_miss"];
+const RHYTHM_FIELDS = Object.freeze([
+  "rhythmAccuracy",
+  "rhythmHitCount",
+  "rhythmMissCount",
+  "rhythmBonusHits",
+  "rhythmBonusPoints",
+]);
 const CAT_STATS = Object.freeze({
   black: {
     healthRating: 1,
@@ -70,6 +77,39 @@ function effectFromRoll(value) {
   return EFFECT_ORDER[Math.floor(normalized * EFFECT_ORDER.length)];
 }
 
+function rhythmSummaryFromEvent(event) {
+  const payload = event.payload || {};
+  const provided = RHYTHM_FIELDS.some((field) =>
+    Object.prototype.hasOwnProperty.call(payload, field),
+  );
+  if (!provided) {
+    return {
+      provided: false,
+      accuracy: 1,
+      multiplier: 1,
+      bonusPoints: 0,
+    };
+  }
+
+  const hitCount = payload.rhythmHitCount ?? 0;
+  const missCount = payload.rhythmMissCount ?? 0;
+  const bonusHits = payload.rhythmBonusHits ?? 0;
+  const attempts = hitCount + missCount;
+  const maxAttempts = Math.max(1, Math.ceil(Math.max(0, event.occurredAtMs) / 500) * 3);
+  if (attempts > maxAttempts) {
+    throw validationError("RHYTHM_COUNT_EXCESSIVE", "Rhythm counts exceed the run duration.");
+  }
+  const accuracy = payload.rhythmAccuracy ?? 1;
+  const multiplier = Math.min(1.2, Math.max(0.8, 0.8 + accuracy * 0.4));
+  return {
+    provided: true,
+    accuracy,
+    multiplier,
+    bonusHits,
+    bonusPoints: payload.rhythmBonusPoints ?? bonusHits * 5,
+  };
+}
+
 function validateEventStream(run, events, { clientFinishedAt } = {}) {
   if (!Number.isFinite(clientFinishedAt) || clientFinishedAt < run.startedAt) {
     throw validationError("FINISH_TIME_INVALID", "Client finish time is invalid.");
@@ -94,6 +134,7 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
   let score = 0;
   let gameoverSeen = false;
   let depletedAt = null;
+  let rhythmSummary = null;
 
   function expireEffect(eventTime) {
     if (activeEffect && eventTime >= activeEffect.expiresAtMs) {
@@ -207,6 +248,7 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
       if (health > 0 || depletedAt === null) {
         throw validationError("GAMEOVER_HEALTH_INVALID", "run_gameover requires a lethal collision.");
       }
+      rhythmSummary = rhythmSummaryFromEvent(event);
       gameoverSeen = true;
       if (index !== events.length - 1) {
         throw validationError("GAMEOVER_NOT_FINAL", "run_gameover must be the final event.");
@@ -218,14 +260,21 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
   if (!gameoverSeen) {
     throw validationError("GAMEOVER_MISSING", "A completed run must include run_gameover.");
   }
-  score = Math.floor((score + Math.floor(distanceM)) * catStats.scoreMultiplier);
-  return {
+  const baseScore = Math.floor((score + Math.floor(distanceM)) * catStats.scoreMultiplier);
+  score = Math.floor(baseScore * rhythmSummary.multiplier) + rhythmSummary.bonusPoints;
+  const result = {
     score,
     distanceM,
     mouseCount,
     health,
     manifestVersion: manifest.version,
   };
+  if (rhythmSummary.provided) {
+    result.rhythmAccuracy = rhythmSummary.accuracy;
+    result.rhythmMultiplier = rhythmSummary.multiplier;
+    result.rhythmBonusPoints = rhythmSummary.bonusPoints;
+  }
+  return result;
 }
 
 function calculateVerifiedResult(run, events, options = {}) {

@@ -1,6 +1,6 @@
 # Task: T07 서버 rhythm 계약과 authoritative 점수
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -60,10 +60,10 @@
 
 ## Acceptance Criteria
 
-- [ ] Optional rhythm summary is validated and legacy runs still complete.
-- [ ] Server computes bounded 0.8~1.2 accuracy multiplier and exact +5 bonus points authoritatively.
-- [ ] Forged client score/health/distance and malformed rhythm fields cannot change verified result.
-- [ ] Existing security, ownership, fall, collision, resume, and patternVersion contracts remain green.
+- [x] Optional rhythm summary is validated and legacy runs still complete.
+- [x] Server computes bounded 0.8~1.2 accuracy multiplier and exact +5 bonus points authoritatively.
+- [x] Forged client score/health/distance and malformed rhythm fields cannot change verified result.
+- [x] Existing security, ownership, fall, collision, resume, and patternVersion contracts remain green.
 
 ## Validation
 
@@ -85,6 +85,11 @@ Task: T07-server-rhythm-validation
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
+
+## Execution Record
+
+- Optional run-gameover rhythm fields, bounded authoritative score calculation, and API result metadata implemented.
+- Validation passed: T07 server command (20 tests); full suite reached 83 passing assertions before the known Windows Node native cleanup abort in auth/server test processes.

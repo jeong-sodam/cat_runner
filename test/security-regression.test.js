@@ -161,6 +161,47 @@ test("malformed, oversized, invalid, and expired requests use stable safe errors
     reason: "GAP_UNKNOWN",
   });
 
+  const rhythmRunResponse = await fetch(fixture.baseUrl + "/api/runs", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ catId: "black" }),
+  });
+  const rhythmRun = await rhythmRunResponse.json();
+  const rhythmManifest = require("../src/game/server-pattern-manifest").createServerManifest(rhythmRun.seed);
+  const rhythmObstacles = rhythmManifest.entities
+    .filter((entity) => entity.type === "obstacle")
+    .slice(0, 4);
+  const invalidRhythmEvents = [
+    {
+      seq: 0,
+      type: "run_started",
+      occurredAtMs: 0,
+      payload: { seed: rhythmRun.seed, catId: rhythmRun.catId },
+    },
+    ...rhythmObstacles.map((obstacle, index) => ({
+      seq: index + 1,
+      type: "obstacle_collision",
+      occurredAtMs: index + 10,
+      payload: { entityId: obstacle.id },
+    })),
+    {
+      seq: 5,
+      type: "run_gameover",
+      occurredAtMs: 60,
+      payload: { rhythmAccuracy: 2 },
+    },
+  ];
+  const invalidRhythm = await fetch(
+    fixture.baseUrl + "/api/runs/" + rhythmRun.runId + "/complete",
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ events: invalidRhythmEvents, clientFinishedAt: Date.now() }),
+    },
+  );
+  assert.equal(invalidRhythm.status, 422);
+  assert.equal((await invalidRhythm.json()).error.reason, "RHYTHM_ACCURACY_INVALID");
+
   await fetch(fixture.baseUrl + "/auth/signout", {
     headers: { Cookie: cookie },
     redirect: "manual",

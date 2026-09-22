@@ -55,7 +55,12 @@ function makeGameoverEvents(run, options = {}) {
       payload: { entityId: obstacle.id, damage: 999, prevented: false },
     });
   }
-  events.push({ seq, type: "run_gameover", occurredAtMs: 700, payload: {} });
+  events.push({
+    seq,
+    type: "run_gameover",
+    occurredAtMs: 700,
+    payload: options.rhythm || {},
+  });
   return events;
 }
 
@@ -84,6 +89,63 @@ test("valid deterministic stream derives score and ignores fake damage/score fie
   assert.equal(result.score, mousePoints + 12);
   assert.equal(result.mouseCount, 1);
   assert.equal(result.health, 0);
+});
+
+test("rhythm accuracy uses bounded multipliers and exact bonus points", () => {
+  const lowAccuracyRun = makeRun("rhythm-low");
+  const lowAccuracy = calculateVerifiedResult(
+    lowAccuracyRun,
+    makeGameoverEvents(lowAccuracyRun, {
+      rhythm: {
+        rhythmAccuracy: 0,
+        rhythmHitCount: 0,
+        rhythmMissCount: 1,
+        rhythmBonusHits: 0,
+        rhythmBonusPoints: 0,
+      },
+    }),
+    { clientFinishedAt: 5000 },
+  );
+  assert.equal(lowAccuracy.rhythmMultiplier, 0.8);
+  assert.equal(lowAccuracy.score, 17);
+
+  const highAccuracyRun = makeRun("rhythm-high");
+  const highAccuracy = calculateVerifiedResult(
+    highAccuracyRun,
+    makeGameoverEvents(highAccuracyRun, {
+      rhythm: {
+        rhythmAccuracy: 1,
+        rhythmHitCount: 1,
+        rhythmMissCount: 0,
+        rhythmBonusHits: 1,
+        rhythmBonusPoints: 5,
+      },
+    }),
+    { clientFinishedAt: 5000 },
+  );
+  assert.equal(highAccuracy.rhythmMultiplier, 1.2);
+  assert.equal(highAccuracy.rhythmBonusPoints, 5);
+  assert.equal(highAccuracy.score, 31);
+});
+
+test("malformed rhythm summaries are rejected without trusting client score fields", () => {
+  const cases = [
+    ["RHYTHM_ACCURACY_INVALID", { rhythmAccuracy: 1.1 }],
+    ["RHYTHM_COUNT_INVALID", { rhythmHitCount: -1 }],
+    ["RHYTHM_BONUS_COUNT_INVALID", { rhythmHitCount: 0, rhythmBonusHits: 1 }],
+    ["RHYTHM_BONUS_POINTS_INVALID", { rhythmHitCount: 1, rhythmBonusHits: 1, rhythmBonusPoints: 4 }],
+    ["RHYTHM_COUNT_EXCESSIVE", { rhythmHitCount: 99, rhythmMissCount: 99 }],
+  ];
+  for (const [reason, rhythm] of cases) {
+    const run = makeRun("rhythm-invalid-" + reason);
+    const events = makeGameoverEvents(run, {
+      rhythm: { ...rhythm, score: 999999, health: 999, distanceM: 999999 },
+    });
+    assert.throws(
+      () => calculateVerifiedResult(run, events, { clientFinishedAt: 5000 }),
+      (error) => error.code === "SCORE_EVENT_INVALID" && error.reason === reason,
+    );
+  }
 });
 
 test("pattern version is validated when present and remains optional for legacy events", () => {

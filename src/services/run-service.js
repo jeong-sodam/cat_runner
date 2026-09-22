@@ -184,6 +184,13 @@ function completeVerifiedRun(
       mouseCount: verified.mouseCount,
       isPersonalBest,
       rank: leaderboardRepository.getRankForUser(db, userId),
+      ...(verified.rhythmAccuracy === undefined
+        ? {}
+        : {
+            rhythmAccuracy: verified.rhythmAccuracy,
+            rhythmMultiplier: verified.rhythmMultiplier,
+            rhythmBonusPoints: verified.rhythmBonusPoints,
+          }),
     },
   };
 }

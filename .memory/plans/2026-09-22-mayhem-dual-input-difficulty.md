@@ -8,7 +8,7 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 고양이 능력치·체력·난이도·장애물 패턴·osu 듀얼 입력·연결 fallback·서버 검증을 순차 구현한다. | [P01](../phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/phase.md) |
+| P01 | `done` | 고양이 능력치·체력·난이도·장애물 패턴·osu 듀얼 입력·연결 fallback·서버 검증을 완료한다. | [P01](../phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/phase.md) |
 
 ## Dependencies and Risk Notes
 

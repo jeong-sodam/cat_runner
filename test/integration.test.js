@@ -21,9 +21,10 @@ async function completeRun(fixture, cookie, catId, distanceM) {
   assert.equal(created.status, 201);
   const run = await created.json();
   const manifest = createServerManifest(run.seed);
+  const collisionCount = catId === "black" ? 4 : 5;
   const obstacles = manifest.entities
     .filter((entity) => entity.type === "obstacle")
-    .slice(0, 3);
+    .slice(0, collisionCount);
   const events = [
     {
       seq: 0,
@@ -43,7 +44,20 @@ async function completeRun(fixture, cookie, catId, distanceM) {
       occurredAtMs: 200 + index * 10,
       payload: { entityId: obstacle.id },
     })),
-    { seq: 5, type: "run_gameover", occurredAtMs: 240, payload: {} },
+    {
+      seq: obstacles.length + 2,
+      type: "run_gameover",
+      occurredAtMs: 240,
+      payload: distanceM === 12
+        ? {
+            rhythmAccuracy: 0.5,
+            rhythmHitCount: 1,
+            rhythmMissCount: 1,
+            rhythmBonusHits: 1,
+            rhythmBonusPoints: 5,
+          }
+        : {},
+    },
   ];
   const appended = await fetch(fixture.baseUrl + "/api/runs/" + run.runId + "/events", {
     method: "POST",
@@ -84,7 +98,10 @@ test("fake authenticated flow completes a run, keeps personal best, and expires 
 
   const first = await completeRun(fixture, cookie, "black", 12);
   assert.equal(first.response.status, 200);
-  assert.equal(first.payload.result.score, 12);
+  assert.equal(first.payload.result.score, 17);
+  assert.equal(first.payload.result.rhythmAccuracy, 0.5);
+  assert.equal(first.payload.result.rhythmMultiplier, 1);
+  assert.equal(first.payload.result.rhythmBonusPoints, 5);
   assert.equal(first.payload.result.isPersonalBest, true);
   assert.equal(first.payload.result.rank, 1);
 
@@ -108,7 +125,7 @@ test("fake authenticated flow completes a run, keeps personal best, and expires 
   const leaderboard = await fetch(fixture.baseUrl + "/api/leaderboard", { headers });
   const leaderboardPayload = await leaderboard.json();
   assert.equal(leaderboardPayload.entries.length, 1);
-  assert.equal(leaderboardPayload.entries[0].score, 12);
+  assert.equal(leaderboardPayload.entries[0].score, 17);
   assert.equal(leaderboardPayload.entries[0].email, "cat-a@example.com");
 
   fixture.clock.value += 24 * 60 * 60 * 1000 + 1;
