@@ -1,4 +1,5 @@
 import { CAT_DEFINITIONS } from "../game/constants.js";
+import { CAT_ASSET_MANIFEST } from "../render/asset-manifest.js";
 import { renderCatCard } from "./cat-card.js";
 
 const CAT_IDS = ["black", "white", "calico", "cheese", "mackerel", "chaos"];
@@ -25,7 +26,9 @@ function createCharacterSelect(onStart, options = {}) {
     return renderCatCard(definition, selected, (catId) => {
       selectedCatId = catId;
       renderCards();
-    }, documentRef);
+    }, documentRef, {
+      previewSrc: CAT_ASSET_MANIFEST[definition.id]?.src || null,
+    });
   }
 
   function mount(nextRoot) {

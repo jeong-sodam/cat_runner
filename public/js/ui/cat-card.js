@@ -13,6 +13,7 @@ function renderCatCard(
   selected = false,
   onSelect = () => {},
   documentRef = globalThis.document,
+  options = {},
 ) {
   if (!documentRef?.createElement) {
     return null;
@@ -23,6 +24,20 @@ function renderCatCard(
   card.dataset.catId = catDefinition.id;
   card.setAttribute("aria-pressed", String(selected));
   card.addEventListener("click", () => onSelect(catDefinition.id));
+
+  if (options.previewSrc) {
+    const preview = documentRef.createElement("img");
+    preview.className = "cat-preview";
+    preview.src = options.previewSrc;
+    preview.alt = catDefinition.label + " 고양이 모습";
+    preview.loading = "eager";
+    preview.decoding = "async";
+    preview.addEventListener("error", () => {
+      preview.hidden = true;
+      preview.setAttribute("aria-hidden", "true");
+    });
+    card.append(preview);
+  }
 
   const name = documentRef.createElement("strong");
   name.textContent = catDefinition.label;

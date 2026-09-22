@@ -234,6 +234,12 @@ test("character selection renders six cats and defaults each new run to black", 
   assert.deepEqual(select.getCatIds(), ["black", "white", "calico", "cheese", "mackerel", "chaos"]);
   assert.equal(cards.length, 6);
   assert.match(cards[0].className, /selected/);
+  assert.equal(cards[0].children[0].tagName, "IMG");
+  assert.equal(cards[0].children[0].alt, "검정 고양이 모습");
+  assert.equal(cards[5].children[0].src, "/assets/cat-runner/cats/chaos.png");
+  cards[0].children[0].dispatch("error");
+  assert.equal(cards[0].children[0].hidden, true);
+  assert.equal(cards[0].getAttribute("aria-pressed"), "true");
   assert.match(textOf(section), /이번 달리기의 고양이를 골라주세요/);
   assert.match(textOf(section), /이 고양이로 달리기/);
 
