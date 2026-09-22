@@ -364,3 +364,132 @@ test("API client preserves a pending result and signals sign-in on 401", async (
     retryable: true,
   });
 });
+
+test("authenticated runs wait for server confirmation before starting the game", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  let resolveStart;
+  const startGate = new Promise((resolve) => {
+    resolveStart = resolve;
+  });
+  const calls = [];
+  const controller = createAppController({
+    documentRef,
+    fetchFn: async () => jsonResponse({
+      authenticated: true,
+      user: { id: "user-1", nickname: "runner" },
+    }),
+    runApiClient: {
+      startRun: async (payload) => {
+        calls.push(payload);
+        await startGate;
+        return { runId: "server-run", catId: payload.catId, seed: "seed", expiresAt: 5000 };
+      },
+    },
+    audioManagerFactory: () => ({
+      unlock: async () => {},
+      startMusic() {},
+      stopMusic() {},
+      playSfx() {},
+      destroy() {},
+    }),
+    settingsPanelFactory: () => ({ mount() {} }),
+    gameClock: {
+      now: () => 0,
+      requestFrame: () => 1,
+      cancelFrame() {},
+    },
+  });
+
+  await controller.bootstrap();
+  const starting = controller.startGame("black");
+  await Promise.resolve();
+  assert.equal(controller.getState().screen, SCREEN_NAMES.CHARACTER_SELECT);
+  assert.equal(controller.getState().gameState, null);
+  assert.deepEqual(calls, [{ userId: "user-1", catId: "black" }]);
+
+  resolveStart();
+  await starting;
+  assert.equal(controller.getState().screen, SCREEN_NAMES.GAME);
+  assert.equal(controller.getState().runMode, "server");
+  controller.destroy();
+});
+
+test("failed server start exposes safe retry/local actions and local mode avoids sync calls", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  const logs = [];
+  let startCalls = 0;
+  const controller = createAppController({
+    documentRef,
+    fetchFn: async () => jsonResponse({
+      authenticated: true,
+      user: { id: "user-1", nickname: "runner" },
+    }),
+    runApiClient: {
+      startRun: async () => {
+        startCalls += 1;
+        const error = new Error("secret request details");
+        error.code = "NETWORK_ERROR";
+        error.status = 503;
+        throw error;
+      },
+    },
+    logger: { error: (...args) => logs.push(args) },
+    audioManagerFactory: () => ({
+      unlock: async () => {},
+      startMusic() {},
+      stopMusic() {},
+      playSfx() {},
+      destroy() {},
+    }),
+    settingsPanelFactory: () => ({ mount() {} }),
+    gameClock: {
+      now: () => 0,
+      requestFrame: () => 1,
+      cancelFrame() {},
+    },
+  });
+
+  await controller.bootstrap();
+  await controller.startGame("chaos");
+
+  const screen = documentRef.getElementById("screen-root");
+  const modal = findAll(screen, (element) => element.className === "start-error-modal flow-card")[0];
+  assert.ok(modal);
+  assert.doesNotMatch(textOf(modal), /secret request details/);
+  assert.equal(logs.length, 1);
+  assert.deepEqual(logs[0], ["Run start failed", { status: 503, code: "NETWORK_ERROR" }]);
+  const actions = findAll(modal, (element) => element.tagName === "BUTTON");
+  assert.equal(actions.length, 2);
+
+  actions[1].dispatch("click");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.GAME);
+  assert.equal(controller.getState().runMode, "local");
+  assert.equal(startCalls, 1);
+  controller.destroy();
+});
+
+test("local result is visibly excluded from ranking without a retry action", async () => {
+  const { createResultScreen } = await import("../public/js/ui/result-screen.js");
+  const documentRef = createAppDocument();
+  const root = documentRef.createElement("section");
+  createResultScreen(
+    {
+      score: 10,
+      distanceM: 4,
+      mouseCount: 1,
+      saved: false,
+      localOnly: true,
+      rank: null,
+      errorMessage: "local only",
+    },
+    { onRetry: () => assert.fail("local results must not retry server completion") },
+    { documentRef },
+  ).mount(root);
+
+  assert.equal(findAll(root, (element) => element.className === "local-mode-badge").length, 1);
+  assert.match(textOf(root), /local only/);
+  assert.equal(findAll(root, (element) => element.tagName === "BUTTON").length, 2);
+  assert.equal(findAll(root, (element) => element.className === "result-rank").length, 0);
+});

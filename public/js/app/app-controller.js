@@ -1,7 +1,7 @@
 import { createAudioManager } from "../audio/audio-manager.js";
 import { createGameLoop } from "../game/game-loop.js";
 import { createInputController } from "../game/input-controller.js";
-import { resolveRhythmTarget } from "../game/rhythm-targets.js";
+import { getRhythmSummary, resolveRhythmTarget } from "../game/rhythm-targets.js";
 import { updateScore } from "../game/scoring.js";
 import { createPatternStream } from "../game/patterns.js";
 import { resolveEntityCollisions } from "../game/collision.js";
@@ -45,6 +45,7 @@ function createAppController(options = {}) {
     screen: SCREEN_NAMES.LOADING,
     user: null,
     catId: null,
+    runMode: null,
     gameState: null,
     lastResult: null,
   };
@@ -56,6 +57,7 @@ function createAppController(options = {}) {
   let runApiClient = null;
   let runSync = null;
   let networkMonitor = null;
+  let localRunStore = null;
   let reconnectBanner = null;
   let pausedForNetwork = false;
   let lastSnapshotAt = -Infinity;
@@ -126,12 +128,27 @@ function createAppController(options = {}) {
     }
   }
 
+  function getLocalRunStore() {
+    if (!localRunStore) {
+      localRunStore = options.localRunStore || createLocalRunStore();
+    }
+    return localRunStore;
+  }
+
+  function teardownRunSync() {
+    networkMonitor?.stop?.();
+    runSync?.destroy?.();
+    networkMonitor = null;
+    runSync = null;
+    runApiClient = null;
+  }
+
   function setupRunSync() {
     if (runSync || !state.user) {
       return runSync;
     }
     runApiClient = options.runApiClient || createRunApiClient(fetchFn);
-    const localStore = options.localRunStore || createLocalRunStore();
+    const localStore = getLocalRunStore();
     const syncOptions = {
       onOffline: () => {
         pausedForNetwork = gameLoop?.getState?.()?.status === "running";
@@ -210,6 +227,66 @@ function createAppController(options = {}) {
     } catch {
       // A resumable check is best effort; the normal new-run screen remains available.
     }
+  }
+
+  function startErrorMessage(error) {
+    switch (error?.code) {
+      case "AUTH_REQUIRED":
+      case "AUTH_CONFIG_MISSING":
+        return "로그인이 만료되었습니다. 다시 로그인한 뒤 시도해주세요.";
+      case "CAT_INVALID":
+        return "선택한 고양이를 시작할 수 없습니다.";
+      case "NETWORK_ERROR":
+        return "서버에 연결하지 못했습니다. 연결을 확인하거나 로컬 플레이를 선택해주세요.";
+      default:
+        return "게임을 시작하지 못했습니다. 다시 시도하거나 로컬 플레이를 선택해주세요.";
+    }
+  }
+
+  function logStartFailure(error) {
+    const logger = options.logger || globalThis.console;
+    logger?.error?.("Run start failed", {
+      status: error?.status ?? null,
+      code: error?.code || "RUN_START_FAILED",
+    });
+  }
+
+  function showStartFailure(catId, error) {
+    logStartFailure(error);
+    showRoot();
+    const existing = screenRoot?.querySelector?.(".start-error-modal");
+    existing?.remove?.();
+    if (!screenRoot || !documentRef?.createElement) {
+      return;
+    }
+    const modal = documentRef.createElement("section");
+    modal.className = "start-error-modal flow-card";
+    const heading = documentRef.createElement("h2");
+    heading.textContent = "서버 연결을 확인해주세요";
+    const message = documentRef.createElement("p");
+    message.textContent = startErrorMessage(error);
+    const actions = documentRef.createElement("div");
+    actions.className = "result-actions";
+    const retryButton = documentRef.createElement("button");
+    retryButton.type = "button";
+    retryButton.className = "game-button primary";
+    retryButton.textContent = "다시 시도";
+    retryButton.addEventListener("click", () => {
+      modal.remove?.();
+      void startGame(catId);
+    });
+    const localButton = documentRef.createElement("button");
+    localButton.type = "button";
+    localButton.className = "game-button";
+    localButton.textContent = "로컬 플레이";
+    localButton.addEventListener("click", () => {
+      modal.remove?.();
+      teardownRunSync();
+      initializeGame(catId, { runMode: "local" });
+    });
+    actions.append(retryButton, localButton);
+    modal.append(heading, message, actions);
+    screenRoot.append(modal);
   }
 
   function showAuth(options = {}) {
@@ -291,14 +368,31 @@ function createAppController(options = {}) {
     }
     completionInProgress = true;
     const completedState = state.gameState || finalGameState;
+    const runMode = completedState.runMode || state.runMode || "server";
+    const rhythmAccuracy = getRhythmSummary(completedState.rhythm).accuracy;
     const localResult = {
       score: completedState.score,
       distanceM: completedState.distanceM,
       mouseCount: completedState.mouseCount,
+      rhythmAccuracy,
       isPersonalBest: false,
-      rank: null,
       saved: false,
     };
+    if (runMode === "local") {
+      const isPersonalBest = getLocalRunStore().saveLocalBest({
+        ...localResult,
+        catId: completedState.catId,
+        achievedAt: Date.now(),
+      });
+      showResult({
+        ...localResult,
+        isPersonalBest,
+        localOnly: true,
+        errorMessage: "로컬 플레이 기록은 순위표에 등록되지 않습니다.",
+      });
+      completionInProgress = false;
+      return;
+    }
     try {
       runSync?.saveSnapshot?.(completedState);
       const activeRun = runSync?.getState?.().activeRun;
@@ -325,11 +419,13 @@ function createAppController(options = {}) {
   }
 
   function playEventSound(event) {
-    runSync?.recordEvent(
-      event.type,
-      Number.isFinite(event.occurredAtMs) ? event.occurredAtMs : state.gameState?.elapsedMs || 0,
-      event.payload || {},
-    );
+    if (state.runMode === "server") {
+      runSync?.recordEvent(
+        event.type,
+        Number.isFinite(event.occurredAtMs) ? event.occurredAtMs : state.gameState?.elapsedMs || 0,
+        event.payload || {},
+      );
+    }
     const soundByEvent = {
       player_jump: "jump",
       mouse_collected: "mouse",
@@ -350,14 +446,17 @@ function createAppController(options = {}) {
     }
   }
 
-  function startGame(catId = "black", runOptions = {}) {
+  function initializeGame(catId = "black", runOptions = {}) {
     destroyGame();
     state.catId = catId;
+    state.runMode = runOptions.runMode || "local";
     setScreen(SCREEN_NAMES.GAME);
     completionInProgress = false;
     finalGameState = null;
     const seed = runOptions.seed || String(Date.now()) + ":" + catId;
     const gameState = createGameState({ catId, seed });
+    gameState.runMode = state.runMode;
+    gameState.connectionMode = state.runMode;
     if (runOptions.snapshot && typeof runOptions.snapshot === "object") {
       Object.assign(gameState, runOptions.snapshot, {
         catId,
@@ -397,10 +496,11 @@ function createAppController(options = {}) {
     loop = createGameLoop({
       state: gameState,
       input,
+      clock: options.gameClock,
       onEvent: playEventSound,
       onStateChange: (nextState) => {
         renderer?.render(nextState);
-        if (nextState.elapsedMs - lastSnapshotAt >= 500) {
+        if (state.runMode === "server" && nextState.elapsedMs - lastSnapshotAt >= 500) {
           lastSnapshotAt = nextState.elapsedMs;
           runSync?.saveSnapshot(snapshotGameState());
         }
@@ -416,7 +516,7 @@ function createAppController(options = {}) {
     gameLoop = loop;
     pauseController = createPauseController(loop, audioManager, {
       settingsPanel,
-      onRestart: () => startGame(state.catId || "black"),
+      onRestart: () => startGame(state.catId || "black", { runMode: state.runMode || "local" }),
     });
     pauseController.mount(gameShell);
     resizeHandler = () => viewport?.resize();
@@ -424,15 +524,26 @@ function createAppController(options = {}) {
     viewport?.resize();
     void audioManager.unlock();
     audioManager.startMusic();
-    if (!runOptions.resumed && runSync && state.user) {
-      void runSync
-        .startRun({ userId: state.user.id, catId, snapshot: snapshotGameState() })
-        .catch(() => {
-          runSync.handleOffline(snapshotGameState());
-        });
-    }
     loop.start();
     return gameState;
+  }
+
+  async function startGame(catId = "black", runOptions = {}) {
+    if (runOptions.runMode === "local" || runOptions.resumed || !state.user) {
+      return initializeGame(catId, {
+        ...runOptions,
+        runMode: runOptions.runMode || (runOptions.resumed ? "server" : "local"),
+      });
+    }
+    const sync = setupRunSync();
+    try {
+      await sync.startRun({ userId: state.user.id, catId });
+      return initializeGame(catId, { ...runOptions, runMode: "server" });
+    } catch (error) {
+      state.gameState = null;
+      showStartFailure(catId, error);
+      return null;
+    }
   }
 
   async function bootstrap() {
@@ -478,10 +589,7 @@ function createAppController(options = {}) {
 
   function destroy() {
     destroyGame();
-    networkMonitor?.stop?.();
-    runSync?.destroy?.();
-    networkMonitor = null;
-    runSync = null;
+    teardownRunSync();
   }
 
   return {

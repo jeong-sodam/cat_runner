@@ -9,9 +9,9 @@
 | T03 | `done` | 브라우저 랜덤 osu 타겟 상태, 판정과 보너스 점수, run-gameover 요약을 구현한다. | [T03](./T03-rhythm-target-engine.md) |
 | T04 | `done` | Canvas 타겟 렌더링, 마우스 좌클릭 입력, 5칸 HUD와 타겟 콤보를 연결한다. | [T04](./T04-canvas-rhythm-input.md) |
 | T05 | `done` | 캐릭터 카드와 9종 능력치, Mayhem 명칭, 로컬 모드 안내 UI를 구현한다. | [T05](./T05-cat-selection-ui.md) |
-| T06 | `in_progress` | 서버 연결 지연, 안전한 오류 안내, 명시적 로컬 fallback과 로컬 최고 기록을 구현한다. | [T06](./T06-connection-local-fallback.md) |
-| T07 | `pending` | run_gameover 정확도·콤보 계약과 authoritative 서버 점수 검증을 확장한다. | [T07](./T07-server-rhythm-validation.md) |
+| T06 | `done` | 서버 연결 지연, 안전한 오류 안내, 명시적 로컬 fallback과 로컬 최고 기록을 구현한다. | [T06](./T06-connection-local-fallback.md) |
+| T07 | `in_progress` | run_gameover 정확도·콤보 계약과 authoritative 서버 점수 검증을 확장한다. | [T07](./T07-server-rhythm-validation.md) |
 
 ## Progress
 
-- done: 5/7 (active: T06)
+- done: 6/7 (active: T07)

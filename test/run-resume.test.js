@@ -162,7 +162,7 @@ test("completion endpoint stores an authoritative score and personal best", asyn
   });
   const run = await created.json();
   const manifest = createServerManifest(run.seed);
-  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 3);
+  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 4);
   const events = [
     { seq: 0, type: "run_started", occurredAtMs: 0, payload: { seed: run.seed, catId: run.catId } },
     { seq: 1, type: "distance_checkpoint", occurredAtMs: 100, payload: { distanceM: 12 } },
@@ -172,7 +172,7 @@ test("completion endpoint stores an authoritative score and personal best", asyn
       occurredAtMs: 200 + index * 10,
       payload: { entityId: obstacle.id },
     })),
-    { seq: 5, type: "run_gameover", occurredAtMs: 240, payload: {} },
+    { seq: 6, type: "run_gameover", occurredAtMs: 240, payload: {} },
   ];
   const completed = await fetch(fixture.baseUrl + "/api/runs/" + run.runId + "/complete", {
     method: "POST",
@@ -306,4 +306,44 @@ test("resume candidate requires matching unexpired server and local runs", async
     sync.getLocalResumeCandidate({ ...candidate.serverRun, expiresAt: 2000 }, 9),
     null,
   );
+});
+
+test("local best records replace only when score, distance, or time improves", async () => {
+  const { LOCAL_BEST_KEY, createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+  const storage = new Map();
+  const store = createLocalRunStore({
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key),
+  });
+
+  assert.equal(store.bestKey, LOCAL_BEST_KEY);
+  assert.equal(store.saveLocalBest({
+    score: 10,
+    distanceM: 5,
+    mouseCount: 2,
+    rhythmAccuracy: 80,
+    catId: "black",
+    achievedAt: 200,
+  }), true);
+  assert.equal(store.saveLocalBest({
+    score: 10,
+    distanceM: 4,
+    achievedAt: 100,
+  }), false);
+  assert.equal(store.saveLocalBest({
+    score: 10,
+    distanceM: 5,
+    achievedAt: 100,
+  }), true);
+  assert.deepEqual(store.getLocalBest(), {
+    score: 10,
+    distanceM: 5,
+    mouseCount: 0,
+    rhythmAccuracy: 0,
+    catId: "black",
+    achievedAt: 100,
+  });
+  store.clearLocalBest();
+  assert.equal(store.getLocalBest(), null);
 });

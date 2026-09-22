@@ -1,14 +1,27 @@
 function createRunApiClient(fetchFn = globalThis.fetch) {
   async function request(url, options = {}) {
-    const response = await fetchFn(url, {
-      credentials: "same-origin",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-      },
-    });
-    const payload = await response.json();
+    let response;
+    try {
+      response = await fetchFn(url, {
+        credentials: "same-origin",
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+        },
+      });
+    } catch {
+      const error = new Error("The run server could not be reached.");
+      error.code = "NETWORK_ERROR";
+      error.status = null;
+      throw error;
+    }
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch {
+      payload = {};
+    }
     if (!response.ok) {
       const error = new Error(payload.error?.message || "Run request failed.");
       error.code = payload.error?.code || "RUN_REQUEST_FAILED";

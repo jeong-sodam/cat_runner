@@ -32,6 +32,12 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
     const section = documentRef.createElement("section");
     section.className = "flow-card result-screen";
     const heading = documentRef.createElement("h1");
+    if (result.localOnly) {
+      const badge = documentRef.createElement("span");
+      badge.className = "local-mode-badge";
+      badge.textContent = "로컬 플레이 · 순위표 미등록";
+      section.append(badge);
+    }
     heading.textContent = "달리기 완료";
     const stats = documentRef.createElement("dl");
     stats.className = "result-stats";
@@ -41,7 +47,9 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
 
     const status = documentRef.createElement("p");
     status.className = result.saved === false ? "result-status unsaved" : "result-status";
-    if (result.saved === false) {
+    if (result.localOnly) {
+      status.textContent = result.errorMessage || "로컬 플레이 기록은 순위표에 등록되지 않습니다.";
+    } else if (result.saved === false) {
       status.textContent = result.errorMessage || "기록을 기기에 저장했습니다. 다시 저장해주세요.";
     } else if (result.isPersonalBest) {
       status.textContent = "개인 최고 기록!";
@@ -59,7 +67,7 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
 
     const actions = documentRef.createElement("div");
     actions.className = "result-actions";
-    if (result.saved === false && callbacks.onRetry) {
+    if (result.saved === false && !result.localOnly && callbacks.onRetry) {
       const retryButton = documentRef.createElement("button");
       retryButton.type = "button";
       retryButton.className = "game-button primary";

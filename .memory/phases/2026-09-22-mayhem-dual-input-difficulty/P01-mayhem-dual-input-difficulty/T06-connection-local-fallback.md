@@ -1,6 +1,6 @@
 # Task: T06 서버 선연결과 명시적 로컬 fallback
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -58,10 +58,10 @@
 
 ## Acceptance Criteria
 
-- [ ] Authenticated games start only after a successful server run creation or explicit local choice.
-- [ ] Initial server errors show safe retry/local actions and diagnostic status/code logging.
-- [ ] Local mode has a visible badge, stores local best only, and never submits a leaderboard result.
-- [ ] Existing server reconnect/resume behavior remains intact.
+- [x] Authenticated games start only after a successful server run creation or explicit local choice.
+- [x] Initial server errors show safe retry/local actions and diagnostic status/code logging.
+- [x] Local mode has a visible badge, stores local best only, and never submits a leaderboard result.
+- [x] Existing server reconnect/resume behavior remains intact.
 
 ## Validation
 
@@ -82,6 +82,12 @@ Task: T06-connection-local-fallback
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
+
+## Execution Record
+
+- Start gate, safe failure modal, explicit local mode, local-best storage, and local-only result rendering implemented.
+- Validation passed separately: `npm.cmd test -- test/app-flow.test.js test/render.test.js` (28 tests) and `npm.cmd test -- test/run-resume.test.js` (8 tests).
+- The exact combined command reaches 28 passing assertions before a known Windows Node native cleanup abort; no assertion fails in the isolated run-resume file.

@@ -10,13 +10,13 @@
 
 ## Active Task
 
-[T06 연결·로컬 fallback](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/T06-connection-local-fallback.md)
+[T07 서버 rhythm validation](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/T07-server-rhythm-validation.md)
 
 ## Status
 
-- T05 캐릭터 카드·9종 능력치·Mayhem metadata·로컬 모드 안내 완료
-- Validation: `npm.cmd test -- test/app-flow.test.js test/game-core.test.js` (18 tests)
+- T06 서버 시작 게이트·안전한 오류 안내·명시적 로컬 fallback·로컬 최고 기록 완료
+- Validation: app-flow/render 28 tests 및 run-resume 8 tests 개별 통과; 통합 실행은 Windows Node native cleanup abort 기록
 
 ## Next Step (IMPORTANT)
 
-T06 청사진을 읽고 서버 연결 지연/오류 안내, 명시적 로컬 fallback, 로컬 최고 기록 저장을 구현한다.
+T07 청사진을 읽고 rhythm 정확도·콤보 이벤트 계약과 authoritative 서버 점수 검증을 확장한다.
