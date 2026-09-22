@@ -237,6 +237,18 @@ test("character selection renders six cats and defaults each new run to black", 
   assert.equal(cards[0].children[0].tagName, "IMG");
   assert.equal(cards[0].children[0].alt, "검정 고양이 모습");
   assert.equal(cards[5].children[0].src, "/assets/cat-runner/cats/chaos.png");
+  assert.equal(cards[5].dataset.catId, "chaos");
+  assert.equal(cards[5].dataset.englishName, "Mayhem");
+  for (const card of cards) {
+    const stats = card.children[4];
+    assert.equal(stats.tagName, "UL");
+    assert.equal(stats.children.length, 9);
+    assert.ok(stats.children.every((row) => row.getAttribute("aria-label").endsWith("/5")));
+    assert.ok(stats.children.every((row) => row.children[1].children.length === 5));
+  }
+  const localModeNote = section.children[4];
+  assert.equal(localModeNote.className, "local-mode-note");
+  assert.equal(localModeNote.dataset.mode, "local");
   cards[0].children[0].dispatch("error");
   assert.equal(cards[0].children[0].hidden, true);
   assert.equal(cards[0].getAttribute("aria-pressed"), "true");

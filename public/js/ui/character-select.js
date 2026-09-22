@@ -51,7 +51,11 @@ function createCharacterSelect(onStart, options = {}) {
     startButton.className = "game-button primary start-game-button";
     startButton.textContent = "이 고양이로 달리기";
     startButton.addEventListener("click", () => onStart?.({ catId: selectedCatId }));
-    section.append(heading, intro, cardsRoot, startButton);
+    const localModeNote = documentRef.createElement("p");
+    localModeNote.className = "local-mode-note";
+    localModeNote.dataset.mode = "local";
+    localModeNote.textContent = "서버 연결 없이도 로컬 모드로 플레이할 수 있습니다.";
+    section.append(heading, intro, cardsRoot, startButton, localModeNote);
     root.append(section);
     renderCards();
     return section;

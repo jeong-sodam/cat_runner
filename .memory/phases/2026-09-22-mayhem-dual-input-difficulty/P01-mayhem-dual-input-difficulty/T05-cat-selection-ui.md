@@ -1,6 +1,6 @@
 # Task: T05 고양이 능력치 카드와 Mayhem 표시
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -69,3 +69,9 @@ Task: T05-cat-selection-ui
 - [ ] 구현 완료
 - [ ] 검증 통과
 - commit: pending
+
+## Execution Record
+
+- Implementation complete
+- Validation passed: `npm.cmd test -- test/app-flow.test.js test/game-core.test.js` (18 tests)
+- Commit: pending

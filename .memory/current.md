@@ -10,14 +10,13 @@
 
 ## Active Task
 
-[T05 캐릭터 선택 UI](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/T05-cat-selection-ui.md)
+[T06 연결·로컬 fallback](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/T06-connection-local-fallback.md)
 
 ## Status
 
-- T04 Canvas 타겟 렌더링·마우스 입력·체력/정확도 HUD 완료
-- Validation: `npm.cmd test -- test/render.test.js test/game-core.test.js` (25 tests)
-- App flow validation: `npm.cmd test -- test/app-flow.test.js` (9 tests)
+- T05 캐릭터 카드·9종 능력치·Mayhem metadata·로컬 모드 안내 완료
+- Validation: `npm.cmd test -- test/app-flow.test.js test/game-core.test.js` (18 tests)
 
 ## Next Step (IMPORTANT)
 
-T05 청사진을 읽고 캐릭터 카드, 9종 능력치, Mayhem 명칭, 로컬 모드 안내 UI를 구현한다.
+T06 청사진을 읽고 서버 연결 지연/오류 안내, 명시적 로컬 fallback, 로컬 최고 기록 저장을 구현한다.
