@@ -33,6 +33,10 @@ body {
   box-shadow: 0 18px 50px rgb(92 62 45 / 20%);
 }
 
+#game-shell [hidden] {
+  display: none !important;
+}
+
 #game-canvas {
   display: block;
   width: 100%;

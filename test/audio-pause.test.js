@@ -28,6 +28,42 @@ function createProviderRecorder() {
   };
 }
 
+class FakeElement {
+  constructor(tagName) {
+    this.tagName = tagName.toUpperCase();
+    this.children = [];
+    this.attributes = new Map();
+    this.listeners = new Map();
+    this.className = "";
+    this.hidden = false;
+    this.textContent = "";
+  }
+
+  append(...children) {
+    this.children.push(...children);
+  }
+
+  addEventListener(type, listener) {
+    const listeners = this.listeners.get(type) || [];
+    listeners.push(listener);
+    this.listeners.set(type, listeners);
+  }
+
+  setAttribute(name, value) {
+    this.attributes.set(name, String(value));
+  }
+
+  getAttribute(name) {
+    return this.attributes.get(name) || null;
+  }
+}
+
+function createFakeDocument() {
+  return {
+    createElement: (tagName) => new FakeElement(tagName),
+  };
+}
+
 test("audio settings persist independently through injected storage", async () => {
   const { createAudioManager } = await loadAudio();
   const storage = createStorage();
@@ -106,12 +142,26 @@ test("pause controller uses one toggle for resume and pause button", async () =>
     startMusic: () => events.push("music-start"),
     stopMusic: () => events.push("music-stop"),
   };
-  const controller = createPauseController(gameLoop, audioManager);
+  const documentRef = createFakeDocument();
+  const root = new FakeElement("main");
+  const controller = createPauseController(gameLoop, audioManager, { documentRef });
+  const overlay = controller.mount(root);
+
+  assert.equal(overlay.hidden, true);
+  assert.equal(overlay.getAttribute("aria-hidden"), "true");
+  const pauseButton = root.children.find((element) => element.className === "pause-button game-button");
+  assert.equal(pauseButton.textContent, "Ⅱ 일시정지");
+  assert.equal(pauseButton.getAttribute("aria-label"), "게임 일시정지");
 
   controller.togglePause();
   assert.equal(state.status, "paused");
+  assert.equal(overlay.hidden, false);
+  assert.equal(overlay.getAttribute("aria-hidden"), "false");
+  assert.equal(pauseButton.textContent, "▶ 계속");
   controller.togglePause();
   assert.equal(state.status, "running");
+  assert.equal(overlay.hidden, true);
+  assert.equal(overlay.getAttribute("aria-hidden"), "true");
   assert.deepEqual(events, ["pause", "music-stop", "resume", "music-start"]);
 });
 

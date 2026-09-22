@@ -127,7 +127,7 @@ test("renderer draws every entity variant and returns a pause hit area", async (
 
   assert.deepEqual(Object.keys(result.pauseButton), ["x", "y", "width", "height"]);
   assert.ok(
-    context.calls.some((call) => call.name === "fillText" && call.args[0] === "magnet"),
+    context.calls.some((call) => call.name === "fillText" && call.args[0] === "자석"),
   );
 });
 

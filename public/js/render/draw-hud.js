@@ -1,6 +1,13 @@
 import { GAME_CONFIG } from "../game/constants.js";
 import { PALETTE } from "./color-palette.js";
 
+const EFFECT_LABELS = Object.freeze({
+  magnet: "자석",
+  invincible: "무적",
+  double_score: "점수 2배",
+  slow_miss: "꽝",
+});
+
 function drawHud(ctx, state) {
   ctx.save();
   ctx.font = "bold 28px Trebuchet MS, sans-serif";
@@ -26,7 +33,8 @@ function drawHud(ctx, state) {
     ctx.arc(600, 48, 18, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = PALETTE.ui.ink;
-    ctx.fillText(state.activeEffect.type, 630, 48);
+    const effectLabel = EFFECT_LABELS[state.activeEffect.type] || state.activeEffect.type;
+    ctx.fillText(effectLabel, 630, 48);
     const remaining = Math.max(
       0,
       Math.ceil((state.activeEffect.expiresAtMs - state.elapsedMs) / 1000),
@@ -46,4 +54,4 @@ function drawHud(ctx, state) {
   return { pauseButton };
 }
 
-export { drawHud };
+export { drawHud, EFFECT_LABELS };

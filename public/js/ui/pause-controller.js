@@ -1,3 +1,14 @@
+const PAUSE_COPY = Object.freeze({
+  running: {
+    button: "Ⅱ 일시정지",
+    label: "게임 일시정지",
+  },
+  paused: {
+    button: "▶ 계속",
+    label: "게임 계속",
+  },
+});
+
 function createPauseController(gameLoop, audioManager, options = {}) {
   const documentRef = options.documentRef || globalThis.document;
   let root = null;
@@ -12,10 +23,13 @@ function createPauseController(gameLoop, audioManager, options = {}) {
     if (!overlay) {
       return;
     }
-    overlay.hidden = !isPaused();
+    const paused = isPaused();
+    overlay.hidden = !paused;
+    overlay.setAttribute?.("aria-hidden", String(!paused));
     if (pauseButton) {
-      pauseButton.textContent = isPaused() ? "▶ 계속" : "Ⅱ 일시정지";
-      pauseButton.setAttribute?.("aria-label", isPaused() ? "게임 계속" : "게임 일시정지");
+      const copy = paused ? PAUSE_COPY.paused : PAUSE_COPY.running;
+      pauseButton.textContent = copy.button;
+      pauseButton.setAttribute?.("aria-label", copy.label);
     }
   }
 
@@ -41,6 +55,8 @@ function createPauseController(gameLoop, audioManager, options = {}) {
     overlay = documentRef.createElement("section");
     overlay.className = "pause-overlay";
     overlay.hidden = true;
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
     overlay.setAttribute("aria-label", "일시정지 메뉴");
 
     const card = documentRef.createElement("div");
