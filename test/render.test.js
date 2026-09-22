@@ -290,6 +290,28 @@ test("asset loader preloads once and keeps successful cat and background images"
   assert.equal(loader.getCatPreviewSrc("unknown"), null);
 });
 
+test("asset loader preloads item sprites with type and variant keys", async () => {
+  const modules = await loadRenderModules();
+  const { FakeImage, createdSources } = createFakeImageCtor();
+  const manifest = {
+    cats: {},
+    backgrounds: {},
+    items: {
+      obstacle: { box: { src: "/item-box.png" } },
+      mouse: { toy: { src: "/item-mouse.png" } },
+    },
+  };
+  const loader = modules.createAssetLoader({ ImageCtor: FakeImage, manifest });
+
+  await loader.preload();
+
+  assert.deepEqual(createdSources, ["/item-box.png", "/item-mouse.png"]);
+  assert.ok(loader.getItemSprite("obstacle", "box"));
+  assert.ok(loader.getItemSprite("mouse", "toy"));
+  assert.equal(loader.getItemSprite("grass", "cat-grass"), null);
+  assert.ok(loader.getState().items.has("obstacle:box"));
+});
+
 test("asset loader records missing or unsupported images and returns fallback nulls", async () => {
   const modules = await loadRenderModules();
   const manifest = {
@@ -314,6 +336,11 @@ test("storybook asset manifest covers every playable cat and game zone", async (
   const modules = await loadRenderModules();
   const catIds = ["black", "white", "calico", "cheese", "mackerel", "chaos"];
   const zoneIds = ["home_day", "outside", "home_night"];
+  const itemIds = {
+    obstacle: ["box", "fence", "pot", "yarn"],
+    mouse: ["toy"],
+    grass: ["cat-grass"],
+  };
 
   assert.deepEqual(modules.CAT_POSES, ["run", "jump", "slide"]);
   assert.deepEqual(Object.keys(modules.CAT_ASSET_MANIFEST), catIds);
@@ -328,5 +355,21 @@ test("storybook asset manifest covers every playable cat and game zone", async (
     assert.ok(definition.width > 0);
     assert.ok(definition.height > 0);
     assert.ok(fs.existsSync(path.join(__dirname, "..", "public", definition.src.slice(1))));
+  }
+  assert.deepEqual(
+    Object.fromEntries(
+      Object.entries(modules.ITEM_ASSET_MANIFEST).map(([type, variants]) => [
+        type,
+        Object.keys(variants),
+      ]),
+    ),
+    itemIds,
+  );
+  for (const variants of Object.values(modules.ITEM_ASSET_MANIFEST)) {
+    for (const definition of Object.values(variants)) {
+      assert.ok(definition.width > 0);
+      assert.ok(definition.height > 0);
+      assert.ok(fs.existsSync(path.join(__dirname, "..", "public", definition.src.slice(1))));
+    }
   }
 });

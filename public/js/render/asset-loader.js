@@ -1,18 +1,21 @@
 import {
   BACKGROUND_ASSET_MANIFEST,
   CAT_ASSET_MANIFEST,
+  ITEM_ASSET_MANIFEST,
 } from "./asset-manifest.js";
 
 function createAssetLoader(options = {}) {
   const manifest = options.manifest || {
     cats: CAT_ASSET_MANIFEST,
     backgrounds: BACKGROUND_ASSET_MANIFEST,
+    items: ITEM_ASSET_MANIFEST,
   };
   const ImageCtor = options.ImageCtor === undefined ? globalThis.Image : options.ImageCtor;
   const state = {
     status: "idle",
     cats: new Map(),
     backgrounds: new Map(),
+    items: new Map(),
     failures: new Set(),
   };
   let preloadPromise = null;
@@ -72,7 +75,12 @@ function createAssetLoader(options = {}) {
     const backgroundLoads = Object.entries(manifest.backgrounds || {}).map(([id, definition]) =>
       loadImage("backgrounds", id, definition),
     );
-    preloadPromise = Promise.all([...catLoads, ...backgroundLoads])
+    const itemLoads = Object.entries(manifest.items || {}).flatMap(([type, variants]) =>
+      Object.entries(variants || {}).map(([variant, definition]) =>
+        loadImage("items", `${type}:${variant}`, definition),
+      ),
+    );
+    preloadPromise = Promise.all([...catLoads, ...backgroundLoads, ...itemLoads])
       .catch(() => [])
       .then(() => {
         state.status = "ready";
@@ -89,6 +97,10 @@ function createAssetLoader(options = {}) {
     return state.backgrounds.get(zoneId) || null;
   }
 
+  function getItemSprite(type, variant) {
+    return state.items.get(`${type}:${variant}`) || null;
+  }
+
   function getCatPreviewSrc(catId) {
     return manifest.cats?.[catId]?.src || null;
   }
@@ -98,6 +110,7 @@ function createAssetLoader(options = {}) {
       status: state.status,
       cats: new Map(state.cats),
       backgrounds: new Map(state.backgrounds),
+      items: new Map(state.items),
       failures: new Set(state.failures),
     };
   }
@@ -106,6 +119,7 @@ function createAssetLoader(options = {}) {
     preload,
     getCatSprite,
     getBackgroundSprite,
+    getItemSprite,
     getCatPreviewSrc,
     getState,
   };

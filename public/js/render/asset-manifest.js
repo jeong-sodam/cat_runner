@@ -57,4 +57,48 @@ const BACKGROUND_ASSET_MANIFEST = Object.freeze({
   }),
 });
 
-export { BACKGROUND_ASSET_MANIFEST, CAT_ASSET_MANIFEST, CAT_POSES };
+const ITEM_ASSET_MANIFEST = Object.freeze({
+  obstacle: Object.freeze({
+    box: Object.freeze({
+      src: "/assets/cat-runner/items/box.png",
+      width: 180,
+      height: 160,
+    }),
+    fence: Object.freeze({
+      src: "/assets/cat-runner/items/fence.png",
+      width: 280,
+      height: 80,
+    }),
+    pot: Object.freeze({
+      src: "/assets/cat-runner/items/pot.png",
+      width: 180,
+      height: 160,
+    }),
+    yarn: Object.freeze({
+      src: "/assets/cat-runner/items/yarn.png",
+      width: 260,
+      height: 80,
+    }),
+  }),
+  mouse: Object.freeze({
+    toy: Object.freeze({
+      src: "/assets/cat-runner/items/mouse.png",
+      width: 84,
+      height: 84,
+    }),
+  }),
+  grass: Object.freeze({
+    "cat-grass": Object.freeze({
+      src: "/assets/cat-runner/items/cat-grass.png",
+      width: 96,
+      height: 144,
+    }),
+  }),
+});
+
+export {
+  BACKGROUND_ASSET_MANIFEST,
+  CAT_ASSET_MANIFEST,
+  CAT_POSES,
+  ITEM_ASSET_MANIFEST,
+};

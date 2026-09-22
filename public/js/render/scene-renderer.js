@@ -29,6 +29,17 @@ function canDrawCatSprite(ctx, sprite) {
   return typeof ctx.drawImage === "function" && width >= 3 && height > 0;
 }
 
+function getItemPresentation(entity, state) {
+  if (entity.type !== "mouse" && entity.type !== "grass") {
+    return { y: entity.y, brightness: 1 };
+  }
+
+  const phase = entity.type === "grass" ? 180 : 260;
+  const bob = Math.sin(((state.elapsedMs || 0) + entity.x) / phase) * 2;
+  const brightness = 0.96 + Math.sin(((state.elapsedMs || 0) + entity.x) / 320) * 0.04;
+  return { y: entity.y + bob, brightness };
+}
+
 function drawTiledBackground(ctx, sprite, offset, alpha = 1) {
   const { width, height } = getSpriteDimensions(sprite);
   if (width <= 0 || height <= 0) {
@@ -115,13 +126,17 @@ function createSceneRenderer(ctx, assets = {}) {
     };
     const sprite = assetProvider.getItemSprite(entity.type, entity.variant);
     if (sprite && ctx.drawImage) {
+      const presentation = getItemPresentation(screenEntity, state);
+      ctx.save();
+      ctx.filter = `brightness(${presentation.brightness})`;
       ctx.drawImage(
         sprite,
         screenEntity.x,
-        screenEntity.y,
+        presentation.y,
         screenEntity.width,
         screenEntity.height,
       );
+      ctx.restore();
       return;
     }
     if (entity.type === "obstacle") {
