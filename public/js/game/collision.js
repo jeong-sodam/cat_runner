@@ -1,4 +1,4 @@
-import { EFFECT_TYPES, GAME_CONFIG } from "./constants.js";
+import { CAT_DEFINITIONS, EFFECT_TYPES, GAME_CONFIG } from "./constants.js";
 import {
   applyEffect,
   getEffectSpeedMultiplier,
@@ -173,7 +173,9 @@ function startPlayerFall(state, gap, now, onEvent) {
   const invulnerable =
     state.activeEffect?.type === EFFECT_TYPES.INVINCIBLE ||
     state.player.fallRecoveryUntilMs > now;
-  const damage = invulnerable ? 0 : GAME_CONFIG.fallDamage;
+  const cat = CAT_DEFINITIONS[state.catId];
+  const resistedFall = cat.fallResistanceMultiplier >= 1.2;
+  const damage = invulnerable || resistedFall ? 0 : GAME_CONFIG.fallDamage;
   state.health = Math.max(0, state.health - damage);
   emit(onEvent, "fall_damage", { gapId: gap.id });
 }
@@ -259,6 +261,7 @@ export {
   getEntityHitbox,
   getObstaclePolygons,
   getPlayerHitbox,
+  startPlayerFall,
   intersects,
   obstacleIntersectsPlayer,
   polygonsIntersect,

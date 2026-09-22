@@ -17,7 +17,7 @@ function makeGameoverEvents(run, options = {}) {
   const manifest = createServerManifest(run.seed);
   const grass = options.grass || null;
   const mouse = options.mouse || manifest.entities.find((entity) => entity.type === "mouse");
-  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 3);
+  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 4);
   const events = [{
     seq: 0,
     type: "run_started",
@@ -145,7 +145,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
   const invincible = findSeedForEffect("invincible");
   const invincibleRun = makeRun(invincible.seed);
   const manifest = createServerManifest(invincible.seed);
-  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 4);
+  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 5);
   const invincibleGap = manifest.gaps[0];
   const events = [
     {
@@ -166,7 +166,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
       occurredAtMs: index === 0 ? 200 : 6000 + index * 100,
       payload: { entityId: obstacle.id },
     })),
-    { seq: 7, type: "run_gameover", occurredAtMs: 6500, payload: {} },
+    { seq: 8, type: "run_gameover", occurredAtMs: 6500, payload: {} },
   ];
   assert.equal(calculateVerifiedResult(invincibleRun, events, { clientFinishedAt: 10000 }).health, 0);
 });
@@ -211,7 +211,7 @@ test("server v3 manifest mirrors client gap ids, widths, and entity ids", async 
 test("fall damage validates known gaps, ignores fake damage, and rejects replayed ids", () => {
   const run = makeRun("fall-validation-seed");
   const manifest = createServerManifest(run.seed);
-  const gaps = manifest.gaps.slice(0, 3);
+  const gaps = manifest.gaps.slice(0, 4);
   const events = [
     {
       seq: 0,
@@ -225,7 +225,7 @@ test("fall damage validates known gaps, ignores fake damage, and rejects replaye
       occurredAtMs: 100 + index * 100,
       payload: { gapId: gap.id, damage: 999, health: 999 },
     })),
-    { seq: 4, type: "run_gameover", occurredAtMs: 500, payload: {} },
+    { seq: 5, type: "run_gameover", occurredAtMs: 600, payload: {} },
   ];
 
   const result = calculateVerifiedResult(run, events, { clientFinishedAt: 5000 });

@@ -25,7 +25,10 @@ function applyEffect(state, effectType, now = state.elapsedMs) {
   const cat = CAT_DEFINITIONS[state.catId];
   const isPositive = POSITIVE_EFFECTS.has(effectType);
   const duration = isPositive
-    ? 5000 * cat.itemDurationMultiplier
+    ? 5000 * cat.itemDurationMultiplier *
+      (effectType === EFFECT_TYPES.INVINCIBLE
+        ? cat.invincibleDurationMultiplier
+        : 1)
     : 5000;
   state.activeEffect = {
     type: effectType,
@@ -35,6 +38,7 @@ function applyEffect(state, effectType, now = state.elapsedMs) {
 }
 
 function updateActiveEffect(state, now = state.elapsedMs, entities = []) {
+  const cat = CAT_DEFINITIONS[state.catId];
   if (
     state.activeEffect &&
     now >= state.activeEffect.expiresAtMs
@@ -49,7 +53,7 @@ function updateActiveEffect(state, now = state.elapsedMs, entities = []) {
         continue;
       }
       const screenDistance = entity.x - state.worldOffset - state.player.x;
-      if (Math.abs(screenDistance) <= 260) {
+      if (Math.abs(screenDistance) <= 260 * cat.magnetRangeMultiplier) {
         entity.x += (targetX - entity.x) * 0.2;
       }
     }

@@ -2,6 +2,7 @@ import {
   CAT_DEFINITIONS,
   GAME_CONFIG,
   GAME_STATUSES,
+  getMaxHealthForRating,
 } from "./constants.js";
 
 function createGameState({ catId, seed }) {
@@ -11,6 +12,7 @@ function createGameState({ catId, seed }) {
 
   const cat = CAT_DEFINITIONS[catId];
   const playerHeight = GAME_CONFIG.playerHeight;
+  const maxHealth = getMaxHealthForRating(cat.statRatings.health);
   return {
     status: GAME_STATUSES.READY,
     catId,
@@ -19,7 +21,8 @@ function createGameState({ catId, seed }) {
     distanceM: 0,
     score: 0,
     mouseCount: 0,
-    health: Math.round(GAME_CONFIG.maxHealth * cat.healthMultiplier),
+    maxHealth,
+    health: maxHealth,
     player: {
       x: 240,
       y: GAME_CONFIG.groundY - playerHeight,
@@ -35,7 +38,7 @@ function createGameState({ catId, seed }) {
       fallRecoveryUntilMs: 0,
     },
     worldOffset: 0,
-    worldSpeed: GAME_CONFIG.baseWorldSpeed * cat.speedMultiplier,
+    worldSpeed: GAME_CONFIG.baseWorldSpeed * cat.speedMultiplier * 1.1,
     zoneId: "home_day",
     worldEntities: [],
     worldGaps: [],

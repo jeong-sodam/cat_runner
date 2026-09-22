@@ -259,13 +259,13 @@ test("obstacle collision damages once and invincibility prevents damage", async 
   modules.resolveEntityCollisions(state, [obstacle], {
     onEvent: (event) => events.push(event),
   });
-  assert.equal(state.health, 17);
+  assert.equal(state.health, 3);
   assert.equal(events[0].type, "obstacle_collision");
 
   modules.resolveEntityCollisions(state, [obstacle], {
     onEvent: (event) => events.push(event),
   });
-  assert.equal(state.health, 17);
+  assert.equal(state.health, 3);
 
   const protectedObstacle = {
     ...obstacle,
@@ -277,7 +277,7 @@ test("obstacle collision damages once and invincibility prevents damage", async 
     now: 100,
     onEvent: (event) => events.push(event),
   });
-  assert.equal(state.health, 17);
+  assert.equal(state.health, 3);
   assert.equal(events.at(-1).payload.prevented, true);
 });
 
@@ -371,7 +371,7 @@ test("effect duration applies to positive effects only", async () => {
 
   modules.applyEffect(cheese, modules.EFFECT_TYPES.MAGNET, 100);
   modules.applyEffect(black, modules.EFFECT_TYPES.MAGNET, 100);
-  assert.equal(cheese.activeEffect.expiresAtMs, 5600);
+  assert.equal(cheese.activeEffect.expiresAtMs, 6100);
   assert.equal(black.activeEffect.expiresAtMs, 5100);
 
   modules.applyEffect(cheese, modules.EFFECT_TYPES.SLOW_MISS, 100);
@@ -404,7 +404,8 @@ test("score doubles mouse points but never distance and zones switch at threshol
   state.distanceM = 2500;
   modules.updateScore(state);
   assert.equal(state.zoneId, "home_night");
-  assert.equal(modules.calculateDifficulty(0, "home_day"), 1);
-  assert.ok(Math.abs(modules.calculateDifficulty(2000, "outside") - 1.8) < 1e-9);
-  assert.ok(Math.abs(modules.calculateDifficulty(5000, "home_night") - 2.25) < 1e-9);
+  assert.equal(modules.calculateDifficulty(0, "home_day"), 1.1);
+  assert.ok(Math.abs(modules.calculateDifficulty(2000, "home_day") - 1.65) < 1e-9);
+  assert.ok(Math.abs(modules.calculateDifficulty(2000, "outside") - 1.98) < 1e-9);
+  assert.ok(Math.abs(modules.calculateDifficulty(5000, "home_night") - 2.475) < 1e-9);
 });

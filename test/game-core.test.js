@@ -87,19 +87,24 @@ test("game state contains the six cats and valid lifecycle transitions", async (
   const expectedCats = ["black", "white", "calico", "cheese", "mackerel", "chaos"];
   assert.deepEqual(Object.keys(modules.CAT_DEFINITIONS), expectedCats);
   for (const cat of Object.values(modules.CAT_DEFINITIONS)) {
-    const multipliers = [
-      cat.jumpMultiplier,
-      cat.speedMultiplier,
-      cat.slideMultiplier,
-      cat.itemDurationMultiplier,
-      cat.healthMultiplier,
-    ];
-    assert.equal(multipliers.filter((value) => value === 1.1).length, 1);
-    assert.equal(multipliers.filter((value) => value === 0.9).length, 1);
+    assert.deepEqual(Object.keys(cat.statRatings), modules.CAT_STAT_KEYS);
+    assert.ok(Object.values(cat.statRatings).every((value) => value >= 1 && value <= 5));
+    assert.ok(Object.values(cat.statRatings).every(Number.isInteger));
   }
+
+  assert.equal(modules.CAT_DEFINITIONS.chaos.englishName, "Mayhem");
+  assert.equal(modules.getMaxHealthForRating(1), 4);
+  assert.equal(modules.getMaxHealthForRating(3), 5);
+  assert.equal(modules.getMaxHealthForRating(5), 6);
+  const ratingTotals = Object.values(modules.CAT_DEFINITIONS).map((cat) =>
+    Object.values(cat.statRatings).reduce((sum, value) => sum + value, 0),
+  );
+  assert.ok(Math.max(...ratingTotals) - Math.min(...ratingTotals) <= 1);
 
   const state = modules.createGameState({ catId: "black", seed: 123 });
   assert.equal(state.status, modules.GAME_STATUSES.READY);
+  assert.equal(state.maxHealth, 4);
+  assert.equal(state.health, 4);
   modules.transitionGameState(state, modules.GAME_STATUSES.RUNNING);
   modules.transitionGameState(state, modules.GAME_STATUSES.PAUSED);
   modules.transitionGameState(state, modules.GAME_STATUSES.RUNNING);

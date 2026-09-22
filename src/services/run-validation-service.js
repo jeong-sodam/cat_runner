@@ -1,18 +1,65 @@
 const { createServerManifest, PATTERN_VERSION } = require("../game/server-pattern-manifest");
 const { contractError, validateEventBatch } = require("../game/event-contract");
 
-const MAX_HEALTH = 30;
-const COLLISION_DAMAGE = 10;
+const BASE_HEALTH = 5;
+const COLLISION_DAMAGE = 1;
+const FALL_DAMAGE = 1;
 const POSITIVE_EFFECTS = new Set(["magnet", "invincible", "double_score"]);
 const EFFECT_ORDER = ["magnet", "invincible", "double_score", "slow_miss"];
 const CAT_STATS = Object.freeze({
-  black: { itemDurationMultiplier: 1 },
-  white: { itemDurationMultiplier: 1 },
-  calico: { itemDurationMultiplier: 1.1 },
-  cheese: { itemDurationMultiplier: 1.1 },
-  mackerel: { itemDurationMultiplier: 0.9 },
-  chaos: { itemDurationMultiplier: 1 },
+  black: {
+    healthRating: 1,
+    itemDurationMultiplier: 1,
+    magnetRangeMultiplier: 1.2,
+    scoreMultiplier: 1,
+    fallResistanceMultiplier: 0.9,
+    invincibleDurationMultiplier: 1,
+  },
+  white: {
+    healthRating: 3,
+    itemDurationMultiplier: 1,
+    magnetRangeMultiplier: 1,
+    scoreMultiplier: 1,
+    fallResistanceMultiplier: 1,
+    invincibleDurationMultiplier: 1.2,
+  },
+  calico: {
+    healthRating: 5,
+    itemDurationMultiplier: 1,
+    magnetRangeMultiplier: 1,
+    scoreMultiplier: 1,
+    fallResistanceMultiplier: 1.2,
+    invincibleDurationMultiplier: 1,
+  },
+  cheese: {
+    healthRating: 3,
+    itemDurationMultiplier: 1.2,
+    magnetRangeMultiplier: 1,
+    scoreMultiplier: 1.2,
+    fallResistanceMultiplier: 1,
+    invincibleDurationMultiplier: 1,
+  },
+  mackerel: {
+    healthRating: 3,
+    itemDurationMultiplier: 0.8,
+    magnetRangeMultiplier: 1,
+    scoreMultiplier: 1,
+    fallResistanceMultiplier: 1.2,
+    invincibleDurationMultiplier: 1,
+  },
+  chaos: {
+    healthRating: 3,
+    itemDurationMultiplier: 1,
+    magnetRangeMultiplier: 1,
+    scoreMultiplier: 1.2,
+    fallResistanceMultiplier: 1,
+    invincibleDurationMultiplier: 1,
+  },
 });
+
+function maxHealthFor(stats) {
+  return BASE_HEALTH + Math.round((stats.healthRating - 3) / 2);
+}
 
 function validationError(reason, message) {
   return contractError(reason, message);
@@ -40,7 +87,7 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
   const collected = new Set();
   const usedGaps = new Set();
   let activeEffect = null;
-  let health = MAX_HEALTH;
+  let health = maxHealthFor(catStats);
   let mouseCount = 0;
   let distanceM = 0;
   let lastDistanceM = 0;
@@ -91,8 +138,8 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
         throw validationError("GAP_REPEATED", "A fall gap cannot be used more than once.");
       }
       usedGaps.add(gap.id);
-      if (activeEffect?.type !== "invincible") {
-        health -= COLLISION_DAMAGE;
+      if (activeEffect?.type !== "invincible" && catStats.fallResistanceMultiplier < 1.2) {
+        health -= FALL_DAMAGE;
         if (health <= 0) {
           health = 0;
           depletedAt = event.occurredAtMs;
@@ -127,7 +174,8 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
           throw validationError("EFFECT_MISMATCH", "Grass effect does not match the server roll.");
         }
         const duration = POSITIVE_EFFECTS.has(effectType)
-          ? 5000 * catStats.itemDurationMultiplier
+          ? 5000 * catStats.itemDurationMultiplier *
+            (effectType === "invincible" ? catStats.invincibleDurationMultiplier : 1)
           : 5000;
         activeEffect = {
           type: effectType,
@@ -170,7 +218,7 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
   if (!gameoverSeen) {
     throw validationError("GAMEOVER_MISSING", "A completed run must include run_gameover.");
   }
-  score += Math.floor(distanceM);
+  score = Math.floor((score + Math.floor(distanceM)) * catStats.scoreMultiplier);
   return {
     score,
     distanceM,
