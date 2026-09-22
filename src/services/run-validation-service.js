@@ -1,7 +1,6 @@
 const { createServerManifest, PATTERN_VERSION } = require("../game/server-pattern-manifest");
 const { contractError, validateEventBatch } = require("../game/event-contract");
 
-const BASE_HEALTH = 5;
 const COLLISION_DAMAGE = 1;
 const FALL_DAMAGE = 1;
 const POSITIVE_EFFECTS = new Set(["magnet", "invincible", "double_score"]);
@@ -65,7 +64,7 @@ const CAT_STATS = Object.freeze({
 });
 
 function maxHealthFor(stats) {
-  return BASE_HEALTH + Math.round((stats.healthRating - 3) / 2);
+  return Math.max(1, Math.min(5, Math.round(Number(stats.healthRating) || 1)));
 }
 
 function validationError(reason, message) {

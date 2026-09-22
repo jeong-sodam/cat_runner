@@ -48,7 +48,7 @@ function getStatMultiplier(rating) {
 }
 
 function getMaxHealthForRating(rating) {
-  return 4 + Math.round((Math.max(1, Math.min(5, rating)) - 1) / 2);
+  return Math.max(1, Math.min(5, Math.round(Number(rating) || 1)));
 }
 
 const CAT_DEFINITIONS = Object.freeze({

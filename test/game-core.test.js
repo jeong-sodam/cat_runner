@@ -97,9 +97,10 @@ test("game state contains the six cats and valid lifecycle transitions", async (
   }
 
   assert.equal(modules.CAT_DEFINITIONS.chaos.englishName, "Mayhem");
-  assert.equal(modules.getMaxHealthForRating(1), 4);
-  assert.equal(modules.getMaxHealthForRating(3), 5);
-  assert.equal(modules.getMaxHealthForRating(5), 6);
+  assert.deepEqual(
+    [1, 2, 3, 4, 5].map((rating) => modules.getMaxHealthForRating(rating)),
+    [1, 2, 3, 4, 5],
+  );
   const ratingTotals = Object.values(modules.CAT_DEFINITIONS).map((cat) =>
     Object.values(cat.statRatings).reduce((sum, value) => sum + value, 0),
   );
@@ -107,8 +108,8 @@ test("game state contains the six cats and valid lifecycle transitions", async (
 
   const state = modules.createGameState({ catId: "black", seed: 123 });
   assert.equal(state.status, modules.GAME_STATUSES.READY);
-  assert.equal(state.maxHealth, 4);
-  assert.equal(state.health, 4);
+  assert.equal(state.maxHealth, 1);
+  assert.equal(state.health, 1);
   modules.transitionGameState(state, modules.GAME_STATUSES.RUNNING);
   modules.transitionGameState(state, modules.GAME_STATUSES.PAUSED);
   modules.transitionGameState(state, modules.GAME_STATUSES.RUNNING);
@@ -285,7 +286,7 @@ test("rhythm timers pause and gameover includes the rhythm summary once", async 
 
 test("falling skips jump physics, damages once, and recovers past the gap", async () => {
   const modules = await loadGameModules();
-  const harness = createHarness(modules, "black", {
+  const harness = createHarness(modules, "white", {
     onStep: (state) =>
       modules.resolveEntityCollisions(state, state.worldEntities, {
         now: state.elapsedMs,

@@ -170,7 +170,7 @@ test("malformed, oversized, invalid, and expired requests use stable safe errors
   const rhythmManifest = require("../src/game/server-pattern-manifest").createServerManifest(rhythmRun.seed);
   const rhythmObstacles = rhythmManifest.entities
     .filter((entity) => entity.type === "obstacle")
-    .slice(0, 4);
+    .slice(0, 1);
   const invalidRhythmEvents = [
     {
       seq: 0,
@@ -185,7 +185,7 @@ test("malformed, oversized, invalid, and expired requests use stable safe errors
       payload: { entityId: obstacle.id },
     })),
     {
-      seq: 5,
+      seq: rhythmObstacles.length + 1,
       type: "run_gameover",
       occurredAtMs: 60,
       payload: { rhythmAccuracy: 2 },

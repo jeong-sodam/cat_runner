@@ -4,6 +4,14 @@ const { createServerManifest } = require("../src/game/server-pattern-manifest");
 const { calculateVerifiedResult } = require("../src/services/run-validation-service");
 
 const EFFECTS = ["magnet", "invincible", "double_score", "slow_miss"];
+const HEALTH_BY_CAT = Object.freeze({
+  black: 1,
+  white: 3,
+  calico: 5,
+  cheese: 3,
+  mackerel: 3,
+  chaos: 3,
+});
 
 function effectFor(entity) {
   return EFFECTS[Math.floor(Math.min(0.999999, Math.max(0, entity.effectRoll)) * 4)];
@@ -17,7 +25,9 @@ function makeGameoverEvents(run, options = {}) {
   const manifest = createServerManifest(run.seed);
   const grass = options.grass || null;
   const mouse = options.mouse || manifest.entities.find((entity) => entity.type === "mouse");
-  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 4);
+  const obstacles = manifest.entities
+    .filter((entity) => entity.type === "obstacle")
+    .slice(0, HEALTH_BY_CAT[run.catId] || 1);
   const events = [{
     seq: 0,
     type: "run_started",
@@ -205,9 +215,9 @@ test("double score and invincibility are recalculated from grass rolls", () => {
   );
 
   const invincible = findSeedForEffect("invincible");
-  const invincibleRun = makeRun(invincible.seed);
+  const invincibleRun = makeRun(invincible.seed, "calico");
   const manifest = createServerManifest(invincible.seed);
-  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 5);
+  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 6);
   const invincibleGap = manifest.gaps[0];
   const events = [
     {
@@ -216,7 +226,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
       occurredAtMs: 0,
       payload: {
         seed: invincible.seed,
-        catId: "black",
+        catId: "calico",
         patternVersion: "cat-runner-patterns-v4",
       },
     },
@@ -228,7 +238,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
       occurredAtMs: index === 0 ? 200 : 6000 + index * 100,
       payload: { entityId: obstacle.id },
     })),
-    { seq: 8, type: "run_gameover", occurredAtMs: 6500, payload: {} },
+    { seq: 9, type: "run_gameover", occurredAtMs: 6500, payload: {} },
   ];
   assert.equal(calculateVerifiedResult(invincibleRun, events, { clientFinishedAt: 10000 }).health, 0);
 });
@@ -273,9 +283,9 @@ test("server v4 manifest mirrors client gap ids, widths, entities, and actions",
 });
 
 test("fall damage validates known gaps, ignores fake damage, and rejects replayed ids", () => {
-  const run = makeRun("fall-validation-seed");
+  const run = makeRun("fall-validation-seed", "white");
   const manifest = createServerManifest(run.seed);
-  const gaps = manifest.gaps.slice(0, 4);
+  const gaps = manifest.gaps.slice(0, 3);
   const events = [
     {
       seq: 0,
@@ -289,7 +299,7 @@ test("fall damage validates known gaps, ignores fake damage, and rejects replaye
       occurredAtMs: 100 + index * 100,
       payload: { gapId: gap.id, damage: 999, health: 999 },
     })),
-    { seq: 5, type: "run_gameover", occurredAtMs: 600, payload: {} },
+    { seq: 4, type: "run_gameover", occurredAtMs: 600, payload: {} },
   ];
 
   const result = calculateVerifiedResult(run, events, { clientFinishedAt: 5000 });

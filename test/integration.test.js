@@ -4,6 +4,14 @@ const { createServerManifest } = require("../src/game/server-pattern-manifest");
 const { createTestApp } = require("./helpers/fake-auth");
 
 const fixtures = new Set();
+const HEALTH_BY_CAT = Object.freeze({
+  black: 1,
+  white: 3,
+  calico: 5,
+  cheese: 3,
+  mackerel: 3,
+  chaos: 3,
+});
 
 async function startFixture(options = {}) {
   const fixture = await createTestApp(options);
@@ -21,7 +29,7 @@ async function completeRun(fixture, cookie, catId, distanceM) {
   assert.equal(created.status, 201);
   const run = await created.json();
   const manifest = createServerManifest(run.seed);
-  const collisionCount = catId === "black" ? 4 : 5;
+  const collisionCount = HEALTH_BY_CAT[catId] || 1;
   const obstacles = manifest.entities
     .filter((entity) => entity.type === "obstacle")
     .slice(0, collisionCount);
