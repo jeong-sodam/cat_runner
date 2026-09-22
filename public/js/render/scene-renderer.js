@@ -3,22 +3,93 @@ import { drawBackground } from "./draw-backgrounds.js";
 import { drawCat } from "./draw-cat.js";
 import { drawGrass, drawMouse, drawObstacle } from "./draw-entities.js";
 import { drawHud } from "./draw-hud.js";
+import { PALETTE } from "./color-palette.js";
+
+const CAT_POSE_FRAME = Object.freeze({
+  run: 0,
+  jump: 1,
+  slide: 2,
+});
+
+function getCatPose(player) {
+  if (player?.isSliding) {
+    return "slide";
+  }
+  return player?.isGrounded === false ? "jump" : "run";
+}
+
+function getSpriteDimensions(sprite) {
+  const width = Number(sprite?.naturalWidth || sprite?.width || 0);
+  const height = Number(sprite?.naturalHeight || sprite?.height || 0);
+  return { width, height };
+}
+
+function canDrawCatSprite(ctx, sprite) {
+  const { width, height } = getSpriteDimensions(sprite);
+  return typeof ctx.drawImage === "function" && width >= 3 && height > 0;
+}
+
+function drawTiledBackground(ctx, sprite, offset, alpha = 1) {
+  const { width, height } = getSpriteDimensions(sprite);
+  if (width <= 0 || height <= 0) {
+    return false;
+  }
+
+  const tileWidth = (width / height) * GAME_CONFIG.canvasHeight;
+  const normalizedOffset = ((offset % tileWidth) + tileWidth) % tileWidth;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  for (let x = -normalizedOffset; x < GAME_CONFIG.canvasWidth; x += tileWidth) {
+    ctx.drawImage(
+      sprite,
+      x,
+      0,
+      tileWidth,
+      GAME_CONFIG.canvasHeight,
+    );
+  }
+  ctx.restore();
+  return true;
+}
 
 function createSceneRenderer(ctx, assets = {}) {
   const assetProvider = {
     getCatSprite: assets.getCatSprite || (() => null),
+    getBackgroundSprite: assets.getBackgroundSprite || (() => null),
     getItemSprite: assets.getItemSprite || (() => null),
   };
 
   function drawBackgroundScene(state) {
+    const sprite = assetProvider.getBackgroundSprite(state.zoneId);
+    if (sprite && typeof ctx.drawImage === "function") {
+      const colors = PALETTE.backgrounds[state.zoneId] || PALETTE.backgrounds.home_day;
+      const hasFarLayer = drawTiledBackground(ctx, sprite, state.worldOffset * 0.18, 0.34);
+      if (hasFarLayer) {
+        ctx.save();
+        ctx.globalAlpha = 0.14;
+        ctx.fillStyle = colors.sky || colors.wall;
+        ctx.fillRect(0, 0, GAME_CONFIG.canvasWidth, GAME_CONFIG.canvasHeight);
+        ctx.restore();
+        drawTiledBackground(ctx, sprite, state.worldOffset, 0.9);
+        return;
+      }
+    }
     drawBackground(ctx, state);
   }
 
   function drawCatScene(state) {
     const sprite = assetProvider.getCatSprite(state.catId);
-    if (sprite && ctx.drawImage) {
+    const { width: spriteWidth, height: spriteHeight } = getSpriteDimensions(sprite);
+    if (canDrawCatSprite(ctx, sprite)) {
+      const pose = getCatPose(state.player);
+      const frameWidth = spriteWidth / 3;
+      const sourceX = frameWidth * CAT_POSE_FRAME[pose];
       ctx.drawImage(
         sprite,
+        sourceX,
+        0,
+        frameWidth,
+        spriteHeight,
         state.player.x,
         state.player.y,
         state.player.width,
@@ -26,7 +97,15 @@ function createSceneRenderer(ctx, assets = {}) {
       );
       return;
     }
-    drawCat(ctx, state.catId, state.player, state.activeEffect);
+    const animationFrame = Number.isFinite(state.animationFrame)
+      ? state.animationFrame
+      : Math.floor((state.elapsedMs || 0) / 120);
+    drawCat(
+      ctx,
+      state.catId,
+      { ...state.player, animationFrame },
+      state.activeEffect,
+    );
   }
 
   function drawEntity(entity, state) {
@@ -82,4 +161,4 @@ function createSceneRenderer(ctx, assets = {}) {
   };
 }
 
-export { createSceneRenderer };
+export { createSceneRenderer, getCatPose };

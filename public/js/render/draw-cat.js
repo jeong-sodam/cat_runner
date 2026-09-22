@@ -11,6 +11,10 @@ function drawCat(ctx, catId, player, effect = null) {
   const y = player.y;
 
   ctx.save();
+  ctx.fillStyle = "rgba(63, 43, 43, 0.18)";
+  ctx.beginPath();
+  ctx.ellipse(x + width / 2, y + height + 7, width * 0.34, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
   ctx.translate(x, y);
   ctx.scale(scaleX, scaleY);
 
@@ -26,6 +30,9 @@ function drawCat(ctx, catId, player, effect = null) {
   ctx.beginPath();
   ctx.ellipse(45, 70, 34, 34, 0, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = "rgba(63, 43, 43, 0.24)";
+  ctx.lineWidth = 3;
+  ctx.stroke();
 
   ctx.fillStyle = colors.body;
   ctx.beginPath();
@@ -37,6 +44,9 @@ function drawCat(ctx, catId, player, effect = null) {
   ctx.lineTo(78, 38);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = "rgba(63, 43, 43, 0.24)";
+  ctx.lineWidth = 3;
+  ctx.stroke();
 
   ctx.fillStyle = colors.patch;
   if (catId === "calico" || catId === "chaos" || catId === "mackerel") {
@@ -74,6 +84,9 @@ function drawCat(ctx, catId, player, effect = null) {
   const legOffset = player.isSliding ? 4 : (player.animationFrame || 0) % 2 ? 8 : 0;
   ctx.fillRect(22 + legOffset, 92, 13, 18);
   ctx.fillRect(56 - legOffset, 92, 13, 18);
+  ctx.fillStyle = "rgba(255, 250, 245, 0.55)";
+  ctx.fillRect(30, 58, 7, 4);
+  ctx.fillRect(56, 58, 7, 4);
 
   ctx.restore();
 }

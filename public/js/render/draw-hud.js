@@ -8,8 +8,17 @@ const EFFECT_LABELS = Object.freeze({
   slow_miss: "꽝",
 });
 
+function drawHudPanel(ctx, x, y, width, height) {
+  ctx.fillStyle = "rgba(255, 250, 245, 0.88)";
+  ctx.strokeStyle = "rgba(63, 43, 43, 0.34)";
+  ctx.lineWidth = 3;
+  ctx.fillRect(x, y, width, height);
+  ctx.strokeRect(x, y, width, height);
+}
+
 function drawHud(ctx, state) {
   ctx.save();
+  drawHudPanel(ctx, 18, 12, 190, 126);
   ctx.font = "bold 28px Trebuchet MS, sans-serif";
   ctx.textBaseline = "middle";
   ctx.fillStyle = PALETTE.ui.ink;
@@ -26,6 +35,7 @@ function drawHud(ctx, state) {
   ctx.fillText("♥".repeat(3 - hearts), 34 + hearts * 27, 120);
 
   if (state.activeEffect) {
+    drawHudPanel(ctx, 570, 14, 250, 92);
     const effectColor =
       PALETTE.effects[state.activeEffect.type] || PALETTE.ui.accent;
     ctx.fillStyle = effectColor;

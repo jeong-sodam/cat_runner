@@ -189,19 +189,83 @@ test("effect colors are distinct and HUD derives three hearts without mutating s
 test("injected sprites replace vector fallback through the asset provider", async () => {
   const modules = await loadRenderModules();
   const context = createFakeContext();
-  const sprite = { name: "cat-sprite" };
+  const sprite = { name: "cat-sprite", naturalWidth: 300, naturalHeight: 100 };
+  const backgroundSprite = {
+    name: "background-sprite",
+    naturalWidth: 1600,
+    naturalHeight: 900,
+  };
   const itemSprite = { name: "mouse-sprite" };
   const renderer = modules.createSceneRenderer(context, {
     getCatSprite: () => sprite,
+    getBackgroundSprite: () => backgroundSprite,
     getItemSprite: (type) => (type === "mouse" ? itemSprite : null),
   });
-  renderer.render(createState(modules));
+  const state = createState(modules);
+  state.worldOffset = 320;
+  renderer.render(state);
 
   const images = context.calls
     .filter((call) => call.name === "drawImage")
     .map((call) => call.args[0]);
   assert.ok(images.includes(sprite));
   assert.ok(images.includes(itemSprite));
+  assert.ok(images.includes(backgroundSprite));
+});
+
+test("loaded cat sheets use distinct run, jump, and slide source regions", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const sprite = { name: "cat-sheet", naturalWidth: 300, naturalHeight: 100 };
+  const renderer = modules.createSceneRenderer(context, {
+    getCatSprite: () => sprite,
+  });
+  const state = createState(modules);
+  const before = JSON.parse(JSON.stringify(state));
+
+  state.player.isGrounded = true;
+  state.player.isSliding = false;
+  renderer.drawCat(state);
+  state.player.isGrounded = false;
+  state.player.isSliding = false;
+  renderer.drawCat(state);
+  state.player.isGrounded = true;
+  state.player.isSliding = true;
+  renderer.drawCat(state);
+
+  const sourceX = context.calls
+    .filter((call) => call.name === "drawImage" && call.args[0] === sprite)
+    .map((call) => call.args[1]);
+  assert.deepEqual(sourceX, [0, 100, 200]);
+  assert.equal(modules.getCatPose({ isGrounded: true, isSliding: false }), "run");
+  assert.equal(modules.getCatPose({ isGrounded: false, isSliding: false }), "jump");
+  assert.equal(modules.getCatPose({ isGrounded: true, isSliding: true }), "slide");
+  state.player.isGrounded = before.player.isGrounded;
+  state.player.isSliding = before.player.isSliding;
+  assert.deepEqual(state, before);
+});
+
+test("loaded backgrounds repeat and move their far and near layers at different rates", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const backgroundSprite = {
+    name: "background-sprite",
+    naturalWidth: 1600,
+    naturalHeight: 900,
+  };
+  const renderer = modules.createSceneRenderer(context, {
+    getBackgroundSprite: () => backgroundSprite,
+  });
+  const state = createState(modules);
+  state.worldOffset = 320;
+  renderer.drawBackground(state);
+
+  const backgroundCalls = context.calls.filter(
+    (call) => call.name === "drawImage" && call.args[0] === backgroundSprite,
+  );
+  assert.equal(backgroundCalls.length, 4);
+  assert.notEqual(backgroundCalls[0].args[1], backgroundCalls[1].args[1]);
+  assert.equal(backgroundCalls[0].args.length, 5);
 });
 
 test("asset loader preloads once and keeps successful cat and background images", async () => {

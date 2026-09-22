@@ -1,6 +1,9 @@
 function drawObstacle(ctx, entity) {
   ctx.save();
   ctx.translate(entity.x, entity.y);
+  ctx.shadowColor = "rgba(63, 43, 43, 0.2)";
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 6;
   if (entity.variant === "pot") {
     ctx.fillStyle = "#d76c58";
     ctx.fillRect(8, 15, entity.width - 16, entity.height - 15);
@@ -34,12 +37,23 @@ function drawObstacle(ctx, entity) {
     ctx.lineTo(entity.width / 2, entity.height - 4);
     ctx.stroke();
   }
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(255, 250, 245, 0.45)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(8, 8);
+  ctx.lineTo(Math.max(8, entity.width - 8), 8);
+  ctx.stroke();
   ctx.restore();
 }
 
 function drawMouse(ctx, entity) {
   ctx.save();
   ctx.translate(entity.x, entity.y);
+  ctx.shadowColor = "rgba(63, 43, 43, 0.2)";
+  ctx.shadowBlur = 9;
+  ctx.shadowOffsetY = 5;
   ctx.fillStyle = "#9c6b55";
   ctx.beginPath();
   ctx.ellipse(entity.width / 2, entity.height / 2 + 5, entity.width / 2 - 4, entity.height / 2 - 8, 0, 0, Math.PI * 2);
@@ -60,12 +74,22 @@ function drawMouse(ctx, entity) {
   ctx.moveTo(entity.width, entity.height * 0.65);
   ctx.quadraticCurveTo(entity.width + 22, entity.height * 0.3, entity.width + 5, 0);
   ctx.stroke();
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(255, 244, 220, 0.65)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(entity.width * 0.38, entity.height * 0.52, 7, Math.PI, Math.PI * 1.7);
+  ctx.stroke();
   ctx.restore();
 }
 
 function drawGrass(ctx, entity) {
   ctx.save();
   ctx.translate(entity.x, entity.y);
+  ctx.shadowColor = "rgba(63, 43, 43, 0.16)";
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetY = 4;
   ctx.strokeStyle = "#4c9b58";
   ctx.lineWidth = 8;
   for (let index = 0; index < 5; index += 1) {
@@ -83,6 +107,13 @@ function drawGrass(ctx, entity) {
   ctx.beginPath();
   ctx.ellipse(entity.width / 2, entity.height, 22, 8, 0, 0, Math.PI * 2);
   ctx.fill();
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(255, 250, 245, 0.7)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(entity.width / 2, entity.height - 2, 15, 3, 0, 0, Math.PI * 2);
+  ctx.stroke();
   ctx.restore();
 }
 
