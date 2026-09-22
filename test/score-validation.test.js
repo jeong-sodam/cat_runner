@@ -22,7 +22,7 @@ function makeGameoverEvents(run, options = {}) {
     seq: 0,
     type: "run_started",
     occurredAtMs: 0,
-    payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v3" },
+    payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v4" },
   }];
   let seq = 1;
   if (grass) {
@@ -155,7 +155,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
       payload: {
         seed: invincible.seed,
         catId: "black",
-        patternVersion: "cat-runner-patterns-v3",
+        patternVersion: "cat-runner-patterns-v4",
       },
     },
     { seq: 1, type: "grass_collected", occurredAtMs: 100, payload: { entityId: invincible.grass.id, effectType: "invincible" } },
@@ -171,7 +171,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
   assert.equal(calculateVerifiedResult(invincibleRun, events, { clientFinishedAt: 10000 }).health, 0);
 });
 
-test("server v3 manifest mirrors client gap ids, widths, and entity ids", async () => {
+test("server v4 manifest mirrors client gap ids, widths, entities, and actions", async () => {
   const client = await import("../public/js/game/patterns.js");
   const seed = "manifest-parity-seed";
   const server = createServerManifest(seed, { patternCount: 32 });
@@ -196,6 +196,8 @@ test("server v3 manifest mirrors client gap ids, widths, and entity ids", async 
       clientPattern.entities.map((entity) => [entity.id, entity.width, entity.height]),
     );
     assert.deepEqual(serverPattern.requiredActions, clientPattern.requiredActions);
+    assert.deepEqual(serverPattern.actionCandidates, clientPattern.actionCandidates);
+    assert.deepEqual(serverPattern.advancedSafeMargin, clientPattern.advancedSafeMargin);
     for (const clientGap of clientPattern.gaps) {
       const serverGap = server.getGap(clientGap.id);
       assert.ok(serverGap);
@@ -217,7 +219,7 @@ test("fall damage validates known gaps, ignores fake damage, and rejects replaye
       seq: 0,
       type: "run_started",
       occurredAtMs: 0,
-      payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v3" },
+      payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v4" },
     },
     ...gaps.map((gap, index) => ({
       seq: index + 1,

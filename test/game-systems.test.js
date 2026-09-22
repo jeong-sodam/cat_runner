@@ -96,12 +96,15 @@ test("zone gates composite patterns and increases only outside obstacle density"
       );
     }
     if (pattern.id.startsWith("combo-")) {
-      assert.equal(pattern.entities.filter((entity) => entity.type === "obstacle").length, 3);
-      assert.deepEqual(pattern.requiredActions, modules.PATTERN_LIBRARY.find(
-        (definition) => definition.id === pattern.id,
-      ).requiredActions);
+      assert.equal(pattern.entities.filter((entity) => entity.type === "obstacle").length, 4);
+      assert.equal(pattern.requiredActions.length, 4);
+      assert.ok(pattern.requiredActions.every((action, index) =>
+        pattern.actionCandidates[index].includes(action),
+      ));
       const obstacles = pattern.entities.filter((entity) => entity.type === "obstacle");
-      assert.deepEqual(obstacles.slice(1).map((entity, index) => entity.x - obstacles[index].x), [130, 130]);
+      assert.ok(obstacles.slice(1).every((entity, index) =>
+        entity.x - (obstacles[index].x + obstacles[index].width) >= 120,
+      ));
     }
   }
 });

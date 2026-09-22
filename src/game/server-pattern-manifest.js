@@ -1,56 +1,48 @@
-const PATTERN_VERSION = "cat-runner-patterns-v3";
+const PATTERN_VERSION = "cat-runner-patterns-v4";
 const CANVAS_WIDTH = 1600;
 const PLAYER_WIDTH = 90;
 const GAP_MIN_WIDTH = 140;
 const GAP_MAX_WIDTH = 220;
 const GAP_SAFE_MARGIN = 200;
-const GAP_CHANCE = Object.freeze({
-  home_day: 0,
-  outside: 0.15,
-  home_night: 0.3,
-});
-const ZONE_ORDER = Object.freeze({
-  home_day: 0,
-  outside: 1,
-  home_night: 2,
-});
+const COMPOSITE_SAFE_MARGIN = 120;
+const GAP_CHANCE = Object.freeze({ home_day: 0, outside: 0.15, home_night: 0.3 });
+const ZONE_ORDER = Object.freeze({ home_day: 0, outside: 1, home_night: 2 });
+const GROUND_ACTIONS = Object.freeze(["jump"]);
+const LOW_ACTIONS = Object.freeze(["jump", "slide"]);
 
-const PATTERNS = [
-  {
-    id: "jump-basic",
-    width: 1200,
-    minGap: 240,
-    safePath: "jump",
-    gapAnchor: { x: 742 },
-    requiredActions: [],
+function pattern(definition) {
+  return Object.freeze({
+    ...definition,
+    gapAnchor: Object.freeze({ ...definition.gapAnchor }),
+    requiredActions: Object.freeze([...(definition.requiredActions || [])]),
+    actionCandidates: Object.freeze(
+      (definition.actionCandidates || []).map((actions) => Object.freeze([...actions])),
+    ),
+    entities: Object.freeze(definition.entities.map((entity) => Object.freeze({ ...entity }))),
+  });
+}
+
+const PATTERNS = Object.freeze([
+  pattern({
+    id: "jump-basic", width: 1200, minGap: 240, safePath: "jump", gapAnchor: { x: 742 },
     entities: [
       { type: "obstacle", x: 420, y: 620, width: 90, height: 80, variant: "box", collectible: false },
       { type: "mouse", x: 300, y: 610, width: 42, height: 42, variant: "toy", collectible: true },
       { type: "mouse", x: 500, y: 490, width: 42, height: 42, variant: "toy", collectible: true },
       { type: "obstacle", x: 180, y: 620, width: 90, height: 80, variant: "pot", collectible: false, minZone: "outside" },
     ],
-  },
-  {
-    id: "slide-basic",
-    width: 1400,
-    minGap: 240,
-    safePath: "slide",
-    gapAnchor: { x: 858 },
-    requiredActions: [],
+  }),
+  pattern({
+    id: "slide-basic", width: 1400, minGap: 240, safePath: "slide", gapAnchor: { x: 858 },
     entities: [
       { type: "obstacle", x: 420, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
       { type: "mouse", x: 280, y: 640, width: 42, height: 42, variant: "toy", collectible: true },
       { type: "grass", x: 610, y: 585, width: 48, height: 72, variant: "cat-grass", collectible: true },
       { type: "obstacle", x: 140, y: 620, width: 90, height: 80, variant: "box", collectible: false, minZone: "outside" },
     ],
-  },
-  {
-    id: "mixed-safe",
-    width: 1400,
-    minGap: 260,
-    safePath: "mixed",
-    gapAnchor: { x: 940 },
-    requiredActions: [],
+  }),
+  pattern({
+    id: "mixed-safe", width: 1400, minGap: 260, safePath: "mixed", gapAnchor: { x: 940 },
     entities: [
       { type: "obstacle", x: 390, y: 620, width: 90, height: 80, variant: "pot", collectible: false },
       { type: "obstacle", x: 610, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
@@ -58,92 +50,74 @@ const PATTERNS = [
       { type: "grass", x: 520, y: 600, width: 48, height: 72, variant: "cat-grass", collectible: true },
       { type: "obstacle", x: 120, y: 620, width: 90, height: 80, variant: "box", collectible: false, minZone: "outside" },
     ],
-  },
-  {
-    id: "combo-jump-slide-jump",
-    width: 1600,
-    minGap: 300,
-    minZone: "outside",
-    safePath: "mixed",
-    requiredActions: ["jump", "slide", "jump"],
-    gapAnchor: { x: 1100 },
+  }),
+  pattern({
+    id: "combo-jump-slide-jump", width: 2200, minGap: 300, minZone: "outside", safePath: "mixed",
+    advancedSafeMargin: COMPOSITE_SAFE_MARGIN, gapAnchor: { x: 1500 },
+    actionCandidates: [GROUND_ACTIONS, LOW_ACTIONS, GROUND_ACTIONS, LOW_ACTIONS],
     entities: [
-      { type: "obstacle", x: 300, y: 620, width: 90, height: 80, variant: "box", collectible: false },
-      { type: "obstacle", x: 430, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
-      { type: "obstacle", x: 560, y: 620, width: 90, height: 80, variant: "pot", collectible: false },
+      { type: "obstacle", x: 260, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 470, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
+      { type: "obstacle", x: 730, y: 620, width: 90, height: 80, variant: "pot", collectible: false },
+      { type: "obstacle", x: 940, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
     ],
-  },
-  {
-    id: "combo-slide-jump-slide",
-    width: 1600,
-    minGap: 300,
-    minZone: "outside",
-    safePath: "mixed",
-    requiredActions: ["slide", "jump", "slide"],
-    gapAnchor: { x: 1100 },
+  }),
+  pattern({
+    id: "combo-slide-jump-slide", width: 2200, minGap: 300, minZone: "outside", safePath: "mixed",
+    advancedSafeMargin: COMPOSITE_SAFE_MARGIN, gapAnchor: { x: 1500 },
+    actionCandidates: [LOW_ACTIONS, GROUND_ACTIONS, LOW_ACTIONS, GROUND_ACTIONS],
     entities: [
-      { type: "obstacle", x: 300, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
-      { type: "obstacle", x: 430, y: 620, width: 90, height: 80, variant: "box", collectible: false },
-      { type: "obstacle", x: 560, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
+      { type: "obstacle", x: 260, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
+      { type: "obstacle", x: 520, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 730, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
+      { type: "obstacle", x: 980, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
     ],
-  },
-  {
-    id: "combo-jump-jump-slide",
-    width: 1600,
-    minGap: 300,
-    minZone: "outside",
-    safePath: "mixed",
-    requiredActions: ["jump", "jump", "slide"],
-    gapAnchor: { x: 1100 },
+  }),
+  pattern({
+    id: "combo-jump-jump-slide", width: 2200, minGap: 300, minZone: "outside", safePath: "mixed",
+    advancedSafeMargin: COMPOSITE_SAFE_MARGIN, gapAnchor: { x: 1500 },
+    actionCandidates: [GROUND_ACTIONS, GROUND_ACTIONS, LOW_ACTIONS, GROUND_ACTIONS],
     entities: [
-      { type: "obstacle", x: 300, y: 620, width: 90, height: 80, variant: "pot", collectible: false },
-      { type: "obstacle", x: 430, y: 620, width: 90, height: 80, variant: "box", collectible: false },
-      { type: "obstacle", x: 560, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
+      { type: "obstacle", x: 260, y: 620, width: 90, height: 80, variant: "pot", collectible: false },
+      { type: "obstacle", x: 470, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 680, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
+      { type: "obstacle", x: 940, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
     ],
-  },
-  {
-    id: "combo-slide-slide-jump",
-    width: 1600,
-    minGap: 300,
-    minZone: "outside",
-    safePath: "mixed",
-    requiredActions: ["slide", "slide", "jump"],
-    gapAnchor: { x: 1100 },
+  }),
+  pattern({
+    id: "combo-slide-slide-jump", width: 2200, minGap: 300, minZone: "outside", safePath: "mixed",
+    advancedSafeMargin: COMPOSITE_SAFE_MARGIN, gapAnchor: { x: 1500 },
+    actionCandidates: [LOW_ACTIONS, LOW_ACTIONS, GROUND_ACTIONS, GROUND_ACTIONS],
     entities: [
-      { type: "obstacle", x: 300, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
-      { type: "obstacle", x: 430, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
-      { type: "obstacle", x: 560, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 260, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
+      { type: "obstacle", x: 520, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
+      { type: "obstacle", x: 780, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 990, y: 620, width: 90, height: 80, variant: "pot", collectible: false },
     ],
-  },
-  {
-    id: "combo-jump-slide-slide",
-    width: 1600,
-    minGap: 300,
-    minZone: "outside",
-    safePath: "mixed",
-    requiredActions: ["jump", "slide", "slide"],
-    gapAnchor: { x: 1100 },
+  }),
+  pattern({
+    id: "combo-jump-slide-slide", width: 2200, minGap: 300, minZone: "outside", safePath: "mixed",
+    advancedSafeMargin: COMPOSITE_SAFE_MARGIN, gapAnchor: { x: 1500 },
+    actionCandidates: [GROUND_ACTIONS, LOW_ACTIONS, LOW_ACTIONS, GROUND_ACTIONS],
     entities: [
-      { type: "obstacle", x: 300, y: 620, width: 90, height: 80, variant: "pot", collectible: false },
-      { type: "obstacle", x: 430, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
-      { type: "obstacle", x: 560, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
+      { type: "obstacle", x: 260, y: 620, width: 90, height: 80, variant: "pot", collectible: false },
+      { type: "obstacle", x: 470, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
+      { type: "obstacle", x: 730, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
+      { type: "obstacle", x: 980, y: 620, width: 90, height: 80, variant: "box", collectible: false },
     ],
-  },
-  {
-    id: "combo-slide-jump-jump",
-    width: 1600,
-    minGap: 300,
-    minZone: "outside",
-    safePath: "mixed",
-    requiredActions: ["slide", "jump", "jump"],
-    gapAnchor: { x: 1100 },
+  }),
+  pattern({
+    id: "combo-slide-jump-jump", width: 2200, minGap: 300, minZone: "outside", safePath: "mixed",
+    advancedSafeMargin: COMPOSITE_SAFE_MARGIN, gapAnchor: { x: 1500 },
+    actionCandidates: [LOW_ACTIONS, GROUND_ACTIONS, GROUND_ACTIONS, LOW_ACTIONS],
     entities: [
-      { type: "obstacle", x: 300, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
-      { type: "obstacle", x: 430, y: 620, width: 90, height: 80, variant: "box", collectible: false },
-      { type: "obstacle", x: 560, y: 620, width: 90, height: 80, variant: "pot", collectible: false },
+      { type: "obstacle", x: 260, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
+      { type: "obstacle", x: 510, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 720, y: 620, width: 90, height: 80, variant: "pot", collectible: false },
+      { type: "obstacle", x: 930, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
     ],
-  },
-];
+  }),
+]);
 
 function hashSeed(seed) {
   let hash = 2166136261;
@@ -171,18 +145,22 @@ function isZoneEnabled(minZone, zoneId) {
 }
 
 function isValidPattern(pattern) {
+  const safeMargin = pattern.advancedSafeMargin ?? GAP_SAFE_MARGIN;
   const maxGapEnd = pattern.gapAnchor.x + GAP_MAX_WIDTH;
-  return (
-    pattern.minGap >= PLAYER_WIDTH * 1.5 &&
+  const obstacles = pattern.entities.filter((entity) => entity.type === "obstacle");
+  return pattern.minGap >= PLAYER_WIDTH * 1.5 &&
     ["jump", "slide", "mixed"].includes(pattern.safePath) &&
-    pattern.gapAnchor.x >= GAP_SAFE_MARGIN &&
-    maxGapEnd <= pattern.width - GAP_SAFE_MARGIN &&
-    pattern.entities.every(
-      (entity) =>
-        entity.x + entity.width <= pattern.gapAnchor.x - GAP_SAFE_MARGIN ||
-        entity.x >= maxGapEnd + GAP_SAFE_MARGIN,
-    )
-  );
+    pattern.gapAnchor.x >= safeMargin &&
+    maxGapEnd <= pattern.width - safeMargin &&
+    pattern.entities.every((entity) =>
+      entity.x + entity.width <= pattern.gapAnchor.x - safeMargin ||
+      entity.x >= maxGapEnd + safeMargin,
+    ) &&
+    (pattern.advancedSafeMargin == null || obstacles.every((entity, index) => {
+      const next = obstacles[index + 1];
+      return !next || next.x - (entity.x + entity.width) >= safeMargin;
+    })) &&
+    pattern.entities.every((entity) => entity.x >= 0 && entity.width > 0 && entity.height > 0);
 }
 
 function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } = {}) {
@@ -194,63 +172,60 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
   const patterns = [];
 
   for (let patternIndex = 0; patternIndex < patternCount; patternIndex += 1) {
-    const candidates = PATTERNS.filter(
-      (pattern) =>
-        pattern.id !== previousId &&
-        isValidPattern(pattern) &&
-        isZoneEnabled(pattern.minZone, zoneId),
+    const candidates = PATTERNS.filter((candidate) =>
+      candidate.id !== previousId &&
+      isValidPattern(candidate) &&
+      isZoneEnabled(candidate.minZone, zoneId),
     );
-    const pattern = candidates[Math.floor(random() * candidates.length)];
+    const selected = candidates[Math.floor(random() * candidates.length)];
     const startX = nextPatternX;
     const gapRoll = random();
-    const gapWidth =
-      GAP_MIN_WIDTH +
-      Math.floor(random() * (GAP_MAX_WIDTH - GAP_MIN_WIDTH + 1));
+    const gapWidth = GAP_MIN_WIDTH + Math.floor(random() * (GAP_MAX_WIDTH - GAP_MIN_WIDTH + 1));
+    const requiredActions = (selected.actionCandidates || []).map((actions) =>
+      actions[Math.floor(random() * actions.length)],
+    );
     const gapChance = GAP_CHANCE[zoneId] ?? GAP_CHANCE.home_day;
-    const generated = pattern.entities
-      .map((entity, entityIndex) => ({
-        id: pattern.id + "-" + patternIndex + "-" + entityIndex,
-        patternId: pattern.id,
-        patternIndex,
-        type: entity.type,
-        x: startX + entity.x,
-        y: entity.y,
-        width: entity.width,
-        height: entity.height,
-        variant: entity.variant,
-        collectible: entity.collectible,
-        minZone: entity.minZone,
-        effectRoll: entity.type === "grass" ? random() : undefined,
-      }))
-      .filter((entity) => isZoneEnabled(entity.minZone, zoneId));
-    const generatedGaps =
-      gapRoll < gapChance
-        ? [{
-            id: `${pattern.id}-gap-${patternIndex}`,
-            patternId: pattern.id,
-            patternIndex,
-            x: startX + pattern.gapAnchor.x,
-            width: gapWidth,
-            minZone: "outside",
-          }]
-        : [];
+    const generated = selected.entities.map((entity, entityIndex) => ({
+      id: `${selected.id}-${patternIndex}-${entityIndex}`,
+      patternId: selected.id,
+      patternIndex,
+      type: entity.type,
+      x: startX + entity.x,
+      y: entity.y,
+      width: entity.width,
+      height: entity.height,
+      variant: entity.variant,
+      collectible: entity.collectible,
+      minZone: entity.minZone,
+      effectRoll: entity.type === "grass" ? random() : undefined,
+    })).filter((entity) => isZoneEnabled(entity.minZone, zoneId));
+    const generatedGaps = gapRoll < gapChance ? [{
+      id: `${selected.id}-gap-${patternIndex}`,
+      patternId: selected.id,
+      patternIndex,
+      x: startX + selected.gapAnchor.x,
+      width: gapWidth,
+      minZone: "outside",
+    }] : [];
 
     entities.push(...generated);
     gaps.push(...generatedGaps);
     patterns.push({
-      id: pattern.id,
-      width: pattern.width,
-      minGap: pattern.minGap,
-      safePath: pattern.safePath,
-      minZone: pattern.minZone,
-      requiredActions: [...(pattern.requiredActions || [])],
+      id: selected.id,
+      width: selected.width,
+      minGap: selected.minGap,
+      safePath: selected.safePath,
+      minZone: selected.minZone,
+      advancedSafeMargin: selected.advancedSafeMargin,
+      actionCandidates: (selected.actionCandidates || []).map((actions) => [...actions]),
+      requiredActions,
       patternIndex,
       startX,
       entities: generated,
       gaps: generatedGaps,
     });
-    nextPatternX = startX + pattern.width + pattern.minGap;
-    previousId = pattern.id;
+    nextPatternX = startX + selected.width + selected.minGap;
+    previousId = selected.id;
   }
 
   const entityById = new Map(entities.map((entity) => [entity.id, entity]));
@@ -269,4 +244,9 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
   };
 }
 
-module.exports = { PATTERN_VERSION, PATTERNS, createServerManifest };
+module.exports = {
+  COMPOSITE_SAFE_MARGIN,
+  PATTERN_VERSION,
+  PATTERNS,
+  createServerManifest,
+};

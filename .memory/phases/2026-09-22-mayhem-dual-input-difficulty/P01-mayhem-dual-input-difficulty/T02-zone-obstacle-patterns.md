@@ -1,6 +1,6 @@
 # Task: T02 zone 장애물 밀도와 seed 행동 시퀀스
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -85,3 +85,9 @@ Task: T02-zone-obstacle-patterns
 - [ ] 구현 완료
 - [ ] 검증 통과
 - commit: pending
+
+## Execution Record
+
+- Implementation complete
+- Validation passed: `npm.cmd test -- test/game-systems.test.js test/score-validation.test.js test/security-regression.test.js` (security regression passes when run alone; combined runner hit a Node native cleanup abort after all assertions passed)
+- Commit: pending

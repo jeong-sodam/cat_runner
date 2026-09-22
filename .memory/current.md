@@ -10,13 +10,13 @@
 
 ## Active Task
 
-[T02 구역·장애물 패턴](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/T02-zone-obstacle-patterns.md)
+[T03 osu 타겟 엔진](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/T03-rhythm-target-engine.md)
 
 ## Status
 
-- T01 고양이 능력치·체력·난이도 모델 완료
-- Validation: `npm.cmd test -- test/game-core.test.js test/game-systems.test.js test/score-validation.test.js`
+- T02 구역·장애물 패턴과 클라이언트/서버 v4 parity 완료
+- Validation: `npm.cmd test -- test/game-systems.test.js test/score-validation.test.js test/security-regression.test.js`
 
 ## Next Step (IMPORTANT)
 
-T02 청사진을 읽고 `public/js/game/patterns.js`와 `src/game/server-pattern-manifest.js`의 구역별 장애물 밀도, seed 기반 패턴, v4 action sequence parity를 구현한다.
+T03 청사진을 읽고 `public/js/game/rhythm-targets.js`, `public/js/game/state.js`, `public/js/game/scoring.js`, `src/services/run-validation-service.js`에 osu 스타일 타겟 상태·판정·보너스 점수 계약을 구현한다.
