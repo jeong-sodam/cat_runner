@@ -9,6 +9,14 @@ const RHYTHM_CONFIG = Object.freeze({
   accuracyMax: 1,
   scoreMultiplierMin: 0.8,
   scoreMultiplierMax: 1.2,
+  placement: Object.freeze({
+    left: 120,
+    right: 120,
+    top: 140,
+    bottom: 120,
+    minimumDistance: 240,
+    maxAttempts: 24,
+  }),
   zones: Object.freeze({
     home_day: Object.freeze({ activeCount: 1, difficultyScale: 1, spawnIntervalMs: 750 }),
     outside: Object.freeze({ activeCount: 2, difficultyScale: 1.5, spawnIntervalMs: 500 }),
@@ -33,6 +41,7 @@ function createRhythmState({ randomSource = Math.random } = {}) {
     bonusPoints: 0,
     nextTargetId: 1,
     lastSpawnAtMs: null,
+    lastSpawnPosition: null,
   };
   Object.defineProperty(state, "randomSource", {
     value: randomSource,
@@ -60,16 +69,53 @@ function targetRadius(config) {
   );
 }
 
+function placementBounds(radius, canvasWidth, canvasHeight) {
+  const width = Math.max(radius * 2, Number(canvasWidth) || 0);
+  const height = Math.max(radius * 2, Number(canvasHeight) || 0);
+  const preferredMinX = RHYTHM_CONFIG.placement.left;
+  const preferredMaxX = width - RHYTHM_CONFIG.placement.right;
+  const preferredMinY = RHYTHM_CONFIG.placement.top;
+  const preferredMaxY = height - RHYTHM_CONFIG.placement.bottom;
+  const drawableMinX = radius;
+  const drawableMaxX = width - radius;
+  const drawableMinY = radius;
+  const drawableMaxY = height - radius;
+
+  return {
+    minX: preferredMinX <= preferredMaxX ? preferredMinX : drawableMinX,
+    maxX: preferredMinX <= preferredMaxX ? preferredMaxX : drawableMaxX,
+    minY: preferredMinY <= preferredMaxY ? preferredMinY : drawableMinY,
+    maxY: preferredMinY <= preferredMaxY ? preferredMaxY : drawableMaxY,
+  };
+}
+
 function spawnTarget(state, { nowMs, config, canvasWidth, canvasHeight }) {
   const radius = targetRadius(config);
   const random = typeof state.randomSource === "function" ? state.randomSource : Math.random;
-  const width = Math.max(radius * 2, Number(canvasWidth) || 0);
-  const height = Math.max(radius * 2, Number(canvasHeight) || 0);
   const isBonus = random() < RHYTHM_CONFIG.bonusChance;
+  const bounds = placementBounds(radius, canvasWidth, canvasHeight);
+  const randomCoordinate = (minimum, maximum) => minimum + random() * (maximum - minimum);
+  let candidate = null;
+  for (let attempt = 0; attempt < RHYTHM_CONFIG.placement.maxAttempts; attempt += 1) {
+    const next = {
+      x: randomCoordinate(bounds.minX, bounds.maxX),
+      y: randomCoordinate(bounds.minY, bounds.maxY),
+    };
+    candidate = next;
+    if (
+      !state.lastSpawnPosition ||
+      Math.hypot(
+        next.x - state.lastSpawnPosition.x,
+        next.y - state.lastSpawnPosition.y,
+      ) >= RHYTHM_CONFIG.placement.minimumDistance
+    ) {
+      break;
+    }
+  }
   const target = {
     id: `rhythm-${state.nextTargetId++}`,
-    x: radius + random() * Math.max(0, width - radius * 2),
-    y: radius + random() * Math.max(0, height - radius * 2),
+    x: candidate.x,
+    y: candidate.y,
     radius,
     button: isBonus ? "secondary" : "primary",
     spawnedAtMs: nowMs,
@@ -77,6 +123,7 @@ function spawnTarget(state, { nowMs, config, canvasWidth, canvasHeight }) {
     status: "active",
   };
   state.targets.push(target);
+  state.lastSpawnPosition = { x: target.x, y: target.y };
   state.lastSpawnAtMs = nowMs;
   return target;
 }

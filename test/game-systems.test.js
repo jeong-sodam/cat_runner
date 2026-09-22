@@ -249,7 +249,7 @@ test("obstacle polygons follow each silhouette while collection entities keep AA
 
 test("obstacle collision damages once and invincibility prevents damage", async () => {
   const modules = await loadSystems();
-  const state = createState(modules);
+  const state = createState(modules, "white");
   const events = [];
   const obstacle = {
     id: "obstacle-1",
@@ -265,13 +265,13 @@ test("obstacle collision damages once and invincibility prevents damage", async 
   modules.resolveEntityCollisions(state, [obstacle], {
     onEvent: (event) => events.push(event),
   });
-  assert.equal(state.health, 3);
+  assert.equal(state.health, 2);
   assert.equal(events[0].type, "obstacle_collision");
 
   modules.resolveEntityCollisions(state, [obstacle], {
     onEvent: (event) => events.push(event),
   });
-  assert.equal(state.health, 3);
+  assert.equal(state.health, 2);
 
   const protectedObstacle = {
     ...obstacle,
@@ -283,7 +283,7 @@ test("obstacle collision damages once and invincibility prevents damage", async 
     now: 100,
     onEvent: (event) => events.push(event),
   });
-  assert.equal(state.health, 3);
+  assert.equal(state.health, 2);
   assert.equal(events.at(-1).payload.prevented, true);
 });
 
@@ -484,4 +484,46 @@ test("rhythm targets use bounded zone counts, expiry, button matching, and bonus
   assert.equal(summary.bonusPoints, 5);
   assert.equal(summary.accuracy, 1);
   assert.equal(summary.scoreMultiplier, 1.2);
+});
+
+test("rhythm targets stay in the HUD-safe area and space consecutive candidates", async () => {
+  const modules = await loadSystems();
+  const values = [0.1, 0.1, 0.1, 0.9, 0.9, 0.9];
+  const spaced = modules.createRhythmState({
+    randomSource: () => values.shift() ?? 0.5,
+  });
+  modules.updateRhythmTargets(spaced, {
+    nowMs: 0,
+    zoneId: "outside",
+    canvasWidth: 1600,
+    canvasHeight: 900,
+  });
+  assert.equal(spaced.targets.filter((target) => target.status === "active").length, 2);
+  for (const target of spaced.targets) {
+    assert.ok(target.x >= 120 && target.x <= 1480);
+    assert.ok(target.y >= 140 && target.y <= 780);
+  }
+  assert.ok(
+    Math.hypot(
+      spaced.targets[0].x - spaced.targets[1].x,
+      spaced.targets[0].y - spaced.targets[1].y,
+    ) >= 240,
+  );
+
+  const fallback = modules.createRhythmState({ randomSource: () => 0.5 });
+  modules.updateRhythmTargets(fallback, {
+    nowMs: 0,
+    zoneId: "home_day",
+    canvasWidth: 1600,
+    canvasHeight: 900,
+  });
+  modules.updateRhythmTargets(fallback, {
+    nowMs: 750,
+    zoneId: "outside",
+    canvasWidth: 1600,
+    canvasHeight: 900,
+  });
+  assert.equal(fallback.targets.filter((target) => target.status === "active").length, 2);
+  assert.ok(fallback.targets.every((target) => target.x >= 120 && target.x <= 1480));
+  assert.ok(fallback.targets.every((target) => target.y >= 140 && target.y <= 780));
 });

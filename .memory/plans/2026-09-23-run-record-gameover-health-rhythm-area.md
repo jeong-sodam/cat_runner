@@ -8,7 +8,7 @@ Align cat health cells with their 1–5 health ratings, make gameover records sa
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Implement health scaling, gameover record/resume behavior, and safe rhythm target placement with regression coverage. | [P01](../phases/2026-09-23-run-record-gameover-health-rhythm-area/P01-run-record-gameover-health-rhythm-area/phase.md) |
+| P01 | `done` | Implement health scaling, gameover record/resume behavior, and safe rhythm target placement with regression coverage. | [P01](../phases/2026-09-23-run-record-gameover-health-rhythm-area/P01-run-record-gameover-health-rhythm-area/phase.md) |
 
 ## Decision Source
 

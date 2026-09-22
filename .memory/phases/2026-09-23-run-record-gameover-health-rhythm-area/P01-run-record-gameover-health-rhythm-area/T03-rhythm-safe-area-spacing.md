@@ -1,6 +1,6 @@
 # Task: T03 Rhythm Safe Area and Spacing
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -45,10 +45,10 @@ Keep osu-style targets away from the score/health HUD and screen edges, prevent 
 
 ## Acceptance Criteria
 
-- [ ] No rhythm target center appears in the HUD/top exclusion or outside the configured side/bottom margins.
-- [ ] Consecutive target centers are at least 240px apart whenever a valid candidate exists.
-- [ ] Fallback placement remains inside the safe rectangle and never stalls spawning.
-- [ ] Zone active counts and primary/secondary target scoring behavior remain unchanged.
+- [x] No rhythm target center appears in the HUD/top exclusion or outside the configured side/bottom margins.
+- [x] Consecutive target centers are at least 240px apart whenever a valid candidate exists.
+- [x] Fallback placement remains inside the safe rectangle and never stalls spawning.
+- [x] Zone active counts and primary/secondary target scoring behavior remain unchanged.
 
 ## Validation
 
@@ -70,6 +70,13 @@ Task: T03-rhythm-safe-area-spacing
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
+
+## Execution Record
+
+- Added a frozen HUD-safe placement rectangle (`120..1480`, `140..780`) and a 240px Euclidean spacing preference.
+- Stored the last spawn center and bounded candidate search to 24 attempts; fallback always selects the final candidate within the valid placement bounds.
+- Preserved zone active counts, target radius, primary/secondary button behavior, expiry, and scoring.
+- Validation: `npm.cmd test -- test/game-systems.test.js test/game-core.test.js test/render.test.js` (38 passed); `git diff --check` passed.
