@@ -6,6 +6,7 @@ import { resolveEntityCollisions } from "../game/collision.js";
 import { createGameState } from "../game/state.js";
 import { updateWorldEntities } from "../game/world.js";
 import { createCanvasViewport } from "../render/canvas-viewport.js";
+import { createAssetLoader } from "../render/asset-loader.js";
 import { createSceneRenderer } from "../render/scene-renderer.js";
 import { createPauseController } from "../ui/pause-controller.js";
 import { createSettingsPanel } from "../ui/settings-panel.js";
@@ -37,6 +38,7 @@ function createAppController(options = {}) {
   const screenRoot = options.screenRoot || documentRef?.getElementById?.("screen-root");
   const canvas = options.canvas || documentRef?.getElementById?.("game-canvas");
   const gameShell = options.gameShell || documentRef?.getElementById?.("game-shell");
+  const assetLoader = options.assetLoader || createAssetLoader();
   const state = {
     screen: SCREEN_NAMES.LOADING,
     user: null,
@@ -365,7 +367,7 @@ function createAppController(options = {}) {
 
     const context = canvas?.getContext?.("2d");
     const viewport = canvas ? createCanvasViewport(canvas) : null;
-    const renderer = context ? createSceneRenderer(context) : null;
+    const renderer = context ? createSceneRenderer(context, assetLoader) : null;
     const patternStream = createPatternStream(seed);
     audioManager = options.audioManagerFactory
       ? options.audioManagerFactory()
@@ -419,6 +421,11 @@ function createAppController(options = {}) {
   async function bootstrap() {
     setScreen(SCREEN_NAMES.LOADING);
     renderLoadingScreen(screenRoot, { documentRef });
+    try {
+      await assetLoader.preload?.();
+    } catch {
+      // Preloading is optional: the renderer falls back to code-drawn scenes.
+    }
     if (typeof fetchFn !== "function") {
       showAuthConfigError();
       return state;

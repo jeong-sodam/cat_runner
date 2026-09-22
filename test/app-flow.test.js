@@ -167,6 +167,27 @@ test("guest mode adds a local play button to the auth screen", async () => {
   assert.match(textOf(screen), /게스트로 플레이/);
 });
 
+test("bootstrap continues to the sign-in screen when asset preloading fails", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  let preloadCalls = 0;
+  const controller = createAppController({
+    documentRef,
+    assetLoader: {
+      preload: async () => {
+        preloadCalls += 1;
+        throw new Error("asset unavailable");
+      },
+    },
+    fetchFn: async () => jsonResponse({ authenticated: false }),
+  });
+
+  await controller.bootstrap();
+
+  assert.equal(preloadCalls, 1);
+  assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
+});
+
 test("authenticated users without a nickname receive nickname onboarding", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();

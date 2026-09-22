@@ -1,15 +1,27 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const { test } = require("node:test");
 
 async function loadRenderModules() {
-  const [constants, stateModule, palette, viewport, renderer] = await Promise.all([
+  const [constants, stateModule, palette, viewport, renderer, manifest, loader] = await Promise.all([
     import("../public/js/game/constants.js"),
     import("../public/js/game/state.js"),
     import("../public/js/render/color-palette.js"),
     import("../public/js/render/canvas-viewport.js"),
     import("../public/js/render/scene-renderer.js"),
+    import("../public/js/render/asset-manifest.js"),
+    import("../public/js/render/asset-loader.js"),
   ]);
-  return { ...constants, ...stateModule, ...palette, ...viewport, ...renderer };
+  return {
+    ...constants,
+    ...stateModule,
+    ...palette,
+    ...viewport,
+    ...renderer,
+    ...manifest,
+    ...loader,
+  };
 }
 
 function createFakeContext() {
@@ -78,6 +90,26 @@ function createState(modules, catId = "black", zoneId = "home_day") {
     },
   ];
   return state;
+}
+
+function createFakeImageCtor(failingSources = new Set()) {
+  const createdSources = [];
+  class FakeImage {
+    set src(value) {
+      this._src = value;
+      createdSources.push(value);
+      if (failingSources.has(value)) {
+        this.onerror?.(new Error("missing"));
+      } else {
+        this.onload?.();
+      }
+    }
+
+    get src() {
+      return this._src;
+    }
+  }
+  return { FakeImage, createdSources };
 }
 
 test("viewport fixes logical dimensions and maps letterboxed coordinates", async () => {
@@ -170,4 +202,67 @@ test("injected sprites replace vector fallback through the asset provider", asyn
     .map((call) => call.args[0]);
   assert.ok(images.includes(sprite));
   assert.ok(images.includes(itemSprite));
+});
+
+test("asset loader preloads once and keeps successful cat and background images", async () => {
+  const modules = await loadRenderModules();
+  const { FakeImage, createdSources } = createFakeImageCtor();
+  const manifest = {
+    cats: { black: { src: "/cat-black.png" } },
+    backgrounds: { home_day: { src: "/home-day.png" } },
+  };
+  const loader = modules.createAssetLoader({ ImageCtor: FakeImage, manifest });
+
+  const first = loader.preload();
+  const second = loader.preload();
+  assert.equal(first, second);
+  await first;
+
+  assert.deepEqual(createdSources, ["/cat-black.png", "/home-day.png"]);
+  assert.equal(loader.getState().status, "ready");
+  assert.ok(loader.getCatSprite("black"));
+  assert.ok(loader.getBackgroundSprite("home_day"));
+  assert.equal(loader.getCatPreviewSrc("black"), "/cat-black.png");
+  assert.equal(loader.getCatPreviewSrc("unknown"), null);
+});
+
+test("asset loader records missing or unsupported images and returns fallback nulls", async () => {
+  const modules = await loadRenderModules();
+  const manifest = {
+    cats: { black: { src: "/cat-black.png" } },
+    backgrounds: { home_day: { src: "/home-day.png" } },
+  };
+  const failing = createFakeImageCtor(new Set(["/home-day.png"]));
+  const loader = modules.createAssetLoader({ ImageCtor: failing.FakeImage, manifest });
+
+  await loader.preload();
+  assert.ok(loader.getCatSprite("black"));
+  assert.equal(loader.getBackgroundSprite("home_day"), null);
+  assert.ok(loader.getState().failures.has("backgrounds:home_day"));
+
+  const unsupported = modules.createAssetLoader({ ImageCtor: null, manifest });
+  await unsupported.preload();
+  assert.equal(unsupported.getCatSprite("black"), null);
+  assert.ok(unsupported.getState().failures.has("cats:black"));
+});
+
+test("storybook asset manifest covers every playable cat and game zone", async () => {
+  const modules = await loadRenderModules();
+  const catIds = ["black", "white", "calico", "cheese", "mackerel", "chaos"];
+  const zoneIds = ["home_day", "outside", "home_night"];
+
+  assert.deepEqual(modules.CAT_POSES, ["run", "jump", "slide"]);
+  assert.deepEqual(Object.keys(modules.CAT_ASSET_MANIFEST), catIds);
+  assert.deepEqual(Object.keys(modules.BACKGROUND_ASSET_MANIFEST), zoneIds);
+  for (const definition of Object.values(modules.CAT_ASSET_MANIFEST)) {
+    assert.equal(definition.frameCount, 3);
+    assert.ok(definition.frameWidth > 0);
+    assert.ok(definition.frameHeight > 0);
+    assert.ok(fs.existsSync(path.join(__dirname, "..", "public", definition.src.slice(1))));
+  }
+  for (const definition of Object.values(modules.BACKGROUND_ASSET_MANIFEST)) {
+    assert.ok(definition.width > 0);
+    assert.ok(definition.height > 0);
+    assert.ok(fs.existsSync(path.join(__dirname, "..", "public", definition.src.slice(1))));
+  }
 });
