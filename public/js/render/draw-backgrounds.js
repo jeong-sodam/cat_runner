@@ -110,6 +110,24 @@ function drawHomeNight(ctx, state) {
   drawLivingRoom(ctx, state, true);
 }
 
+function drawGap(ctx, gap, state) {
+  const x = gap.x - state.worldOffset;
+  const y = GAME_CONFIG.groundY - 115;
+  ctx.save();
+  ctx.fillStyle = "#171522";
+  ctx.fillRect(x, y, gap.width, GAME_CONFIG.canvasHeight - y);
+  ctx.fillStyle = "#332b3b";
+  ctx.fillRect(x - 8, y, 8, GAME_CONFIG.canvasHeight - y);
+  ctx.fillRect(x + gap.width, y, 8, GAME_CONFIG.canvasHeight - y);
+  ctx.strokeStyle = "#0d0b14";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + gap.width, y);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawBackground(ctx, state) {
   if (state.zoneId === "outside") {
     return drawOutside(ctx, state);
@@ -122,6 +140,7 @@ function drawBackground(ctx, state) {
 
 export {
   drawBackground,
+  drawGap,
   drawHomeDay,
   drawHomeNight,
   drawOutside,

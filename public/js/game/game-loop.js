@@ -54,10 +54,15 @@ function createGameLoop({
     const cat = CAT_DEFINITIONS[state.catId];
     updateActiveEffect(state, state.elapsedMs, state.worldEntities);
     const speed = difficultyMultiplier(state.distanceM, state.zoneId);
-    const isSliding = input.isSliding() && state.player.isGrounded;
+    const isSliding =
+      input.isSliding() && state.player.isGrounded && !state.player.isFalling;
     const jumpPressed = input.consumeJumpPress();
 
-    if (jumpPressed && state.player.jumpsUsed < GAME_CONFIG.maxJumps) {
+    if (
+      !state.player.isFalling &&
+      jumpPressed &&
+      state.player.jumpsUsed < GAME_CONFIG.maxJumps
+    ) {
       state.player.height = GAME_CONFIG.playerHeight;
       state.player.y = GAME_CONFIG.groundY - state.player.height;
       state.player.vy = GAME_CONFIG.jumpVelocity * cat.jumpMultiplier;
@@ -67,7 +72,12 @@ function createGameLoop({
       emit("player_jump", { jumpsUsed: state.player.jumpsUsed });
     }
 
-    if (!state.player.isGrounded) {
+    if (state.player.isFalling) {
+      state.player.fallVy += GAME_CONFIG.gravity * dt;
+      state.player.y += state.player.fallVy * dt;
+      state.player.height = GAME_CONFIG.playerHeight;
+      state.player.isSliding = false;
+    } else if (!state.player.isGrounded) {
       state.player.vy += GAME_CONFIG.gravity * dt;
       state.player.y += state.player.vy * dt;
       state.player.height = GAME_CONFIG.playerHeight;
@@ -101,6 +111,25 @@ function createGameLoop({
     state.worldOffset += state.worldSpeed * dt;
     state.elapsedMs += stepMs;
     state.distanceM = state.worldOffset / GAME_CONFIG.pixelsPerMeter;
+
+    if (state.player.isFalling) {
+      const fallGap = (state.worldGaps || []).find(
+        (gap) => gap.id === state.player.fallGapId,
+      );
+      if (
+        fallGap &&
+        fallGap.x + fallGap.width - state.worldOffset <= state.player.x
+      ) {
+        state.player.y = GAME_CONFIG.groundY - state.player.height;
+        state.player.fallVy = 0;
+        state.player.fallGapId = null;
+        state.player.isFalling = false;
+        state.player.isGrounded = true;
+        state.player.jumpsUsed = 0;
+        state.player.fallRecoveryUntilMs =
+          state.elapsedMs + GAME_CONFIG.fallRecoveryMs;
+      }
+    }
 
     const checkpoint = Math.floor(state.distanceM);
     while (lastCheckpoint < checkpoint) {

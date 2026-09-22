@@ -163,6 +163,26 @@ test("renderer draws every entity variant and returns a pause hit area", async (
   );
 });
 
+test("renderer draws active floor gaps behind world entities", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const renderer = modules.createSceneRenderer(context);
+  const state = createState(modules);
+  state.worldGaps = [{ id: "gap-render", x: 320, width: 180 }];
+
+  renderer.render(state);
+
+  assert.ok(
+    context.calls.some(
+      (call) =>
+        call.name === "fillRect" &&
+        call.args[0] === 320 &&
+        call.args[1] === modules.GAME_CONFIG.groundY - 115 &&
+        call.args[2] === 180,
+    ),
+  );
+});
+
 test("effect colors are distinct and HUD derives three hearts without mutating state", async () => {
   const modules = await loadRenderModules();
   const colors = Object.values(modules.PALETTE.effects);

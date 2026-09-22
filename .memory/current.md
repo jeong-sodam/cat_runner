@@ -10,13 +10,13 @@
 
 ## Active Task
 
-[T02 polygon collision and fall gameplay](./phases/2026-09-22-obstacle-item-fall-hazard/P01-assets-collision-fall/T02-polygon-collision-fall-gameplay.md)
+[T03 server fall event validation](./phases/2026-09-22-obstacle-item-fall-hazard/P01-assets-collision-fall/T03-server-fall-event-validation.md)
 
 ## Status
 
-- T01 completed: item PNG assets and rendering fallbacks
-- Validation passed: render and app-flow test suites
+- T02 completed: polygon obstacle hitboxes, deterministic floor gaps, fall damage, and recovery
+- Validation passed: 29 core tests; clean-auth regression passed 70 tests, with the full runner's native cleanup abort isolated to the multi-file server test process
 
 ## Next Step (IMPORTANT)
 
-Execute T02: implement obstacle polygon hitboxes, deterministic floor gaps, fall damage, and recovery.
+Execute T03: add the server pattern manifest and `fall_damage` event validation.

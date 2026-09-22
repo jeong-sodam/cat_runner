@@ -55,6 +55,46 @@ test("same seed yields stable patterns, grass rolls, and no adjacent repeat", as
   assert.deepEqual(first, second);
 });
 
+test("gaps are deterministic, zone-gated, bounded, and safely separated", async () => {
+  const modules = await loadSystems();
+  const outsideFirst = modules.createPatternStream("gap-seed");
+  const outsideSecond = modules.createPatternStream("gap-seed");
+  const outside = Array.from({ length: 500 }, () => outsideFirst.next("outside"));
+  const outsideAgain = Array.from({ length: 500 }, () => outsideSecond.next("outside"));
+  const nightStream = modules.createPatternStream("gap-seed");
+  const night = Array.from({ length: 500 }, () => nightStream.next("home_night"));
+  const homeDayStream = modules.createPatternStream("gap-seed");
+  const homeDay = Array.from({ length: 50 }, () => homeDayStream.next("home_day"));
+
+  assert.deepEqual(outside, outsideAgain);
+  assert.ok(outside.some((pattern) => pattern.gaps.length > 0));
+  assert.equal(homeDay.every((pattern) => pattern.gaps.length === 0), true);
+  const widths = outside
+    .flatMap((pattern) => pattern.gaps)
+    .map((gap) => gap.width);
+  assert.ok(widths.every((width) =>
+    width >= modules.GAME_CONFIG.gapMinWidth &&
+    width <= modules.GAME_CONFIG.gapMaxWidth,
+  ));
+  assert.ok(widths.length > 40 && widths.length < 110);
+  assert.ok(night.some((pattern) => pattern.gaps.length > 0));
+
+  for (const pattern of outside) {
+    for (const gap of pattern.gaps) {
+      assert.ok(gap.x >= modules.GAME_CONFIG.gapSafeMargin);
+      assert.ok(
+        pattern.width - (gap.x + gap.width) >= modules.GAME_CONFIG.gapSafeMargin,
+      );
+      for (const entity of pattern.entities) {
+        const separated =
+          entity.x + entity.width <= gap.x - modules.GAME_CONFIG.gapSafeMargin ||
+          entity.x >= gap.x + gap.width + modules.GAME_CONFIG.gapSafeMargin;
+        assert.equal(separated, true);
+      }
+    }
+  }
+});
+
 test("world spawns safe logical entities and removes entities behind the player", async () => {
   const modules = await loadSystems();
   const state = createState(modules);
@@ -112,6 +152,44 @@ test("jump and slide paths are both valid ways to avoid their obstacle shape", a
   );
 });
 
+test("obstacle polygons follow each silhouette while collection entities keep AABB checks", async () => {
+  const modules = await loadSystems();
+  const state = createState(modules);
+  const variants = ["box", "pot", "fence", "yarn"];
+
+  for (const variant of variants) {
+    const obstacle = {
+      id: "polygon-" + variant,
+      type: "obstacle",
+      variant,
+      x: state.worldOffset + state.player.x,
+      y: variant === "fence" ? 560 : 620,
+      width: variant === "fence" ? 140 : 90,
+      height: variant === "fence" ? 40 : 80,
+    };
+    assert.ok(modules.getObstaclePolygons(obstacle).length > 0);
+    assert.equal(modules.obstacleIntersectsPlayer(obstacle, state), true);
+    const outside = {
+      ...obstacle,
+      x: obstacle.x - state.player.width - obstacle.width - 20,
+    };
+    assert.equal(modules.obstacleIntersectsPlayer(outside, state), false);
+  }
+
+  const mouse = {
+    id: "aabb-mouse",
+    type: "mouse",
+    x: state.player.x,
+    y: 610,
+    width: 42,
+    height: 42,
+  };
+  assert.equal(
+    modules.intersects(modules.getPlayerHitbox(state), modules.getEntityHitbox(mouse, state)),
+    true,
+  );
+});
+
 test("obstacle collision damages once and invincibility prevents damage", async () => {
   const modules = await loadSystems();
   const state = createState(modules);
@@ -150,6 +228,24 @@ test("obstacle collision damages once and invincibility prevents damage", async 
   });
   assert.equal(state.health, 17);
   assert.equal(events.at(-1).payload.prevented, true);
+});
+
+test("fall damage still emits while invincibility prevents the health loss", async () => {
+  const modules = await loadSystems();
+  const state = createState(modules);
+  const events = [];
+  state.worldGaps = [{ id: "invincible-gap", x: state.player.x, width: 160 }];
+  const healthBefore = state.health;
+  modules.applyEffect(state, modules.EFFECT_TYPES.INVINCIBLE, 0);
+
+  modules.resolveEntityCollisions(state, [], {
+    now: 100,
+    onEvent: (event) => events.push(event),
+  });
+
+  assert.equal(state.player.isFalling, true);
+  assert.equal(state.health, healthBefore);
+  assert.deepEqual(events, [{ type: "fall_damage", payload: { gapId: "invincible-gap" } }]);
 });
 
 test("mouse, grass effects, magnet, slow miss, and replacement emit distinct outcomes", async () => {

@@ -2,13 +2,20 @@ const assert = require("node:assert/strict");
 const { test } = require("node:test");
 
 async function loadGameModules() {
-  const [constants, stateModule, inputModule, loopModule] = await Promise.all([
+  const [constants, stateModule, inputModule, loopModule, collision] = await Promise.all([
     import("../public/js/game/constants.js"),
     import("../public/js/game/state.js"),
     import("../public/js/game/input-controller.js"),
     import("../public/js/game/game-loop.js"),
+    import("../public/js/game/collision.js"),
   ]);
-  return { ...constants, ...stateModule, ...inputModule, ...loopModule };
+  return {
+    ...constants,
+    ...stateModule,
+    ...inputModule,
+    ...loopModule,
+    ...collision,
+  };
 }
 
 class FakeEventTarget {
@@ -42,7 +49,7 @@ class FakeEventTarget {
   }
 }
 
-function createHarness(modules, catId = "black") {
+function createHarness(modules, catId = "black", options = {}) {
   const target = new FakeEventTarget();
   const canvas = { ownerDocument: { defaultView: target } };
   const state = modules.createGameState({ catId, seed: "fixed-seed" });
@@ -53,6 +60,7 @@ function createHarness(modules, catId = "black") {
     state,
     input,
     onEvent: (event) => events.push(event),
+    onStep: options.onStep,
     clock: {
       now: () => 0,
       requestFrame: () => 1,
@@ -183,6 +191,63 @@ test("health zero transitions to gameover and emits a run event", async () => {
     harness.events.filter((event) => event.type === "run_gameover").length,
     1,
   );
+  harness.destroy();
+});
+
+test("falling skips jump physics, damages once, and recovers past the gap", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules, "black", {
+    onStep: (state) =>
+      modules.resolveEntityCollisions(state, state.worldEntities, {
+        now: state.elapsedMs,
+        onEvent: (event) => harness.events.push(event),
+      }),
+  });
+  harness.state.worldGaps = [{ id: "gap-1", x: 200, width: 180 }];
+  const initialHealth = harness.state.health;
+  const initialWorldOffset = harness.state.worldOffset;
+
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  assert.equal(harness.state.player.isFalling, true);
+  assert.equal(harness.state.player.isSliding, false);
+  assert.equal(harness.state.player.jumpsUsed, 0);
+  assert.equal(harness.state.health, initialHealth - modules.GAME_CONFIG.fallDamage);
+  assert.equal(
+    harness.events.filter((event) => event.type === "fall_damage").length,
+    1,
+  );
+  assert.deepEqual(
+    harness.events.find((event) => event.type === "fall_damage").payload,
+    { gapId: "gap-1" },
+  );
+
+  for (let frame = 0; frame < 120; frame += 1) {
+    harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  }
+
+  assert.equal(harness.state.player.isFalling, false);
+  assert.equal(harness.state.player.isGrounded, true);
+  assert.equal(harness.state.player.fallGapId, null);
+  assert.ok(harness.state.player.fallRecoveryUntilMs > harness.state.elapsedMs);
+  assert.ok(harness.state.worldOffset > initialWorldOffset);
+
+  const recoveryObstacle = {
+    id: "recovery-obstacle",
+    type: "obstacle",
+    variant: "box",
+    x: harness.state.worldOffset + harness.state.player.x,
+    y: modules.GAME_CONFIG.groundY - 80,
+    width: 90,
+    height: 80,
+    hitByPlayer: false,
+    collected: false,
+  };
+  modules.resolveEntityCollisions(harness.state, [recoveryObstacle], {
+    now: harness.state.elapsedMs,
+    onEvent: (event) => harness.events.push(event),
+  });
+  assert.equal(harness.state.health, initialHealth - modules.GAME_CONFIG.fallDamage);
+  assert.equal(recoveryObstacle.hitByPlayer, true);
   harness.destroy();
 });
 

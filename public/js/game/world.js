@@ -27,12 +27,19 @@ function spawnNextPattern(state, patternStream) {
     patternId: pattern.id,
     patternIndex: pattern.patternIndex,
   }));
+  const gaps = (pattern.gaps || []).map((gap) => ({
+    ...gap,
+    x: startX + gap.x,
+    patternId: pattern.id,
+    patternIndex: pattern.patternIndex,
+  }));
   state.worldEntities.push(...entities);
+  state.worldGaps.push(...gaps);
   state.nextPatternX = startX + pattern.width + pattern.minGap;
   state.lastPatternId = pattern.id;
   state.patternIndex = pattern.patternIndex + 1;
 
-  return { ...pattern, startX, entities };
+  return { ...pattern, startX, entities, gaps };
 }
 
 function updateWorldEntities(state, patternStream) {
@@ -45,6 +52,9 @@ function updateWorldEntities(state, patternStream) {
 
   state.worldEntities = state.worldEntities.filter(
     (entity) => entity.x - state.worldOffset > state.player.x - 200,
+  );
+  state.worldGaps = state.worldGaps.filter(
+    (gap) => gap.x + gap.width - state.worldOffset > state.player.x - 200,
   );
   return state.worldEntities;
 }

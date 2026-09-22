@@ -1,5 +1,5 @@
 import { GAME_CONFIG } from "../game/constants.js";
-import { drawBackground } from "./draw-backgrounds.js";
+import { drawBackground, drawGap } from "./draw-backgrounds.js";
 import { drawCat } from "./draw-cat.js";
 import { drawGrass, drawMouse, drawObstacle } from "./draw-entities.js";
 import { drawHud } from "./draw-hud.js";
@@ -155,6 +155,9 @@ function createSceneRenderer(ctx, assets = {}) {
   function render(state, world = state.worldEntities || []) {
     ctx.clearRect(0, 0, GAME_CONFIG.canvasWidth, GAME_CONFIG.canvasHeight);
     drawBackgroundScene(state);
+    for (const gap of state.worldGaps || []) {
+      drawGap(ctx, gap, state);
+    }
     for (const entity of [...world].sort((first, second) => first.x - second.x)) {
       if (entity.collected) {
         continue;

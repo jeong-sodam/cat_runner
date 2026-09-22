@@ -1,6 +1,6 @@
 # Task: T02 다각형 충돌 및 낙사 게임플레이
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -83,7 +83,6 @@ Task: T02-polygon-collision-fall-gameplay
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
-

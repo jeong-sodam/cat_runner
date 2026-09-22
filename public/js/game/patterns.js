@@ -24,9 +24,10 @@ const ZONE_DEFINITIONS = Object.freeze({
 const PATTERN_LIBRARY = Object.freeze([
   Object.freeze({
     id: "jump-basic",
-    width: 640,
+    width: 1200,
     minGap: 240,
     safePath: "jump",
+    gapAnchor: Object.freeze({ x: 742 }),
     entities: Object.freeze([
       Object.freeze({
         type: "obstacle",
@@ -59,9 +60,10 @@ const PATTERN_LIBRARY = Object.freeze([
   }),
   Object.freeze({
     id: "slide-basic",
-    width: 680,
+    width: 1400,
     minGap: 240,
     safePath: "slide",
+    gapAnchor: Object.freeze({ x: 858 }),
     entities: Object.freeze([
       Object.freeze({
         type: "obstacle",
@@ -94,9 +96,10 @@ const PATTERN_LIBRARY = Object.freeze([
   }),
   Object.freeze({
     id: "mixed-safe",
-    width: 760,
+    width: 1400,
     minGap: 260,
     safePath: "mixed",
+    gapAnchor: Object.freeze({ x: 940 }),
     entities: Object.freeze([
       Object.freeze({
         type: "obstacle",
@@ -156,9 +159,21 @@ function createSeededRandom(seed) {
 }
 
 function isValidPattern(pattern) {
+  const gapAnchor = pattern.gapAnchor;
+  const maxGapEnd = (gapAnchor?.x || 0) + GAME_CONFIG.gapMaxWidth;
+  const gapSafe =
+    gapAnchor &&
+    gapAnchor.x >= GAME_CONFIG.gapSafeMargin &&
+    maxGapEnd <= pattern.width - GAME_CONFIG.gapSafeMargin &&
+    pattern.entities.every(
+      (entity) =>
+        entity.x + entity.width <= gapAnchor.x - GAME_CONFIG.gapSafeMargin ||
+        entity.x >= maxGapEnd + GAME_CONFIG.gapSafeMargin,
+    );
   return (
     pattern.minGap >= GAME_CONFIG.playerWidth * 1.5 &&
     ["jump", "slide", "mixed"].includes(pattern.safePath) &&
+    gapSafe &&
     pattern.entities.every(
       (entity) =>
         Number.isFinite(entity.x) &&
@@ -175,7 +190,7 @@ function createPatternStream(seed) {
   let sequence = 0;
 
   return {
-    next() {
+    next(zoneId = "home_day") {
       const candidates = PATTERN_LIBRARY.filter(
         (pattern) => pattern.id !== previousPatternId && isValidPattern(pattern),
       );
@@ -187,6 +202,29 @@ function createPatternStream(seed) {
       const patternIndex = sequence;
       sequence += 1;
       previousPatternId = pattern.id;
+      const gapRoll = random();
+      const gapWidth =
+        GAME_CONFIG.gapMinWidth +
+        Math.floor(
+          random() * (GAME_CONFIG.gapMaxWidth - GAME_CONFIG.gapMinWidth + 1),
+        );
+      const gapChance =
+        zoneId === "outside"
+          ? GAME_CONFIG.gapChanceOutside
+          : zoneId === "home_night"
+            ? GAME_CONFIG.gapChanceHomeNight
+            : 0;
+      const gaps =
+        gapRoll < gapChance
+          ? [
+              {
+                id: `${pattern.id}-gap-${patternIndex}`,
+                x: pattern.gapAnchor.x,
+                width: gapWidth,
+                minZone: "outside",
+              },
+            ]
+          : [];
 
       return {
         id: pattern.id,
@@ -194,6 +232,7 @@ function createPatternStream(seed) {
         minGap: pattern.minGap,
         safePath: pattern.safePath,
         patternIndex,
+        gaps,
         entities: pattern.entities.map((entity, entityIndex) => ({
           ...entity,
           id: pattern.id + "-" + patternIndex + "-" + entityIndex,
