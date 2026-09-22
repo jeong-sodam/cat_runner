@@ -72,6 +72,36 @@ function drawTiledBackground(ctx, sprite, offset, alpha = 1) {
   return true;
 }
 
+function drawRhythmTargets(ctx, rhythmState) {
+  for (const target of rhythmState?.targets || []) {
+    if (target.status !== "active") {
+      continue;
+    }
+    const isSecondary = target.button === "secondary";
+    const colors = isSecondary
+      ? { fill: PALETTE.rhythm.secondary, ring: PALETTE.rhythm.secondaryRing }
+      : { fill: PALETTE.rhythm.primary, ring: PALETTE.rhythm.primaryRing };
+    ctx.save();
+    ctx.globalAlpha = 0.78;
+    ctx.fillStyle = colors.fill;
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = colors.ring;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, target.radius + 5, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = PALETTE.ui.ink;
+    ctx.font = "bold 20px Trebuchet MS, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(isSecondary ? "R" : "L", target.x, target.y);
+    ctx.restore();
+  }
+}
+
 function createSceneRenderer(ctx, assets = {}) {
   const assetProvider = {
     getCatSprite: assets.getCatSprite || (() => null),
@@ -179,6 +209,7 @@ function createSceneRenderer(ctx, assets = {}) {
       drawEntity(entity, state);
     }
     drawCatScene(state);
+    drawRhythmTargets(ctx, state.rhythm);
     return drawHudScene(state);
   }
 
@@ -189,8 +220,9 @@ function createSceneRenderer(ctx, assets = {}) {
     drawObstacle: (entity, state) => drawEntity(entity, state),
     drawMouse: (entity, state) => drawEntity(entity, state),
     drawGrass: (entity, state) => drawEntity(entity, state),
+    drawRhythmTargets: (rhythmState) => drawRhythmTargets(ctx, rhythmState),
     drawHud: drawHudScene,
   };
 }
 
-export { createSceneRenderer, getCatAirPresentation, getCatPose };
+export { createSceneRenderer, drawRhythmTargets, getCatAirPresentation, getCatPose };

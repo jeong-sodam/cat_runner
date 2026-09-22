@@ -1,6 +1,6 @@
 # Task: T04 Canvas 타겟 렌더링과 마우스 입력
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -84,3 +84,9 @@ Task: T04-canvas-rhythm-input
 - [ ] 구현 완료
 - [ ] 검증 통과
 - commit: pending
+
+## Execution Record
+
+- Implementation complete
+- Validation passed: `npm.cmd test -- test/render.test.js test/game-core.test.js` (25 tests); `npm.cmd test -- test/app-flow.test.js` (9 tests)
+- Commit: pending

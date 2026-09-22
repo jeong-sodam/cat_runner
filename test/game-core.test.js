@@ -167,6 +167,52 @@ test("S changes the hitbox only while grounded", async () => {
   harness.destroy();
 });
 
+test("pointer input converts letterboxed coordinates and maps right click to secondary", async () => {
+  const modules = await loadGameModules();
+  const view = new FakeEventTarget();
+  const listeners = new Map();
+  const canvas = {
+    width: 1600,
+    height: 900,
+    ownerDocument: { defaultView: view },
+    getBoundingClientRect: () => ({ left: 100, top: 50, width: 800, height: 800 }),
+    addEventListener(type, listener) {
+      listeners.set(type, listener);
+    },
+    removeEventListener(type) {
+      listeners.delete(type);
+    },
+  };
+  const received = [];
+  const input = modules.createInputController(canvas, () => {}, {
+    onPointerDown: (pointer) => received.push(pointer),
+  });
+  const pointerEvent = {
+    button: 2,
+    clientX: 500,
+    clientY: 450,
+    prevented: false,
+    preventDefault() {
+      this.prevented = true;
+    },
+  };
+  listeners.get("pointerdown")(pointerEvent);
+  assert.equal(pointerEvent.prevented, true);
+  assert.deepEqual(
+    { x: received[0].x, y: received[0].y, button: received[0].button },
+    { x: 800, y: 450, button: "secondary" },
+  );
+
+  const ignored = { button: 1, clientX: 500, clientY: 450, preventDefault() {} };
+  listeners.get("pointerdown")(ignored);
+  assert.equal(received.length, 1);
+  const contextMenu = { prevented: false, preventDefault() { this.prevented = true; } };
+  listeners.get("contextmenu")(contextMenu);
+  assert.equal(contextMenu.prevented, true);
+  input.destroy();
+  assert.equal(listeners.size, 0);
+});
+
 test("P pauses and resumes without advancing the simulation while paused", async () => {
   const modules = await loadGameModules();
   const harness = createHarness(modules);

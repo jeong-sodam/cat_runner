@@ -1,6 +1,8 @@
 import { createAudioManager } from "../audio/audio-manager.js";
 import { createGameLoop } from "../game/game-loop.js";
 import { createInputController } from "../game/input-controller.js";
+import { resolveRhythmTarget } from "../game/rhythm-targets.js";
+import { updateScore } from "../game/scoring.js";
 import { createPatternStream } from "../game/patterns.js";
 import { resolveEntityCollisions } from "../game/collision.js";
 import { createGameState } from "../game/state.js";
@@ -376,7 +378,22 @@ function createAppController(options = {}) {
       ? options.settingsPanelFactory(audioManager)
       : createSettingsPanel(audioManager, { documentRef });
     let loop = null;
-    input = createInputController(canvas, () => pauseController?.togglePause());
+    input = createInputController(canvas, () => pauseController?.togglePause(), {
+      onPointerDown: ({ x, y, button }) => {
+        if (gameState.status !== "running") {
+          return;
+        }
+        const target = resolveRhythmTarget(gameState.rhythm, {
+          x,
+          y,
+          button,
+          nowMs: gameState.elapsedMs,
+        });
+        if (target) {
+          updateScore(gameState);
+        }
+      },
+    });
     loop = createGameLoop({
       state: gameState,
       input,

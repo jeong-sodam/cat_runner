@@ -10,13 +10,14 @@
 
 ## Active Task
 
-[T04 Canvas 리듬 입력](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/T04-canvas-rhythm-input.md)
+[T05 캐릭터 선택 UI](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/T05-cat-selection-ui.md)
 
 ## Status
 
-- T03 osu 타겟 엔진·판정·정확도·gameover 요약 완료
-- Validation: `npm.cmd test -- test/game-systems.test.js test/game-core.test.js` (20 tests)
+- T04 Canvas 타겟 렌더링·마우스 입력·체력/정확도 HUD 완료
+- Validation: `npm.cmd test -- test/render.test.js test/game-core.test.js` (25 tests)
+- App flow validation: `npm.cmd test -- test/app-flow.test.js` (9 tests)
 
 ## Next Step (IMPORTANT)
 
-T04 청사진을 읽고 Canvas 타겟 렌더링, 마우스 좌클릭 입력, 5칸 HUD와 타겟 콤보를 연결한다.
+T05 청사진을 읽고 캐릭터 카드, 9종 능력치, Mayhem 명칭, 로컬 모드 안내 UI를 구현한다.

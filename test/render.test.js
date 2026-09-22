@@ -183,6 +183,46 @@ test("renderer draws active floor gaps behind world entities", async () => {
   );
 });
 
+test("renderer draws primary and bonus rhythm targets without mutating them", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const renderer = modules.createSceneRenderer(context);
+  const state = createState(modules);
+  state.rhythm.targets = [
+    { id: "primary", x: 320, y: 220, radius: 30, button: "primary", status: "active" },
+    { id: "bonus", x: 720, y: 420, radius: 24, button: "secondary", status: "active" },
+    { id: "missed", x: 900, y: 500, radius: 20, button: "primary", status: "miss" },
+  ];
+  const before = JSON.stringify(state);
+  renderer.render(state);
+
+  const arcs = context.calls.filter((call) => call.name === "arc");
+  assert.ok(arcs.some((call) => call.args[0] === 320 && call.args[1] === 220 && call.args[2] === 30));
+  assert.ok(arcs.some((call) => call.args[0] === 720 && call.args[1] === 420 && call.args[2] === 24));
+  assert.ok(!arcs.some((call) => call.args[0] === 900 && call.args[1] === 500));
+  const labels = context.calls
+    .filter((call) => call.name === "fillText")
+    .map((call) => call.args[0]);
+  assert.ok(labels.includes("L"));
+  assert.ok(labels.includes("R"));
+  assert.deepEqual(JSON.stringify(state), before);
+});
+
+test("HUD renders the complete health capacity for four and six health cats", async () => {
+  const modules = await loadRenderModules();
+  for (const catId of ["black", "calico"]) {
+    const context = createFakeContext();
+    const renderer = modules.createSceneRenderer(context);
+    const state = createState(modules, catId);
+    state.health = state.maxHealth;
+    renderer.render(state);
+    const hearts = context.calls.filter(
+      (call) => call.name === "fillText" && call.args[0] === "♥" && call.args[2] === 120,
+    );
+    assert.equal(hearts.length, state.maxHealth);
+  }
+});
+
 test("effect colors are distinct and HUD derives three hearts without mutating state", async () => {
   const modules = await loadRenderModules();
   const colors = Object.values(modules.PALETTE.effects);

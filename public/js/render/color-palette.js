@@ -13,6 +13,12 @@ const PALETTE = Object.freeze({
     double_score: "#b47cff",
     slow_miss: "#ff6b6b",
   }),
+  rhythm: Object.freeze({
+    primary: "#5f9df7",
+    primaryRing: "#d9e8ff",
+    secondary: "#f2a65a",
+    secondaryRing: "#fff0cf",
+  }),
   backgrounds: Object.freeze({
     home_day: Object.freeze({ sky: "#c9efff", floor: "#d7a56d", wall: "#fff6e8" }),
     outside: Object.freeze({ sky: "#9dd7ff", floor: "#83b96b", wall: "#b9e5ff" }),
