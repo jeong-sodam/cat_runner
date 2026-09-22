@@ -18,6 +18,15 @@ function getCatPose(player) {
   return player?.isGrounded === false ? "jump" : "run";
 }
 
+function getCatAirPresentation(player) {
+  if (!player || player.isSliding || player.isGrounded !== false) {
+    return { yOffset: 0, phase: "ground" };
+  }
+  return player.vy < 0
+    ? { yOffset: -4, phase: "rising" }
+    : { yOffset: 3, phase: "falling" };
+}
+
 function getSpriteDimensions(sprite) {
   const width = Number(sprite?.naturalWidth || sprite?.width || 0);
   const height = Number(sprite?.naturalHeight || sprite?.height || 0);
@@ -90,6 +99,7 @@ function createSceneRenderer(ctx, assets = {}) {
 
   function drawCatScene(state) {
     const sprite = assetProvider.getCatSprite(state.catId);
+    const airPresentation = getCatAirPresentation(state.player);
     const { width: spriteWidth, height: spriteHeight } = getSpriteDimensions(sprite);
     if (canDrawCatSprite(ctx, sprite)) {
       const pose = getCatPose(state.player);
@@ -102,7 +112,7 @@ function createSceneRenderer(ctx, assets = {}) {
         frameWidth,
         spriteHeight,
         state.player.x,
-        state.player.y,
+        state.player.y + airPresentation.yOffset,
         state.player.width,
         state.player.height,
       );
@@ -114,7 +124,11 @@ function createSceneRenderer(ctx, assets = {}) {
     drawCat(
       ctx,
       state.catId,
-      { ...state.player, animationFrame },
+      {
+        ...state.player,
+        y: state.player.y + airPresentation.yOffset,
+        animationFrame,
+      },
       state.activeEffect,
     );
   }
@@ -179,4 +193,4 @@ function createSceneRenderer(ctx, assets = {}) {
   };
 }
 
-export { createSceneRenderer, getCatPose };
+export { createSceneRenderer, getCatAirPresentation, getCatPose };

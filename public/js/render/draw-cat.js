@@ -81,7 +81,11 @@ function drawCat(ctx, catId, player, effect = null) {
   ctx.stroke();
 
   ctx.fillStyle = colors.body;
-  const legOffset = player.isSliding ? 4 : (player.animationFrame || 0) % 2 ? 8 : 0;
+  const legOffset = player.isSliding
+    ? 4
+    : player.isGrounded === false
+      ? (player.vy || 0) < 0 ? 10 : 3
+      : (player.animationFrame || 0) % 2 ? 8 : 0;
   ctx.fillRect(22 + legOffset, 92, 13, 18);
   ctx.fillRect(56 - legOffset, 92, 13, 18);
   ctx.fillStyle = "rgba(255, 250, 245, 0.55)";

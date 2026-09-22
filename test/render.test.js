@@ -265,6 +265,65 @@ test("loaded cat sheets use distinct run, jump, and slide source regions", async
   assert.deepEqual(state, before);
 });
 
+test("cat jump presentation distinguishes ascent and descent without mutating physics", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const sprite = { name: "cat-sheet", naturalWidth: 300, naturalHeight: 100 };
+  const renderer = modules.createSceneRenderer(context, {
+    getCatSprite: () => sprite,
+  });
+  const state = createState(modules);
+  const before = JSON.parse(JSON.stringify(state));
+
+  state.player.isGrounded = false;
+  state.player.isSliding = false;
+  state.player.vy = -320;
+  renderer.drawCat(state);
+  state.player.vy = 180;
+  renderer.drawCat(state);
+
+  const calls = context.calls.filter(
+    (call) => call.name === "drawImage" && call.args[0] === sprite,
+  );
+  assert.deepEqual(calls.map((call) => call.args[1]), [100, 100]);
+  assert.deepEqual(calls.map((call) => call.args[6]), [state.player.y - 4, state.player.y + 3]);
+  assert.deepEqual(modules.getCatAirPresentation({ isGrounded: true, vy: -320 }), {
+    yOffset: 0,
+    phase: "ground",
+  });
+  assert.deepEqual(modules.getCatAirPresentation({ isGrounded: false, vy: -320 }), {
+    yOffset: -4,
+    phase: "rising",
+  });
+  assert.deepEqual(modules.getCatAirPresentation({ isGrounded: false, vy: 180 }), {
+    yOffset: 3,
+    phase: "falling",
+  });
+
+  state.player.isGrounded = before.player.isGrounded;
+  state.player.isSliding = before.player.isSliding;
+  state.player.vy = before.player.vy;
+  assert.deepEqual(state, before);
+});
+
+test("vector cat fallback uses distinct airborne leg poses", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const renderer = modules.createSceneRenderer(context);
+  const state = createState(modules);
+  state.player.isGrounded = false;
+  state.player.isSliding = false;
+  state.player.vy = -220;
+  renderer.drawCat(state);
+  state.player.vy = 220;
+  renderer.drawCat(state);
+
+  const legCalls = context.calls.filter(
+    (call) => call.name === "fillRect" && call.args[1] === 92,
+  );
+  assert.deepEqual(legCalls.slice(-4).map((call) => call.args[0]), [32, 46, 25, 53]);
+});
+
 test("loaded backgrounds repeat and move their far and near layers at different rates", async () => {
   const modules = await loadRenderModules();
   const context = createFakeContext();

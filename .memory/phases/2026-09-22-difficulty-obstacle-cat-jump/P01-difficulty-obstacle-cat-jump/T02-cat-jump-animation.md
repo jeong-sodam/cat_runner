@@ -1,6 +1,6 @@
 # Task: T02 고양이 상승·하강 점프 연출
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -73,6 +73,6 @@ Task: T02-cat-jump-animation
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과: `npm.cmd test -- test/render.test.js test/game-core.test.js`
 - commit: pending
