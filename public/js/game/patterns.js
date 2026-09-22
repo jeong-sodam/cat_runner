@@ -21,7 +21,13 @@ const ZONE_DEFINITIONS = Object.freeze({
   }),
 });
 
-const PATTERN_VERSION = "cat-runner-patterns-v2";
+const PATTERN_VERSION = "cat-runner-patterns-v3";
+
+const ZONE_ORDER = Object.freeze({
+  home_day: 0,
+  outside: 1,
+  home_night: 2,
+});
 
 const PATTERN_LIBRARY = Object.freeze([
   Object.freeze({
@@ -30,6 +36,7 @@ const PATTERN_LIBRARY = Object.freeze([
     minGap: 240,
     safePath: "jump",
     gapAnchor: Object.freeze({ x: 742 }),
+    requiredActions: Object.freeze([]),
     entities: Object.freeze([
       Object.freeze({
         type: "obstacle",
@@ -58,6 +65,16 @@ const PATTERN_LIBRARY = Object.freeze([
         variant: "toy",
         collectible: true,
       }),
+      Object.freeze({
+        type: "obstacle",
+        x: 180,
+        y: 620,
+        width: 90,
+        height: 80,
+        variant: "pot",
+        collectible: false,
+        minZone: "outside",
+      }),
     ]),
   }),
   Object.freeze({
@@ -66,6 +83,7 @@ const PATTERN_LIBRARY = Object.freeze([
     minGap: 240,
     safePath: "slide",
     gapAnchor: Object.freeze({ x: 858 }),
+    requiredActions: Object.freeze([]),
     entities: Object.freeze([
       Object.freeze({
         type: "obstacle",
@@ -94,6 +112,16 @@ const PATTERN_LIBRARY = Object.freeze([
         variant: "cat-grass",
         collectible: true,
       }),
+      Object.freeze({
+        type: "obstacle",
+        x: 140,
+        y: 620,
+        width: 90,
+        height: 80,
+        variant: "box",
+        collectible: false,
+        minZone: "outside",
+      }),
     ]),
   }),
   Object.freeze({
@@ -102,6 +130,7 @@ const PATTERN_LIBRARY = Object.freeze([
     minGap: 260,
     safePath: "mixed",
     gapAnchor: Object.freeze({ x: 940 }),
+    requiredActions: Object.freeze([]),
     entities: Object.freeze([
       Object.freeze({
         type: "obstacle",
@@ -139,6 +168,100 @@ const PATTERN_LIBRARY = Object.freeze([
         variant: "cat-grass",
         collectible: true,
       }),
+      Object.freeze({
+        type: "obstacle",
+        x: 120,
+        y: 620,
+        width: 90,
+        height: 80,
+        variant: "box",
+        collectible: false,
+        minZone: "outside",
+      }),
+    ]),
+  }),
+  Object.freeze({
+    id: "combo-jump-slide-jump",
+    width: 1600,
+    minGap: 300,
+    minZone: "outside",
+    safePath: "mixed",
+    requiredActions: Object.freeze(["jump", "slide", "jump"]),
+    gapAnchor: Object.freeze({ x: 1100 }),
+    entities: Object.freeze([
+      Object.freeze({ type: "obstacle", x: 300, y: 620, width: 90, height: 80, variant: "box", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 430, y: 560, width: 140, height: 40, variant: "fence", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 560, y: 620, width: 90, height: 80, variant: "pot", collectible: false }),
+    ]),
+  }),
+  Object.freeze({
+    id: "combo-slide-jump-slide",
+    width: 1600,
+    minGap: 300,
+    minZone: "outside",
+    safePath: "mixed",
+    requiredActions: Object.freeze(["slide", "jump", "slide"]),
+    gapAnchor: Object.freeze({ x: 1100 }),
+    entities: Object.freeze([
+      Object.freeze({ type: "obstacle", x: 300, y: 560, width: 140, height: 40, variant: "fence", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 430, y: 620, width: 90, height: 80, variant: "box", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 560, y: 560, width: 130, height: 40, variant: "yarn", collectible: false }),
+    ]),
+  }),
+  Object.freeze({
+    id: "combo-jump-jump-slide",
+    width: 1600,
+    minGap: 300,
+    minZone: "outside",
+    safePath: "mixed",
+    requiredActions: Object.freeze(["jump", "jump", "slide"]),
+    gapAnchor: Object.freeze({ x: 1100 }),
+    entities: Object.freeze([
+      Object.freeze({ type: "obstacle", x: 300, y: 620, width: 90, height: 80, variant: "pot", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 430, y: 620, width: 90, height: 80, variant: "box", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 560, y: 560, width: 140, height: 40, variant: "fence", collectible: false }),
+    ]),
+  }),
+  Object.freeze({
+    id: "combo-slide-slide-jump",
+    width: 1600,
+    minGap: 300,
+    minZone: "outside",
+    safePath: "mixed",
+    requiredActions: Object.freeze(["slide", "slide", "jump"]),
+    gapAnchor: Object.freeze({ x: 1100 }),
+    entities: Object.freeze([
+      Object.freeze({ type: "obstacle", x: 300, y: 560, width: 140, height: 40, variant: "fence", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 430, y: 560, width: 130, height: 40, variant: "yarn", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 560, y: 620, width: 90, height: 80, variant: "box", collectible: false }),
+    ]),
+  }),
+  Object.freeze({
+    id: "combo-jump-slide-slide",
+    width: 1600,
+    minGap: 300,
+    minZone: "outside",
+    safePath: "mixed",
+    requiredActions: Object.freeze(["jump", "slide", "slide"]),
+    gapAnchor: Object.freeze({ x: 1100 }),
+    entities: Object.freeze([
+      Object.freeze({ type: "obstacle", x: 300, y: 620, width: 90, height: 80, variant: "pot", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 430, y: 560, width: 140, height: 40, variant: "fence", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 560, y: 560, width: 130, height: 40, variant: "yarn", collectible: false }),
+    ]),
+  }),
+  Object.freeze({
+    id: "combo-slide-jump-jump",
+    width: 1600,
+    minGap: 300,
+    minZone: "outside",
+    safePath: "mixed",
+    requiredActions: Object.freeze(["slide", "jump", "jump"]),
+    gapAnchor: Object.freeze({ x: 1100 }),
+    entities: Object.freeze([
+      Object.freeze({ type: "obstacle", x: 300, y: 560, width: 130, height: 40, variant: "yarn", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 430, y: 620, width: 90, height: 80, variant: "box", collectible: false }),
+      Object.freeze({ type: "obstacle", x: 560, y: 620, width: 90, height: 80, variant: "pot", collectible: false }),
     ]),
   }),
 ]);
@@ -186,6 +309,14 @@ function isValidPattern(pattern) {
   );
 }
 
+function zoneRank(zoneId) {
+  return ZONE_ORDER[zoneId] ?? ZONE_ORDER.home_day;
+}
+
+function isZoneEnabled(minZone, zoneId) {
+  return zoneRank(zoneId) >= zoneRank(minZone || "home_day");
+}
+
 function createPatternStream(seed) {
   const random = createSeededRandom(seed);
   let previousPatternId = null;
@@ -194,7 +325,10 @@ function createPatternStream(seed) {
   return {
     next(zoneId = "home_day") {
       const candidates = PATTERN_LIBRARY.filter(
-        (pattern) => pattern.id !== previousPatternId && isValidPattern(pattern),
+        (pattern) =>
+          pattern.id !== previousPatternId &&
+          isValidPattern(pattern) &&
+          isZoneEnabled(pattern.minZone, zoneId),
       );
       if (candidates.length === 0) {
         throw new Error("No valid pattern candidate available.");
@@ -228,21 +362,27 @@ function createPatternStream(seed) {
             ]
           : [];
 
-      return {
-        id: pattern.id,
-        width: pattern.width,
-        minGap: pattern.minGap,
-        safePath: pattern.safePath,
-        patternIndex,
-        gaps,
-        entities: pattern.entities.map((entity, entityIndex) => ({
+      const entities = pattern.entities
+        .map((entity, entityIndex) => ({
           ...entity,
           id: pattern.id + "-" + patternIndex + "-" + entityIndex,
           effectRoll:
             entity.type === "grass" ? random() : undefined,
           collected: false,
           hitByPlayer: false,
-        })),
+        }))
+        .filter((entity) => isZoneEnabled(entity.minZone, zoneId));
+
+      return {
+        id: pattern.id,
+        width: pattern.width,
+        minGap: pattern.minGap,
+        safePath: pattern.safePath,
+        minZone: pattern.minZone,
+        requiredActions: [...(pattern.requiredActions || [])],
+        patternIndex,
+        gaps,
+        entities,
       };
     },
   };

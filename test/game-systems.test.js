@@ -55,6 +55,57 @@ test("same seed yields stable patterns, grass rolls, and no adjacent repeat", as
   assert.deepEqual(first, second);
 });
 
+test("zone gates composite patterns and increases only outside obstacle density", async () => {
+  const modules = await loadSystems();
+  const collect = (zoneId, seed = "density-seed") => {
+    const stream = modules.createPatternStream(seed);
+    return Array.from({ length: 240 }, () => stream.next(zoneId));
+  };
+  const homeDay = collect("home_day");
+  const outside = collect("outside");
+  const night = collect("home_night");
+  const compositeDefinitions = modules.PATTERN_LIBRARY.filter((pattern) =>
+    pattern.id.startsWith("combo-"),
+  );
+
+  assert.equal(compositeDefinitions.length, 6);
+  assert.equal(homeDay.every((pattern) => !pattern.id.startsWith("combo-")), true);
+  assert.equal(
+    new Set(outside.filter((pattern) => pattern.id.startsWith("combo-")).map((pattern) => pattern.id)).size,
+    6,
+  );
+  assert.equal(
+    new Set(night.filter((pattern) => pattern.id.startsWith("combo-")).map((pattern) => pattern.id)).size,
+    6,
+  );
+
+  const baseCounts = { "jump-basic": 1, "slide-basic": 1, "mixed-safe": 2 };
+  for (const pattern of homeDay) {
+    if (baseCounts[pattern.id]) {
+      assert.equal(
+        pattern.entities.filter((entity) => entity.type === "obstacle").length,
+        baseCounts[pattern.id],
+      );
+    }
+  }
+  for (const pattern of outside) {
+    if (baseCounts[pattern.id]) {
+      assert.equal(
+        pattern.entities.filter((entity) => entity.type === "obstacle").length,
+        baseCounts[pattern.id] + 1,
+      );
+    }
+    if (pattern.id.startsWith("combo-")) {
+      assert.equal(pattern.entities.filter((entity) => entity.type === "obstacle").length, 3);
+      assert.deepEqual(pattern.requiredActions, modules.PATTERN_LIBRARY.find(
+        (definition) => definition.id === pattern.id,
+      ).requiredActions);
+      const obstacles = pattern.entities.filter((entity) => entity.type === "obstacle");
+      assert.deepEqual(obstacles.slice(1).map((entity, index) => entity.x - obstacles[index].x), [130, 130]);
+    }
+  }
+});
+
 test("gaps are deterministic, zone-gated, bounded, and safely separated", async () => {
   const modules = await loadSystems();
   const outsideFirst = modules.createPatternStream("gap-seed");
