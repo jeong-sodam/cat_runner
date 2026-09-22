@@ -2,11 +2,11 @@
 
 ## Active Plan
 
-[Mayhem 듀얼 입력·난이도](./plans/2026-09-22-mayhem-dual-input-difficulty.md)
+[Rhythm Speed Ease](./plans/2026-09-23-rhythm-speed-ease.md)
 
 ## Active Phase
 
-[P01 Mayhem 듀얼 입력·난이도](./phases/2026-09-22-mayhem-dual-input-difficulty/P01-mayhem-dual-input-difficulty/phase.md)
+[P01 Rhythm Speed Ease](./phases/2026-09-23-rhythm-speed-ease/P01-rhythm-speed-ease/phase.md)
 
 ## Active Task
 
@@ -14,8 +14,8 @@ P01 complete — no next task is defined.
 
 ## Status
 
-- T07 rhythm summary 검증·bounded multiplier·authoritative bonus 점수 완료
-- Validation: T07 서버 20 tests 통과; 전체 suite 85개 중 83개 assertion 통과 후 auth/server의 Windows Node native cleanup abort 기록
+- Rhythm Speed Ease T01 완료: 전 구역 1.5배 완화, 750ms 유지시간, 동시 타겟 수 유지
+- Validation: game-systems/game-core 21 tests 통과
 
 ## Next Step (IMPORTANT)
 

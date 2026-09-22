@@ -1,6 +1,6 @@
 const RHYTHM_CONFIG = Object.freeze({
-  targetLifetimeMs: 500,
-  baseSpawnIntervalMs: 500,
+  targetLifetimeMs: 750,
+  baseSpawnIntervalMs: 750,
   baseRadius: 34,
   minRadius: 18,
   bonusChance: 0.2,
@@ -10,9 +10,9 @@ const RHYTHM_CONFIG = Object.freeze({
   scoreMultiplierMin: 0.8,
   scoreMultiplierMax: 1.2,
   zones: Object.freeze({
-    home_day: Object.freeze({ activeCount: 1, difficultyScale: 1, spawnIntervalMs: 500 }),
-    outside: Object.freeze({ activeCount: 2, difficultyScale: 1.5, spawnIntervalMs: 500 / 1.5 }),
-    home_night: Object.freeze({ activeCount: 3, difficultyScale: 2, spawnIntervalMs: 250 }),
+    home_day: Object.freeze({ activeCount: 1, difficultyScale: 1, spawnIntervalMs: 750 }),
+    outside: Object.freeze({ activeCount: 2, difficultyScale: 1.5, spawnIntervalMs: 500 }),
+    home_night: Object.freeze({ activeCount: 3, difficultyScale: 2, spawnIntervalMs: 375 }),
   }),
 });
 
