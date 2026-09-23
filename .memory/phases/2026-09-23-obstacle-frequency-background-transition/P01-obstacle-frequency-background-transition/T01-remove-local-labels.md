@@ -83,4 +83,4 @@ Task: T01-remove-local-labels
 
 - [x] 구현 완료
 - [x] 검증 통과 (`node --test --test-isolation=none --test-concurrency=1 test/app-flow.test.js`, `node --test --test-isolation=none --test-concurrency=1 test/render.test.js`)
-- commit: pending
+- commit: 14a8e11
