@@ -1,4 +1,11 @@
 import { GAME_CONFIG } from "./constants.js";
+import {
+  FORMATION_CELL_SIZE,
+  FORMATION_CELL_STEP,
+  FORMATION_HEIGHT,
+  FORMATION_WIDTH,
+  createFormation,
+} from "./mouse-formations.js";
 
 const ZONE_DEFINITIONS = Object.freeze({
   home_day: Object.freeze({ id: "home_day", minScore: 0, background: "living-room", difficulty: 1 }),
@@ -19,6 +26,10 @@ function freezePattern(pattern) {
   return Object.freeze({
     ...pattern,
     gapAnchor: Object.freeze({ ...pattern.gapAnchor }),
+    formationAnchor: Object.freeze({
+      x: pattern.formationAnchor?.x ?? pattern.gapAnchor.x,
+      y: pattern.formationAnchor?.y ?? 470,
+    }),
     requiredActions: Object.freeze([...(pattern.requiredActions || [])]),
     actionCandidates: Object.freeze(
       (pattern.actionCandidates || []).map((actions) => Object.freeze([...actions])),
@@ -239,6 +250,58 @@ function isValidPattern(pattern) {
     isActionSequenceValid(pattern);
 }
 
+function isFormationAnchorSafe(pattern) {
+  const anchor = pattern.formationAnchor;
+  if (!anchor || anchor.x < GAME_CONFIG.gapSafeMargin ||
+      anchor.x + FORMATION_WIDTH > pattern.width - GAME_CONFIG.gapSafeMargin) {
+    return false;
+  }
+  return pattern.entities.every((entity) =>
+    entity.x + entity.width <= anchor.x ||
+    entity.x >= anchor.x + FORMATION_WIDTH,
+  );
+}
+
+function isEntityClearOfGaps(entity, gaps) {
+  return gaps.every((gap) =>
+    entity.x + entity.width <= gap.x - GAME_CONFIG.gapSafeMargin ||
+    entity.x >= gap.x + gap.width + GAME_CONFIG.gapSafeMargin,
+  );
+}
+
+function addDenseMice(entities, gaps = []) {
+  return entities.flatMap((entity) => {
+    if (entity.type !== "mouse") {
+      return [entity];
+    }
+    const forward = { ...entity, x: entity.x + FORMATION_CELL_STEP * 2 };
+    const backward = { ...entity, x: entity.x - FORMATION_CELL_STEP * 2 };
+    const duplicate = isEntityClearOfGaps(forward, gaps)
+      ? forward
+      : isEntityClearOfGaps(backward, gaps) ? backward : null;
+    return [
+      entity,
+      ...(duplicate ? [duplicate] : []),
+    ];
+  });
+}
+
+function createFormationEntities(formation, pattern) {
+  const anchor = pattern.formationAnchor;
+  return formation.cells.map((cell) => ({
+    type: "mouse",
+    x: anchor.x + cell.column * FORMATION_CELL_STEP,
+    y: anchor.y + cell.row * FORMATION_CELL_STEP,
+    width: FORMATION_CELL_SIZE,
+    height: FORMATION_CELL_SIZE,
+    variant: "toy",
+    collectible: true,
+    formationId: formation.label,
+    formationKind: formation.kind,
+    formationCell: { ...cell },
+  }));
+}
+
 function createPatternStream(seed) {
   const random = createSeededRandom(seed);
   let previousPatternId = null;
@@ -274,7 +337,20 @@ function createPatternStream(seed) {
         width: gapWidth,
         minZone: "outside",
       }] : [];
-      const entities = pattern.entities.map((entity, entityIndex) => ({
+      const formationRoll = random();
+      const canUseFormation = gaps.length === 0 && isFormationAnchorSafe(pattern);
+      const formation = formationRoll < 0.2 && canUseFormation
+        ? {
+            ...createFormation(random),
+            anchor: { ...pattern.formationAnchor },
+          }
+        : null;
+      const sourceEntities = formation
+        ? pattern.entities
+            .filter((entity) => entity.type !== "mouse")
+            .concat(createFormationEntities(formation, pattern))
+        : addDenseMice(pattern.entities, gaps);
+      const entities = sourceEntities.map((entity, entityIndex) => ({
         ...entity,
         id: `${pattern.id}-${patternIndex}-${entityIndex}`,
         effectRoll: entity.type === "grass" ? random() : undefined,
@@ -291,6 +367,7 @@ function createPatternStream(seed) {
         advancedSafeMargin: pattern.advancedSafeMargin,
         actionCandidates: (pattern.actionCandidates || []).map((actions) => [...actions]),
         requiredActions,
+        formation,
         patternIndex,
         gaps,
         entities,
@@ -301,10 +378,12 @@ function createPatternStream(seed) {
 
 export {
   COMPOSITE_SAFE_MARGIN,
+  addDenseMice,
   PATTERN_LIBRARY,
   PATTERN_VERSION,
   ZONE_DEFINITIONS,
   createPatternStream,
+  isFormationAnchorSafe,
   isActionSequenceValid,
   isValidPattern,
 };

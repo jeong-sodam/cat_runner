@@ -6,6 +6,7 @@ async function loadSystems() {
     constants,
     stateModule,
     patterns,
+    formations,
     world,
     collision,
     effects,
@@ -15,6 +16,7 @@ async function loadSystems() {
     import("../public/js/game/constants.js"),
     import("../public/js/game/state.js"),
     import("../public/js/game/patterns.js"),
+    import("../public/js/game/mouse-formations.js"),
     import("../public/js/game/world.js"),
     import("../public/js/game/collision.js"),
     import("../public/js/game/effects.js"),
@@ -25,6 +27,7 @@ async function loadSystems() {
     ...constants,
     ...stateModule,
     ...patterns,
+    ...formations,
     ...world,
     ...collision,
     ...effects,
@@ -32,6 +35,86 @@ async function loadSystems() {
     ...rhythm,
   };
 }
+
+test("five-by-five formation masks cover the named shapes and alphabet", async () => {
+  const modules = await loadSystems();
+  for (const kind of ["heart", "star", "clover", "thumbsUp"]) {
+    const formation = modules.createFormation(() => 0.5, { kind });
+    assert.equal(formation.cells.length > 0, true);
+    assert.ok(formation.cells.every((cell) =>
+      cell.column >= 0 && cell.column < 5 && cell.row >= 0 && cell.row < 5,
+    ));
+    assert.deepEqual(
+      { width: formation.width, height: formation.height },
+      { width: 178, height: 178 },
+    );
+  }
+
+  assert.equal(Object.keys(modules.ALPHABET_MASKS).length, 26);
+  for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+    const formation = modules.createFormation(() => 0.5, {
+      kind: "alphabet",
+      label: letter,
+      forceDex: false,
+    });
+    assert.equal(formation.label, letter);
+    assert.equal(formation.isDex, false);
+    assert.ok(formation.cells.length > 0);
+  }
+});
+
+test("pattern stream doubles base mice and replaces them with safe formations", async () => {
+  const modules = await loadSystems();
+  const baseCounts = { "jump-basic": 2, "slide-basic": 1, "mixed-safe": 1 };
+  const stream = modules.createPatternStream("formation-density-seed");
+  const patterns = Array.from({ length: 240 }, () => stream.next("home_day"));
+  const basePatterns = patterns.filter((pattern) => baseCounts[pattern.id]);
+  assert.ok(basePatterns.length > 20);
+  assert.ok(basePatterns.some((pattern) => pattern.formation));
+  assert.ok(basePatterns.some((pattern) => !pattern.formation));
+
+  for (const pattern of basePatterns) {
+    const mice = pattern.entities.filter((entity) => entity.type === "mouse");
+    if (pattern.formation) {
+      assert.equal(
+        pattern.formation.obstacleSuppressed,
+        pattern.formation.isDex,
+      );
+      assert.equal(mice.length, pattern.formation.cells.length);
+      assert.ok(pattern.entities.every((entity) =>
+        entity.type !== "obstacle" ||
+        entity.x + entity.width <= pattern.formation.anchor.x ||
+        entity.x >= pattern.formation.anchor.x + pattern.formation.width,
+      ));
+    } else {
+      assert.equal(mice.length, baseCounts[pattern.id] * 2);
+    }
+  }
+});
+
+test("formation selection is deterministic and alphabet DEX uses the five-percent branch", async () => {
+  const modules = await loadSystems();
+  const firstStream = modules.createPatternStream("formation-determinism");
+  const secondStream = modules.createPatternStream("formation-determinism");
+  const first = Array.from({ length: 120 }, () => firstStream.next("outside"));
+  const second = Array.from({ length: 120 }, () => secondStream.next("outside"));
+  assert.deepEqual(first, second);
+
+  const dex = modules.createFormation(() => 0.01, {
+    kind: "alphabet",
+    label: "A",
+  });
+  assert.equal(dex.isDex, true);
+  assert.deepEqual(dex.sequence, ["D", "E", "X"]);
+  assert.equal(dex.obstacleSuppressed, true);
+  assert.equal(dex.label, "DEX");
+  const ordinary = modules.createFormation(() => 0.99, {
+    kind: "alphabet",
+    label: "A",
+  });
+  assert.equal(ordinary.isDex, false);
+  assert.equal(ordinary.label, "A");
+});
 
 function createState(modules, catId = "black") {
   return modules.createGameState({ catId, seed: "systems-seed" });
