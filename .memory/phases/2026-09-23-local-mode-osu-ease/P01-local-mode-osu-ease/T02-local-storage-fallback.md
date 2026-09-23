@@ -121,4 +121,4 @@ Task: T02-local-storage-fallback
 
 - [x] 구현 완료
 - [x] 검증 통과 (`node --test --test-isolation=none --test-concurrency=1 test/run-resume.test.js`, `node --test --test-isolation=none --test-concurrency=1 test/app-flow.test.js`)
-- commit: pending
+- commit: a5da260
