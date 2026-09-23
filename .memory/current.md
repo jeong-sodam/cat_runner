@@ -2,21 +2,23 @@
 
 ## Active Plan
 
-[HUD Local Mode Label](./plans/2026-09-23-hud-local-mode-label.md)
+[Local Personal Records](./plans/2026-09-23-local-personal-records.md)
 
 ## Active Phase
 
-[P01 HUD Local Mode Label](./phases/2026-09-23-hud-local-mode-label/P01-hud-local-mode-label/phase.md)
+[P01 Local Personal Records](./phases/2026-09-23-local-personal-records/P01-local-personal-records/phase.md)
 
 ## Active Task
 
-[All tasks complete](./plans/2026-09-23-hud-local-mode-label.md)
+[T02 Personal Records Panel](./phases/2026-09-23-local-personal-records/P01-local-personal-records/T02-personal-records-panel.md)
 
 ## Status
 
-- T01 완료: HUD 정확도·타겟 영역 아래 모드 표기를 LOCAL로 고정
-- Validation: 계획의 모든 작업 구현·검증 완료
+- T01 완료: 전체 로컬 기록 이력·개인 순위 저장 구현 및 검증 완료
+- Validation: app-flow 16개 통과; 저장소 독립 스모크 검증 통과
+- Note: run-resume 전체 실행은 기존 better-sqlite3 네이티브 정리 충돌로 종료됨
 
 ## Next Step (IMPORTANT)
 
-현재 계획의 T01 작업이 완료되었습니다. 새로운 기능 요청이 있으면 새 계획을 수립합니다.
+T02 청사진을 읽고 `public/js/ui/personal-records.js`를 추가해 개인기록표 UI를 구현한 뒤 `test/app-flow.test.js`를 검증한다.
+

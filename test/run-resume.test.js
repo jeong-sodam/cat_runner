@@ -308,7 +308,7 @@ test("resume candidate requires matching unexpired server and local runs", async
   );
 });
 
-test("local best records replace only when score, distance, or time improves", async () => {
+test("local best records replace only when score or earlier time improves", async () => {
   const { LOCAL_BEST_KEY, createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
   const storage = new Map();
   const store = createLocalRunStore({
@@ -330,15 +330,15 @@ test("local best records replace only when score, distance, or time improves", a
     score: 10,
     distanceM: 4,
     achievedAt: 100,
-  }), false);
+  }), true);
   assert.equal(store.saveLocalBest({
     score: 10,
     distanceM: 5,
     achievedAt: 100,
-  }), true);
+  }), false);
   assert.deepEqual(store.getLocalBest(), {
     score: 10,
-    distanceM: 5,
+    distanceM: 4,
     mouseCount: 0,
     rhythmAccuracy: 0,
     catId: "black",
@@ -348,8 +348,8 @@ test("local best records replace only when score, distance, or time improves", a
   assert.equal(store.getLocalBest(), null);
 });
 
-test("local score history keeps an all-cat top five and latest result", async () => {
-  const { LOCAL_SCORES_KEY, LOCAL_LAST_RESULT_KEY, createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+test("local score history keeps all records and exposes a top five view", async () => {
+  const { LOCAL_HISTORY_KEY, LOCAL_SCORES_KEY, LOCAL_LAST_RESULT_KEY, createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
   const storage = new Map();
   const store = createLocalRunStore({
     getItem: (key) => storage.get(key) || null,
@@ -377,8 +377,12 @@ test("local score history keeps an all-cat top five and latest result", async ()
       [20, 10, "black"],
     ],
   );
+  assert.equal(store.getLocalHistory().length, 6);
+  assert.equal(store.getLocalHistory()[0].catId, "calico");
+  assert.equal(store.getLocalRank({ score: 10, distanceM: 100, achievedAt: 0, catId: "chaos" }), 6);
 
   const latest = { score: 1, distanceM: 1, achievedAt: 99, catId: "chaos" };
+  assert.equal(store.saveLocalResult(latest).rank, 7);
   assert.equal(store.saveLastResult(latest), true);
   assert.deepEqual(store.getLastResult(), {
     score: 1,
@@ -388,12 +392,14 @@ test("local score history keeps an all-cat top five and latest result", async ()
     catId: "chaos",
     achievedAt: 99,
   });
+  assert.equal(store.getLocalRank(store.getLastResult()), 7);
+  assert.equal(storage.has(LOCAL_HISTORY_KEY), true);
   assert.equal(storage.has(LOCAL_SCORES_KEY), true);
   assert.equal(storage.has(LOCAL_LAST_RESULT_KEY), true);
 });
 
-test("local score history migrates the legacy best and clears malformed data safely", async () => {
-  const { LOCAL_BEST_KEY, LOCAL_SCORES_KEY, LOCAL_LAST_RESULT_KEY, createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+test("local score history migrates legacy data and clears malformed data safely", async () => {
+  const { LOCAL_BEST_KEY, LOCAL_HISTORY_KEY, LOCAL_SCORES_KEY, LOCAL_LAST_RESULT_KEY, createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
   const storage = new Map([
     [LOCAL_BEST_KEY, JSON.stringify({ score: 12, distanceM: 3, catId: "white", achievedAt: 10 })],
     [LOCAL_LAST_RESULT_KEY, "not-json"],
@@ -413,8 +419,40 @@ test("local score history migrates the legacy best and clears malformed data saf
     achievedAt: 10,
   }]);
   assert.equal(storage.has(LOCAL_SCORES_KEY), true);
+  assert.equal(storage.has(LOCAL_HISTORY_KEY), true);
   assert.deepEqual(store.getLocalBest(), store.getLocalScores()[0]);
   assert.equal(store.getLastResult(), null);
   store.clearLocalBest();
   assert.equal(store.getLocalScores().length, 0);
+});
+
+test("local score history migrates an existing top-five array without losing records", async () => {
+  const { LOCAL_HISTORY_KEY, LOCAL_SCORES_KEY, createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+  const legacyScores = [
+    { score: 30, distanceM: 3, catId: "black", achievedAt: 30 },
+    { score: 20, distanceM: 2, catId: "white", achievedAt: 20 },
+  ];
+  const storage = new Map([[LOCAL_SCORES_KEY, JSON.stringify(legacyScores)]]);
+  const store = createLocalRunStore({
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key),
+  });
+
+  assert.deepEqual(store.getLocalHistory().map((record) => record.score), [30, 20]);
+  assert.equal(storage.has(LOCAL_HISTORY_KEY), true);
+});
+
+test("local score history reports a failed save when storage rejects writes", async () => {
+  const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+  const store = createLocalRunStore({
+    getItem: () => null,
+    setItem: () => { throw new Error("storage blocked"); },
+    removeItem() {},
+  });
+
+  const result = store.saveLocalResult({ score: 10, achievedAt: 1 });
+  assert.equal(result.saved, false);
+  assert.equal(result.rank, 1);
+  assert.equal(result.totalEntries, 1);
 });
