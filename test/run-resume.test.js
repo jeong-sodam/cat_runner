@@ -443,7 +443,7 @@ test("local score history migrates an existing top-five array without losing rec
   assert.equal(storage.has(LOCAL_HISTORY_KEY), true);
 });
 
-test("local score history reports a failed save when storage rejects writes", async () => {
+test("local score history stays available in memory when storage rejects writes", async () => {
   const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
   const store = createLocalRunStore({
     getItem: () => null,
@@ -451,8 +451,16 @@ test("local score history reports a failed save when storage rejects writes", as
     removeItem() {},
   });
 
-  const result = store.saveLocalResult({ score: 10, achievedAt: 1 });
-  assert.equal(result.saved, false);
-  assert.equal(result.rank, 1);
-  assert.equal(result.totalEntries, 1);
+  for (const score of [10, 20, 30, 40, 50, 60]) {
+    const result = store.saveLocalResult({ score, distanceM: score / 2, achievedAt: score });
+    assert.equal(result.saved, true);
+    assert.equal(result.persisted, false);
+    assert.equal(result.warning, true);
+  }
+  assert.deepEqual(store.getLocalScores().map((record) => record.score), [60, 50, 40, 30, 20]);
+  assert.equal(store.getLocalHistory().length, 6);
+  assert.equal(store.getLocalRank({ score: 10, distanceM: 5, achievedAt: 10 }), 6);
+  assert.equal(store.saveLastResult({ score: 10, distanceM: 5, achievedAt: 10 }), true);
+  assert.equal(store.getLastResult().score, 10);
+  assert.deepEqual(store.getStorageStatus(), { persistent: false, warning: true });
 });

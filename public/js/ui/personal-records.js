@@ -108,6 +108,13 @@ function createPersonalRecordsPanel(callbacks = {}, options = {}) {
     heading.textContent = "개인기록표";
     const intro = documentRef.createElement("p");
     intro.textContent = "LOCAL 플레이 개인 최고 기록 5개";
+    const storageWarning = documentRef.createElement("p");
+    storageWarning.className = "local-storage-warning";
+    storageWarning.textContent = "현재 세션에 저장된 기록입니다. 새로고침하거나 브라우저를 닫으면 기록이 사라질 수 있습니다.";
+    storageWarning.hidden = !(
+      options.currentResult?.storageWarning === true ||
+      localStore?.getStorageStatus?.().warning === true
+    );
 
     const table = documentRef.createElement("table");
     table.className = "leaderboard-table personal-records-table";
@@ -146,7 +153,7 @@ function createPersonalRecordsPanel(callbacks = {}, options = {}) {
     restartButton.addEventListener("click", () => callbacks.onRestart?.());
     actions.append(backButton, restartButton);
 
-    section.append(heading, intro, table, emptyElement, latestElement, actions);
+    section.append(heading, intro, storageWarning, table, emptyElement, latestElement, actions);
     root.append(section);
     render();
     return section;

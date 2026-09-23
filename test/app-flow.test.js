@@ -563,6 +563,83 @@ test("local gameover saves the latest result and opens personal records offline"
   controller.destroy();
 });
 
+test("local fallback result keeps rank and explains session-only persistence", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  const records = [{ score: 25, distanceM: 10, rhythmAccuracy: 80, achievedAt: 1 }];
+  let latest = null;
+  let frameCallback = null;
+  let frameTime = 0;
+  const localRunStore = {
+    getLocalScores: () => records,
+    getLastResult: () => latest,
+    getLocalRank: () => 2,
+    getStorageStatus: () => ({ persistent: false, warning: true }),
+    saveLocalResult: (record) => {
+      records.unshift(record);
+      return {
+        saved: true,
+        persisted: false,
+        warning: true,
+        ranked: true,
+        rank: 2,
+        record,
+        entries: records.slice(0, 5),
+        totalEntries: records.length,
+      };
+    },
+    saveLastResult: (record) => {
+      latest = record;
+      return true;
+    },
+  };
+  const controller = createAppController({
+    documentRef,
+    localRunStore,
+    audioManagerFactory: () => ({
+      unlock: async () => {},
+      startMusic() {},
+      stopMusic() {},
+      playSfx() {},
+      destroy() {},
+    }),
+    settingsPanelFactory: () => ({ mount() {} }),
+    gameClock: {
+      now: () => frameTime,
+      requestFrame: (callback) => {
+        frameCallback = callback;
+        return 1;
+      },
+      cancelFrame() {},
+    },
+  });
+
+  await controller.startGame("black");
+  controller.getState().gameState.health = 0;
+  frameTime = 0;
+  frameCallback(frameTime);
+  frameTime = 50;
+  frameCallback(frameTime);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const screen = documentRef.getElementById("screen-root");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.RESULT);
+  assert.equal(controller.getState().lastResult.saved, true);
+  assert.equal(controller.getState().lastResult.persisted, false);
+  assert.equal(controller.getState().lastResult.storageWarning, true);
+  assert.match(textOf(screen), /현재 세션에 기록되었습니다/);
+  assert.doesNotMatch(textOf(screen), /저장 재시도/);
+
+  findAll(screen, (element) => element.tagName === "BUTTON")
+    .find((button) => button.textContent === "개인기록표")
+    .dispatch("click");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.PERSONAL_RECORDS);
+  assert.equal(findAll(screen, (element) => element.className === "local-storage-warning")[0].hidden, false);
+  assert.equal(findAll(screen, (element) => element.tagName === "TR").length, 3);
+  assert.match(textOf(screen), /방금 기록/);
+  controller.destroy();
+});
+
 test("API client preserves a pending result and signals sign-in on 401", async () => {
   const {
     createApiClient,

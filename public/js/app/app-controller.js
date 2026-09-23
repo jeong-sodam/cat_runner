@@ -439,7 +439,12 @@ function createAppController(options = {}) {
         catId: completedState.catId,
         achievedAt,
       };
-      let savedResult = { saved: false, rank: null };
+      let savedResult = {
+        saved: false,
+        persisted: false,
+        warning: false,
+        rank: null,
+      };
       let lastResultSaved = false;
       try {
         savedResult = localStore.saveLocalResult(scoreRecord) || savedResult;
@@ -452,9 +457,17 @@ function createAppController(options = {}) {
         lastResultSaved = false;
       }
       const saved = savedResult.saved === true && lastResultSaved;
+      const storageStatus = localStore.getStorageStatus?.() || {
+        persistent: savedResult.persisted !== false,
+        warning: savedResult.warning === true,
+      };
+      const persisted = savedResult.persisted === true && storageStatus.persistent === true;
+      const storageWarning = savedResult.warning === true || storageStatus.warning === true;
       showResult({
         ...localResult,
         saved,
+        persisted,
+        storageWarning,
         rank: savedResult.rank,
         isPersonalBest: saved && savedResult.rank === 1,
         localOnly: true,

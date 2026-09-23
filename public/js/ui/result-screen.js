@@ -38,7 +38,9 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
       badge.className = "local-mode-badge";
       badge.textContent = result.saved === false
         ? "로컬 플레이 · 저장 실패"
-        : "로컬 플레이 · 개인기록표 저장";
+        : result.storageWarning === true
+          ? "로컬 플레이 · 세션 기록"
+          : "로컬 플레이 · 개인기록표 저장";
       section.append(badge);
     }
     heading.textContent = "달리기 완료";
@@ -49,9 +51,15 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
     addStat(documentRef, stats, "쥐 인형", numberText(result.mouseCount));
 
     const status = documentRef.createElement("p");
-    status.className = result.saved === false ? "result-status unsaved" : "result-status";
+    status.className = result.saved === false
+      ? "result-status unsaved"
+      : result.storageWarning === true
+        ? "result-status storage-warning"
+        : "result-status";
     if (localResult && result.saved === false) {
       status.textContent = result.errorMessage || "개인기록표에 저장하지 못했습니다. 브라우저 저장소를 확인해주세요.";
+    } else if (localResult && result.storageWarning === true) {
+      status.textContent = "현재 세션에 기록되었습니다. 새로고침하거나 브라우저를 닫으면 기록이 사라질 수 있습니다.";
     } else if (localResult) {
       status.textContent = result.isPersonalBest
         ? "개인 최고 기록! 개인기록표에 저장되었습니다."

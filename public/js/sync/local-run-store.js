@@ -15,23 +15,33 @@ function createMemoryStorage() {
 
 function resolveStorage(storage) {
   if (storage) {
-    return storage;
+    return { storage, persistent: true };
   }
   try {
-    return globalThis.localStorage || createMemoryStorage();
+    if (globalThis.localStorage) {
+      return { storage: globalThis.localStorage, persistent: true };
+    }
   } catch {
-    return createMemoryStorage();
+    // Access to localStorage can be blocked by privacy mode or a sandbox.
   }
+  return { storage: createMemoryStorage(), persistent: false };
 }
 
 function createLocalRunStore(storage) {
-  const safeStorage = resolveStorage(storage);
+  const resolvedStorage = resolveStorage(storage);
+  const safeStorage = resolvedStorage.storage;
+  let persistent = resolvedStorage.persistent;
+  let storageWarning = !resolvedStorage.persistent;
+  let fallbackHistory = null;
+  let fallbackLastResult = null;
 
   function readJson(key) {
     try {
       const raw = safeStorage.getItem(key);
       return raw ? JSON.parse(raw) : null;
     } catch {
+      persistent = false;
+      storageWarning = true;
       return null;
     }
   }
@@ -41,6 +51,8 @@ function createLocalRunStore(storage) {
       safeStorage.setItem(key, JSON.stringify(value));
       return true;
     } catch {
+      persistent = false;
+      storageWarning = true;
       return false;
     }
   }
@@ -49,6 +61,8 @@ function createLocalRunStore(storage) {
     try {
       return safeStorage.getItem(key) !== null;
     } catch {
+      persistent = false;
+      storageWarning = true;
       return false;
     }
   }
@@ -154,9 +168,19 @@ function createLocalRunStore(storage) {
   }
 
   function persistHistory(history) {
-    const historySaved = writeJson(LOCAL_HISTORY_KEY, history);
-    const scoresSaved = writeJson(LOCAL_SCORES_KEY, history.slice(0, 5));
-    return historySaved && scoresSaved;
+    const normalizedHistory = history.map(normalizeScoreRecord);
+    const historySaved = writeJson(LOCAL_HISTORY_KEY, normalizedHistory);
+    const scoresSaved = writeJson(LOCAL_SCORES_KEY, normalizedHistory.slice(0, 5));
+    if (historySaved && scoresSaved) {
+      fallbackHistory = null;
+      persistent = true;
+      storageWarning = false;
+      return true;
+    }
+    fallbackHistory = normalizedHistory;
+    persistent = false;
+    storageWarning = true;
+    return false;
   }
 
   function readScoreArray(key) {
@@ -177,6 +201,10 @@ function createLocalRunStore(storage) {
     const history = readScoreArray(LOCAL_HISTORY_KEY);
     if (history !== null) {
       return history;
+    }
+
+    if (fallbackHistory) {
+      return [...fallbackHistory];
     }
 
     const legacyScores = readScoreArray(LOCAL_SCORES_KEY);
@@ -210,7 +238,9 @@ function createLocalRunStore(storage) {
     const rankIndex = history.findIndex((entry) => sameScoreRecord(entry, next));
     const entries = history.slice(0, 5);
     return {
-      saved,
+      saved: saved || fallbackHistory !== null,
+      persisted: saved,
+      warning: storageWarning,
       ranked: rankIndex !== -1 && rankIndex < 5,
       rank: rankIndex === -1 ? null : rankIndex + 1,
       record: next,
@@ -242,7 +272,7 @@ function createLocalRunStore(storage) {
   function getLastResult() {
     const record = readJson(LOCAL_LAST_RESULT_KEY);
     if (!record && !hasStoredValue(LOCAL_LAST_RESULT_KEY)) {
-      return null;
+      return fallbackLastResult ? { ...fallbackLastResult } : null;
     }
     if (!isValidScoreRecord(record)) {
       clearLastResult();
@@ -252,7 +282,27 @@ function createLocalRunStore(storage) {
   }
 
   function saveLastResult(record) {
-    return writeJson(LOCAL_LAST_RESULT_KEY, normalizeScoreRecord(record));
+    const next = normalizeScoreRecord(record);
+    const saved = writeJson(LOCAL_LAST_RESULT_KEY, next);
+    if (saved) {
+      fallbackLastResult = null;
+      if (fallbackHistory === null) {
+        persistent = true;
+        storageWarning = false;
+      }
+      return true;
+    }
+    fallbackLastResult = next;
+    persistent = false;
+    storageWarning = true;
+    return true;
+  }
+
+  function getStorageStatus() {
+    return {
+      persistent,
+      warning: storageWarning,
+    };
   }
 
   function clearLastResult() {
@@ -294,6 +344,7 @@ function createLocalRunStore(storage) {
     saveLocalBest,
     getLastResult,
     saveLastResult,
+    getStorageStatus,
     clearLocalScores,
     clearLocalBest,
     clearLastResult,
