@@ -10,7 +10,7 @@
   --accent-soft: #f3dfcf;
   --green: #3d8657;
   --shadow: rgb(63 43 43 / 22%);
-  font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
   background: var(--paper);
   color: var(--ink);
 }
@@ -80,7 +80,12 @@ body {
 }
 
 #screen-root h1 {
-  font-size: clamp(2rem, 5vw, 4rem);
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(1.8rem, 5vw, 3.6rem);
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 #screen-root p {
@@ -131,6 +136,7 @@ body {
   background: var(--accent-soft);
   font: inherit;
   font-weight: 700;
+  white-space: nowrap;
   transition: transform 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
 }
 
@@ -198,8 +204,17 @@ body {
 }
 
 .flow-card h1 {
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  min-width: 0;
+  overflow: hidden;
+  font-size: clamp(1.6rem, 5vw, 3rem);
+  letter-spacing: -0.06em;
   line-height: 1.15;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.wide-card h1 {
+  font-size: clamp(1.35rem, 4.5vw, 3rem);
 }
 
 .eyebrow {
@@ -279,6 +294,7 @@ body {
   color: var(--ink);
   background: var(--cream);
   font: inherit;
+  min-width: 0;
   text-align: left;
   transition: transform 120ms ease, border-color 120ms ease, background-color 120ms ease;
 }
@@ -342,7 +358,10 @@ body {
 }
 
 .cat-stat-label {
-  overflow-wrap: anywhere;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .cat-stat-value {
@@ -412,6 +431,7 @@ body {
   background: #fff1d4;
   font-size: 0.82rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .resume-modal {
@@ -443,12 +463,14 @@ body {
 .result-stat dt {
   color: #775d52;
   font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .result-stat dd {
   margin: 4px 0 0;
   font-size: 1.35rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .result-status {
@@ -464,6 +486,7 @@ body {
 .result-rank {
   font-size: 1.2rem !important;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .result-actions {
@@ -489,6 +512,7 @@ body {
 
 .leaderboard-table th {
   color: #775d52;
+  white-space: nowrap;
 }
 
 .leaderboard-tabs {
@@ -506,6 +530,7 @@ body {
   color: #775d52;
   font: inherit;
   font-weight: 800;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -536,6 +561,7 @@ body {
 .current-result h2 {
   margin: 0 0 4px;
   font-size: 1rem;
+  white-space: nowrap;
 }
 
 .current-result p {
@@ -580,6 +606,11 @@ body {
   .cat-card {
     grid-template-columns: 88px 1fr;
     align-items: center;
+  }
+
+  .flow-card h1,
+  .wide-card h1 {
+    font-size: clamp(1.25rem, 6vw, 2.2rem);
   }
 
   .cat-preview {

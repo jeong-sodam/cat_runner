@@ -4,16 +4,16 @@
 [폰트·고양이 능력치·쥐 도트아트](./plans/2026-09-23-font-cat-stats-mouse-formation.md)
 
 ## Active Phase
-[P01 능력치 모델과 폰트 기반](./phases/2026-09-23-font-cat-stats-mouse-formation/P01-stat-and-font-foundation/phase.md)
+[P02 쥐 도트아트와 DEX 이벤트](./phases/2026-09-23-font-cat-stats-mouse-formation/P02-mouse-formations-and-dex/phase.md)
 
 ## Active Task
-[T02 폰트와 고양이 선택 UI](./phases/2026-09-23-font-cat-stats-mouse-formation/P01-stat-and-font-foundation/T02-font-and-cat-card-ui.md)
+[T01 도트아트 생성기](./phases/2026-09-23-font-cat-stats-mouse-formation/P02-mouse-formations-and-dex/T01-formation-generator.md)
 
 ## Status
 
-- T01 구현·검증 완료
-- 다음 Task T02 진행 준비 완료
+- P01-T02 구현·검증 완료
+- P02-T01 진행 준비 완료
 
 ## Next Step (IMPORTANT)
 
-T02 청사진을 읽고 `public/styles.css`, `public/js/ui/cat-card.js`, `public/js/render/draw-hud.js`, `public/js/render/scene-renderer.js` 구현을 시작한다.
+P02-T01 청사진을 읽고 `public/js/game/mouse-formations.js`, `public/js/game/patterns.js`, `test/game-systems.test.js` 구현을 시작한다.

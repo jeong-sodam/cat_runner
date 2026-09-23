@@ -1,15 +1,11 @@
 import { CAT_STAT_KEYS } from "../game/constants.js";
 
 const STAT_LABELS = Object.freeze({
-  jump: "점프",
+  jump: "점프력",
   speed: "속도",
-  slide: "슬라이드",
-  itemDuration: "아이템",
   health: "체력",
+  itemDuration: "아이템 지속",
   magnetRange: "자석 범위",
-  score: "점수",
-  fallResistance: "낙사 저항",
-  invincibleDuration: "무적 지속",
 });
 
 function formatMultiplier(value) {

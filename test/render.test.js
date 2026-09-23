@@ -208,7 +208,7 @@ test("renderer draws primary and bonus rhythm targets without mutating them", as
   assert.deepEqual(JSON.stringify(state), before);
 });
 
-test("HUD renders the complete health capacity for four and six health cats", async () => {
+test("HUD renders the complete health capacity for two and five health cats", async () => {
   const modules = await loadRenderModules();
   for (const catId of ["black", "calico"]) {
     const context = createFakeContext();
@@ -220,6 +220,7 @@ test("HUD renders the complete health capacity for four and six health cats", as
       (call) => call.name === "fillText" && call.args[0] === "♥" && call.args[2] === 120,
     );
     assert.equal(hearts.length, state.maxHealth);
+    assert.match(context.font, /Pretendard/);
   }
 });
 

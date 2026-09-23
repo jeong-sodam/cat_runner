@@ -9,6 +9,8 @@ const EFFECT_LABELS = Object.freeze({
   slow_miss: "느림",
 });
 
+const CANVAS_FONT_FAMILY = '"Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif';
+
 function drawHudPanel(ctx, x, y, width, height) {
   ctx.fillStyle = "rgba(255, 250, 245, 0.88)";
   ctx.strokeStyle = "rgba(63, 43, 43, 0.34)";
@@ -20,7 +22,7 @@ function drawHudPanel(ctx, x, y, width, height) {
 function drawHud(ctx, state) {
   ctx.save();
   drawHudPanel(ctx, 18, 12, 190, 142);
-  ctx.font = "bold 28px Trebuchet MS, sans-serif";
+  ctx.font = `bold 28px ${CANVAS_FONT_FAMILY}`;
   ctx.textBaseline = "middle";
   ctx.fillStyle = PALETTE.ui.ink;
   ctx.fillText("점수 " + state.score, 34, 38);
@@ -36,7 +38,7 @@ function drawHud(ctx, state) {
   const rhythm = getRhythmSummary(state.rhythm);
   drawHudPanel(ctx, 230, 12, 270, 100);
   ctx.fillStyle = PALETTE.ui.ink;
-  ctx.font = "bold 22px Trebuchet MS, sans-serif";
+  ctx.font = `bold 22px ${CANVAS_FONT_FAMILY}`;
   ctx.fillText("정확도 " + Math.round(rhythm.accuracy * 100) + "%", 246, 40);
   ctx.fillText("타겟 " + (state.rhythm?.targets?.filter((target) => target.status === "active").length || 0), 246, 76);
 
@@ -69,4 +71,4 @@ function drawHud(ctx, state) {
   return { pauseButton };
 }
 
-export { drawHud, EFFECT_LABELS };
+export { CANVAS_FONT_FAMILY, drawHud, EFFECT_LABELS };
