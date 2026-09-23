@@ -3,6 +3,7 @@ const RHYTHM_CONFIG = Object.freeze({
   baseSpawnIntervalMs: 750,
   baseRadius: 34,
   minRadius: 18,
+  targetScale: 1.25,
   bonusChance: 0.2,
   bonusPoints: 5,
   accuracyMin: 0,
@@ -14,7 +15,7 @@ const RHYTHM_CONFIG = Object.freeze({
     right: 120,
     top: 140,
     bottom: 120,
-    minimumDistance: 240,
+    minimumDistance: 160,
     maxAttempts: 24,
   }),
   zones: Object.freeze({
@@ -62,10 +63,12 @@ function expireTargets(state, nowMs) {
 }
 
 function targetRadius(config) {
+  const scaledBaseRadius = RHYTHM_CONFIG.baseRadius * RHYTHM_CONFIG.targetScale;
+  const scaledMinRadius = RHYTHM_CONFIG.minRadius * RHYTHM_CONFIG.targetScale;
   return clamp(
-    RHYTHM_CONFIG.baseRadius / config.difficultyScale,
-    RHYTHM_CONFIG.minRadius,
-    RHYTHM_CONFIG.baseRadius,
+    scaledBaseRadius / config.difficultyScale,
+    scaledMinRadius,
+    scaledBaseRadius,
   );
 }
 

@@ -8,7 +8,7 @@ Provide an offline personal leaderboard with a combined all-cat top five, a pers
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Expand local score persistence, render local/global leaderboard states, connect local navigation, and ease rhythm targeting. | [P01](../phases/2026-09-23-local-leaderboard/P01-local-leaderboard-and-rhythm-ease/phase.md) |
+| P01 | `done` | Expand local score persistence, render local/global leaderboard states, connect local navigation, and ease rhythm targeting. | [P01](../phases/2026-09-23-local-leaderboard/P01-local-leaderboard-and-rhythm-ease/phase.md) |
 
 ## Decision Source
 

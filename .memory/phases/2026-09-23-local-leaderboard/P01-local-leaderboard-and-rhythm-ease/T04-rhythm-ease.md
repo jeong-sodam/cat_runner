@@ -1,6 +1,6 @@
 # Task: T04 Rhythm Ease
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -43,9 +43,9 @@ Make osu-style rhythm targets 25% larger visually and for hit detection, and red
 
 ## Acceptance Criteria
 
-- [ ] Visible and accepted target radius increases by exactly 25%.
-- [ ] Consecutive target movement preference is reduced to 160px without unsafe placement.
-- [ ] Existing rhythm timing, scoring, button, fallback, and rendering behavior remains intact.
+- [x] Visible and accepted target radius increases by exactly 25%.
+- [x] Consecutive target movement preference is reduced to 160px without unsafe placement.
+- [x] Existing rhythm timing, scoring, button, fallback, and rendering behavior remains intact.
 
 ## Validation
 
@@ -67,6 +67,12 @@ Task: T04-rhythm-ease
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
+
+## Execution Record
+
+- Added `targetScale: 1.25` to enlarge both rendered target circles and their shared hit radius.
+- Reduced the preferred consecutive center distance to 160px while preserving HUD-safe bounds and bounded fallback placement.
+- Validation: `npm.cmd test -- test/game-systems.test.js test/game-core.test.js test/render.test.js` (38 passed); `git diff --check` passed.

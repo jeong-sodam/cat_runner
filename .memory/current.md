@@ -10,15 +10,16 @@
 
 ## Active Task
 
-[T04 Rhythm Ease](./phases/2026-09-23-local-leaderboard/P01-local-leaderboard-and-rhythm-ease/T04-rhythm-ease.md)
+[All tasks complete](./plans/2026-09-23-local-leaderboard.md)
 
 ## Status
 
 - T01 완료: 로컬 점수 탑5·최근 기록 저장 및 기존 최고 기록 마이그레이션
 - T02 완료: 내 점수순위·전체 순위 탭과 방금 기록 UI
 - T03 완료: 로컬 게임오버 저장 및 서버 호출 없는 순위표 진입
-- Validation: T03 구현·검증 완료, 다음 작업은 osu 타겟 난이도 완화
+- T04 완료: osu 타겟 크기·판정범위 확대 및 이동 난이도 완화
+- Validation: 계획의 모든 작업 구현·검증 완료
 
 ## Next Step (IMPORTANT)
 
-T04 청사진을 읽고 osu 타겟 원·판정범위를 25% 확대하고 다음 타겟 이동거리를 완화합니다.
+현재 계획의 T01~T04 작업이 모두 완료되었습니다. 새로운 기능 요청이 있으면 새 계획을 수립합니다.

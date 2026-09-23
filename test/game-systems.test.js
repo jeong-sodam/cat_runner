@@ -420,6 +420,8 @@ test("rhythm targets use bounded zone counts, expiry, button matching, and bonus
   const modules = await loadSystems();
   assert.equal(modules.RHYTHM_CONFIG.targetLifetimeMs, 750);
   assert.equal(modules.RHYTHM_CONFIG.baseSpawnIntervalMs, 750);
+  assert.equal(modules.RHYTHM_CONFIG.targetScale, 1.25);
+  assert.equal(modules.RHYTHM_CONFIG.placement.minimumDistance, 160);
   assert.equal(modules.RHYTHM_CONFIG.zones.home_day.spawnIntervalMs, 750);
   assert.equal(modules.RHYTHM_CONFIG.zones.outside.spawnIntervalMs, 500);
   assert.equal(modules.RHYTHM_CONFIG.zones.home_night.spawnIntervalMs, 375);
@@ -433,6 +435,7 @@ test("rhythm targets use bounded zone counts, expiry, button matching, and bonus
   });
   assert.equal(home.targets.filter((target) => target.status === "active").length, 1);
   assert.equal(home.targets[0].button, "primary");
+  assert.equal(home.targets[0].radius, 42.5);
   assert.equal(home.targets[0].expiresAtMs, 750);
   modules.updateRhythmTargets(home, {
     nowMs: 749,
@@ -468,6 +471,23 @@ test("rhythm targets use bounded zone counts, expiry, button matching, and bonus
   const night = modules.createRhythmState({ randomSource: () => 0.9 });
   modules.updateRhythmTargets(night, { nowMs: 0, zoneId: "home_night", canvasWidth: 800, canvasHeight: 600 });
   assert.equal(night.targets.filter((target) => target.status === "active").length, 3);
+  assert.equal(night.targets[0].radius, 22.5);
+
+  const hitArea = modules.createRhythmState({ randomSource: () => 0.9 });
+  modules.updateRhythmTargets(hitArea, {
+    nowMs: 0,
+    zoneId: "home_day",
+    canvasWidth: 1600,
+    canvasHeight: 900,
+  });
+  const accepted = modules.resolveRhythmTarget(hitArea, {
+    x: hitArea.targets[0].x + 40,
+    y: hitArea.targets[0].y,
+    button: "primary",
+    nowMs: 100,
+  });
+  assert.ok(accepted);
+  assert.equal(hitArea.hitCount, 1);
 
   const bonus = modules.createRhythmState({ randomSource: () => 0.1 });
   modules.updateRhythmTargets(bonus, { nowMs: 0, zoneId: "home_day", canvasWidth: 200, canvasHeight: 120 });
@@ -507,7 +527,7 @@ test("rhythm targets stay in the HUD-safe area and space consecutive candidates"
     Math.hypot(
       spaced.targets[0].x - spaced.targets[1].x,
       spaced.targets[0].y - spaced.targets[1].y,
-    ) >= 240,
+    ) >= 160,
   );
 
   const fallback = modules.createRhythmState({ randomSource: () => 0.5 });

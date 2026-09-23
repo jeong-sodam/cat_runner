@@ -7,8 +7,8 @@
 | T01 | `done` | Expand local storage from one best record to a migrated all-cat top-five list plus a persisted latest result. | [T01](./T01-local-score-storage.md) |
 | T02 | `done` | Render personal/global leaderboard tabs, local top-five rows, and the always-visible latest-result row. | [T02](./T02-local-leaderboard-ui.md) |
 | T03 | `done` | Route local leaderboard navigation without server calls and persist/pass the latest result from gameover. | [T03](./T03-local-leaderboard-flow.md) |
-| T04 | `in_progress` | Increase visible/hit target size by 25% and reduce consecutive target movement distance to 160px. | [T04](./T04-rhythm-ease.md) |
+| T04 | `done` | Increase visible/hit target size by 25% and reduce consecutive target movement distance to 160px. | [T04](./T04-rhythm-ease.md) |
 
 ## Progress
 
-- done: 3/4 (active: T04)
+- done: 4/4 (phase complete)
