@@ -81,4 +81,4 @@ Task: T03-osu-target-ease
 
 - [x] 구현 완료
 - [x] 검증 통과 (`node --test --test-isolation=none --test-concurrency=1 test/game-systems.test.js`)
-- commit: pending
+- commit: a3c9a12
