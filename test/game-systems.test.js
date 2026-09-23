@@ -610,6 +610,70 @@ test("mouse, grass effects, magnet, slow miss, and replacement emit distinct out
   }
 });
 
+test("formation mice collect individually and use the full magnet range", async () => {
+  const modules = await loadSystems();
+  const state = createState(modules, "white");
+  const events = [];
+  const formationMouse = {
+    id: "formation-mouse",
+    type: "mouse",
+    x: state.player.x,
+    y: 610,
+    width: 42,
+    height: 42,
+    formationKind: "heart",
+    formationCell: { column: 1, row: 0 },
+    collected: false,
+    hitByPlayer: false,
+  };
+
+  modules.resolveEntityCollisions(state, [formationMouse], {
+    now: 1000,
+    onEvent: (event) => events.push(event),
+  });
+  assert.equal(state.mouseCount, 1);
+  assert.equal(state.score, 12);
+  assert.deepEqual(events[0], {
+    type: "mouse_collected",
+    payload: {
+      entityId: "formation-mouse",
+      formationKind: "heart",
+      formationCell: { column: 1, row: 0 },
+    },
+  });
+
+  assert.equal(
+    modules.getMagnetRangePixels(modules.getStatMultiplier(1)),
+    208,
+  );
+  assert.equal(
+    modules.getMagnetRangePixels(modules.getStatMultiplier(5)),
+    312,
+  );
+  state.activeEffect = { type: modules.EFFECT_TYPES.MAGNET, expiresAtMs: 5000 };
+  const inside = {
+    id: "formation-inside",
+    type: "mouse",
+    x: state.player.x + 207,
+    y: 610,
+    width: 42,
+    height: 42,
+    formationKind: "heart",
+    formationCell: { column: 0, row: 1 },
+    collected: false,
+  };
+  const outside = {
+    ...inside,
+    id: "formation-outside",
+    x: state.player.x + 209,
+    formationCell: { column: 2, row: 1 },
+  };
+  const beforeOutside = outside.x;
+  modules.updateActiveEffect(state, 1000, [inside, outside]);
+  assert.ok(inside.x < state.player.x + 207);
+  assert.equal(outside.x, beforeOutside);
+});
+
 test("effect duration applies to positive effects only", async () => {
   const modules = await loadSystems();
   const cheese = createState(modules, "cheese");

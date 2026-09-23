@@ -163,6 +163,38 @@ test("renderer draws every entity variant and returns a pause hit area", async (
   );
 });
 
+test("renderer sends every formation cell through the ordinary mouse fallback", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const renderer = modules.createSceneRenderer(context);
+  const state = createState(modules);
+  const cells = [
+    { column: 1, row: 0 },
+    { column: 0, row: 1 },
+    { column: 1, row: 1 },
+    { column: 2, row: 1 },
+    { column: 1, row: 2 },
+  ];
+  state.worldEntities = cells.map((cell, index) => ({
+    id: `formation-${index}`,
+    type: "mouse",
+    variant: "toy",
+    x: 600 + cell.column * 34,
+    y: 470 + cell.row * 34,
+    width: 42,
+    height: 42,
+    formationKind: "heart",
+    formationCell: cell,
+    collected: false,
+  }));
+  const before = JSON.stringify(state.worldEntities);
+
+  renderer.render(state);
+
+  assert.ok(context.calls.filter((call) => call.name === "ellipse").length >= cells.length);
+  assert.equal(JSON.stringify(state.worldEntities), before);
+});
+
 test("renderer draws active floor gaps behind world entities", async () => {
   const modules = await loadRenderModules();
   const context = createFakeContext();

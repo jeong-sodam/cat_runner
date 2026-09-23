@@ -231,7 +231,15 @@ function resolveEntityCollisions(
     if (entity.type === "mouse") {
       entity.collected = true;
       state.mouseCount += 1;
-      emit(onEvent, "mouse_collected", { entityId: entity.id });
+      const payload = { entityId: entity.id };
+      if (entity.formationKind) {
+        payload.formationKind = entity.formationKind;
+        payload.formationCell = entity.formationCell;
+        if (entity.formationLetter) {
+          payload.formationLetter = entity.formationLetter;
+        }
+      }
+      emit(onEvent, "mouse_collected", payload);
       updateScore(state);
       continue;
     }

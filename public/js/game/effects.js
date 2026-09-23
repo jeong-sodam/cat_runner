@@ -5,6 +5,11 @@ const POSITIVE_EFFECTS = new Set([
   EFFECT_TYPES.INVINCIBLE,
   EFFECT_TYPES.DOUBLE_SCORE,
 ]);
+const BASE_MAGNET_RANGE = 260;
+
+function getMagnetRangePixels(magnetRangeMultiplier) {
+  return BASE_MAGNET_RANGE * magnetRangeMultiplier;
+}
 
 function rollGrassEffect(randomSource) {
   const value =
@@ -50,7 +55,7 @@ function updateActiveEffect(state, now = state.elapsedMs, entities = []) {
         continue;
       }
       const screenDistance = entity.x - state.worldOffset - state.player.x;
-      if (Math.abs(screenDistance) <= 260 * cat.magnetRangeMultiplier) {
+      if (Math.abs(screenDistance) <= getMagnetRangePixels(cat.magnetRangeMultiplier)) {
         entity.x += (targetX - entity.x) * 0.2;
       }
     }
@@ -64,7 +69,9 @@ function getEffectSpeedMultiplier(state) {
 }
 
 export {
+  BASE_MAGNET_RANGE,
   applyEffect,
+  getMagnetRangePixels,
   getEffectSpeedMultiplier,
   rollGrassEffect,
   updateActiveEffect,
