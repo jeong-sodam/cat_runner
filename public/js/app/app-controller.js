@@ -322,15 +322,11 @@ function createAppController(options = {}) {
   function showCharacterSelect({ allowResume = true } = {}) {
     destroyGame();
     setScreen(SCREEN_NAMES.CHARACTER_SELECT);
-    setupRunSync();
     const characterSelect = createCharacterSelect(
       ({ catId }) => startGame(catId),
       { documentRef },
     );
     characterSelect.mount(screenRoot);
-    if (allowResume) {
-      void checkForResume();
-    }
   }
 
   function showResult(result) {
@@ -607,21 +603,12 @@ function createAppController(options = {}) {
   }
 
   async function startGame(catId = "black", runOptions = {}) {
-    if (runOptions.runMode === "local" || runOptions.resumed || !state.user) {
-      return initializeGame(catId, {
-        ...runOptions,
-        runMode: runOptions.runMode || (runOptions.resumed ? "server" : "local"),
-      });
-    }
-    const sync = setupRunSync();
-    try {
-      await sync.startRun({ userId: state.user.id, catId });
-      return initializeGame(catId, { ...runOptions, runMode: "server" });
-    } catch (error) {
-      state.gameState = null;
-      showStartFailure(catId, error);
-      return null;
-    }
+    return initializeGame(catId, {
+      ...runOptions,
+      runMode: "local",
+      resumed: false,
+      snapshot: undefined,
+    });
   }
 
   async function bootstrap() {

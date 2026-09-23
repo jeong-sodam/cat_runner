@@ -219,7 +219,7 @@ test("authenticated users without a nickname receive nickname onboarding", async
   assert.equal(controller.getState().screen, SCREEN_NAMES.CHARACTER_SELECT);
 });
 
-test("gameover character selection skips resume lookup while normal selection keeps it", async () => {
+test("character selection never checks for a server resume in local mode", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
   let resumeLookups = 0;
@@ -239,17 +239,16 @@ test("gameover character selection skips resume lookup while normal selection ke
 
   await controller.bootstrap();
   await new Promise((resolve) => setTimeout(resolve, 0));
-  const bootstrapLookups = resumeLookups;
   assert.equal(controller.getState().screen, SCREEN_NAMES.CHARACTER_SELECT);
 
   controller.showCharacterSelect({ allowResume: false });
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.equal(resumeLookups, bootstrapLookups);
+  assert.equal(resumeLookups, 0);
   assert.equal(findAll(documentRef.getElementById("screen-root"), (element) => element.className === "resume-modal flow-card").length, 0);
 
   controller.showCharacterSelect();
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.equal(resumeLookups, bootstrapLookups + 1);
+  assert.equal(resumeLookups, 0);
   controller.destroy();
 });
 
@@ -596,13 +595,9 @@ test("API client preserves a pending result and signals sign-in on 401", async (
   });
 });
 
-test("authenticated runs wait for server confirmation before starting the game", async () => {
+test("authenticated runs start in local mode without server confirmation", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
-  let resolveStart;
-  const startGate = new Promise((resolve) => {
-    resolveStart = resolve;
-  });
   const calls = [];
   const controller = createAppController({
     documentRef,
@@ -613,7 +608,6 @@ test("authenticated runs wait for server confirmation before starting the game",
     runApiClient: {
       startRun: async (payload) => {
         calls.push(payload);
-        await startGate;
         return { runId: "server-run", catId: payload.catId, seed: "seed", expiresAt: 5000 };
       },
     },
@@ -633,20 +627,16 @@ test("authenticated runs wait for server confirmation before starting the game",
   });
 
   await controller.bootstrap();
-  const starting = controller.startGame("black");
-  await Promise.resolve();
-  assert.equal(controller.getState().screen, SCREEN_NAMES.CHARACTER_SELECT);
-  assert.equal(controller.getState().gameState, null);
-  assert.deepEqual(calls, [{ userId: "user-1", catId: "black" }]);
-
-  resolveStart();
-  await starting;
+  await controller.startGame("black", { runMode: "server", resumed: true, snapshot: { score: 999 } });
   assert.equal(controller.getState().screen, SCREEN_NAMES.GAME);
-  assert.equal(controller.getState().runMode, "server");
+  assert.equal(controller.getState().runMode, "local");
+  assert.equal(controller.getState().gameState.runMode, "local");
+  assert.equal(controller.getState().gameState.score, 0);
+  assert.deepEqual(calls, []);
   controller.destroy();
 });
 
-test("failed server start exposes safe retry/local actions and local mode avoids sync calls", async () => {
+test("authenticated local start does not expose a server failure modal", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
   const logs = [];
@@ -660,10 +650,7 @@ test("failed server start exposes safe retry/local actions and local mode avoids
     runApiClient: {
       startRun: async () => {
         startCalls += 1;
-        const error = new Error("secret request details");
-        error.code = "NETWORK_ERROR";
-        error.status = 503;
-        throw error;
+        throw new Error("server start must not be called");
       },
     },
     logger: { error: (...args) => logs.push(args) },
@@ -686,18 +673,11 @@ test("failed server start exposes safe retry/local actions and local mode avoids
   await controller.startGame("chaos");
 
   const screen = documentRef.getElementById("screen-root");
-  const modal = findAll(screen, (element) => element.className === "start-error-modal flow-card")[0];
-  assert.ok(modal);
-  assert.doesNotMatch(textOf(modal), /secret request details/);
-  assert.equal(logs.length, 1);
-  assert.deepEqual(logs[0], ["Run start failed", { status: 503, code: "NETWORK_ERROR" }]);
-  const actions = findAll(modal, (element) => element.tagName === "BUTTON");
-  assert.equal(actions.length, 2);
-
-  actions[1].dispatch("click");
   assert.equal(controller.getState().screen, SCREEN_NAMES.GAME);
   assert.equal(controller.getState().runMode, "local");
-  assert.equal(startCalls, 1);
+  assert.equal(startCalls, 0);
+  assert.equal(logs.length, 0);
+  assert.equal(findAll(screen, (element) => element.className === "start-error-modal flow-card").length, 0);
   controller.destroy();
 });
 
