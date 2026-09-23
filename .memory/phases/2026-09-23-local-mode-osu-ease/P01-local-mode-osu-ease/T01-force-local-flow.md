@@ -81,4 +81,4 @@ Task: T01-force-local-flow
 
 - [x] 구현 완료
 - [x] 검증 통과 (`node --test --test-isolation=none --test-concurrency=1 test/app-flow.test.js`)
-- commit: ef1b31d
+- commit: a6d3893
