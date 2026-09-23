@@ -428,6 +428,61 @@ test("empty local leaderboard shows a non-error state", async () => {
   assert.equal(findAll(root, (element) => element.textContent === "다시 시도").length, 0);
 });
 
+test("personal records renders local top five and latest rank without server calls", async () => {
+  const { createPersonalRecordsPanel } = await import("../public/js/ui/personal-records.js");
+  const documentRef = createAppDocument();
+  const root = documentRef.createElement("section");
+  let serverCalls = 0;
+  const panel = createPersonalRecordsPanel(
+    {},
+    {
+      documentRef,
+      localStore: {
+        getLocalScores: () => [
+          { score: 50, distanceM: 20, rhythmAccuracy: 90, achievedAt: 1 },
+          { score: 40, distanceM: 18, rhythmAccuracy: 80, achievedAt: 2 },
+          { score: 30, distanceM: 16, rhythmAccuracy: 70, achievedAt: 3 },
+          { score: 20, distanceM: 14, rhythmAccuracy: 60, achievedAt: 4 },
+          { score: 10, distanceM: 12, rhythmAccuracy: 50, achievedAt: 5 },
+        ],
+        getLastResult: () => ({ score: 5, distanceM: 3, rhythmAccuracy: 25, achievedAt: 6 }),
+        getLocalRank: () => 6,
+        getLeaderboard: () => {
+          serverCalls += 1;
+          return { entries: [] };
+        },
+      },
+    },
+  );
+  panel.mount(root);
+
+  assert.equal(serverCalls, 0);
+  assert.match(textOf(root), /개인기록표/);
+  assert.match(textOf(root), /방금 기록/);
+  assert.match(textOf(root), /개인 순위 6위/);
+  assert.match(textOf(root), /정확도 25%/);
+  assert.equal(findAll(root, (element) => element.tagName === "TR").length, 6);
+  assert.equal(findAll(root, (element) => element.className === "latest-local-result").length, 1);
+  assert.equal(findAll(root, (element) => element.className === "leaderboard-empty personal-records-empty")[0].hidden, true);
+});
+
+test("empty personal records renders a safe non-error state", async () => {
+  const { createPersonalRecordsPanel } = await import("../public/js/ui/personal-records.js");
+  const documentRef = createAppDocument();
+  const root = documentRef.createElement("section");
+  createPersonalRecordsPanel(
+    {},
+    {
+      documentRef,
+      localStore: { getLocalScores: () => [], getLastResult: () => null },
+    },
+  ).mount(root);
+
+  assert.match(textOf(root), /아직 저장된 개인 기록이 없습니다/);
+  assert.equal(findAll(root, (element) => element.className.includes("personal-records-empty"))[0].hidden, false);
+  assert.equal(findAll(root, (element) => element.textContent === "다시 시도").length, 0);
+});
+
 test("local gameover saves the latest result and opens the local leaderboard offline", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
