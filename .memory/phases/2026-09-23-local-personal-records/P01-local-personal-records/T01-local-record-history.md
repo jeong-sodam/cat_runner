@@ -105,4 +105,4 @@ Task: T01-local-record-history
 
 - [x] 구현 완료
 - [x] 검증 통과
-- commit: 3180379
+- commit: recorded
