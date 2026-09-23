@@ -347,3 +347,74 @@ test("local best records replace only when score, distance, or time improves", a
   store.clearLocalBest();
   assert.equal(store.getLocalBest(), null);
 });
+
+test("local score history keeps an all-cat top five and latest result", async () => {
+  const { LOCAL_SCORES_KEY, LOCAL_LAST_RESULT_KEY, createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+  const storage = new Map();
+  const store = createLocalRunStore({
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key),
+  });
+
+  for (const [score, distanceM, achievedAt, catId] of [
+    [20, 10, 5, "black"],
+    [50, 4, 4, "white"],
+    [50, 6, 3, "calico"],
+    [40, 20, 2, "cheese"],
+    [30, 10, 1, "mackerel"],
+    [10, 100, 0, "chaos"],
+  ]) {
+    assert.equal(store.saveLocalResult({ score, distanceM, achievedAt, catId }).saved, true);
+  }
+  assert.deepEqual(
+    store.getLocalScores().map((record) => [record.score, record.distanceM, record.catId]),
+    [
+      [50, 6, "calico"],
+      [50, 4, "white"],
+      [40, 20, "cheese"],
+      [30, 10, "mackerel"],
+      [20, 10, "black"],
+    ],
+  );
+
+  const latest = { score: 1, distanceM: 1, achievedAt: 99, catId: "chaos" };
+  assert.equal(store.saveLastResult(latest), true);
+  assert.deepEqual(store.getLastResult(), {
+    score: 1,
+    distanceM: 1,
+    mouseCount: 0,
+    rhythmAccuracy: 0,
+    catId: "chaos",
+    achievedAt: 99,
+  });
+  assert.equal(storage.has(LOCAL_SCORES_KEY), true);
+  assert.equal(storage.has(LOCAL_LAST_RESULT_KEY), true);
+});
+
+test("local score history migrates the legacy best and clears malformed data safely", async () => {
+  const { LOCAL_BEST_KEY, LOCAL_SCORES_KEY, LOCAL_LAST_RESULT_KEY, createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+  const storage = new Map([
+    [LOCAL_BEST_KEY, JSON.stringify({ score: 12, distanceM: 3, catId: "white", achievedAt: 10 })],
+    [LOCAL_LAST_RESULT_KEY, "not-json"],
+  ]);
+  const store = createLocalRunStore({
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key),
+  });
+
+  assert.deepEqual(store.getLocalScores(), [{
+    score: 12,
+    distanceM: 3,
+    mouseCount: 0,
+    rhythmAccuracy: 0,
+    catId: "white",
+    achievedAt: 10,
+  }]);
+  assert.equal(storage.has(LOCAL_SCORES_KEY), true);
+  assert.deepEqual(store.getLocalBest(), store.getLocalScores()[0]);
+  assert.equal(store.getLastResult(), null);
+  store.clearLocalBest();
+  assert.equal(store.getLocalScores().length, 0);
+});

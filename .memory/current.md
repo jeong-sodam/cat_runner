@@ -2,23 +2,21 @@
 
 ## Active Plan
 
-[Run Record, Gameover Flow, Health Scaling, and Rhythm Area](./plans/2026-09-23-run-record-gameover-health-rhythm-area.md)
+[Local Leaderboard and Rhythm Ease](./plans/2026-09-23-local-leaderboard.md)
 
 ## Active Phase
 
-[P01 Run Record, Gameover Flow, Health Scaling, and Rhythm Area](./phases/2026-09-23-run-record-gameover-health-rhythm-area/P01-run-record-gameover-health-rhythm-area/phase.md)
+[P01 Local Leaderboard and Rhythm Ease](./phases/2026-09-23-local-leaderboard/P01-local-leaderboard-and-rhythm-ease/phase.md)
 
 ## Active Task
 
-[All tasks complete](./plans/2026-09-23-run-record-gameover-health-rhythm-area.md)
+[T02 Local Leaderboard UI](./phases/2026-09-23-local-leaderboard/P01-local-leaderboard-and-rhythm-ease/T02-local-leaderboard-ui.md)
 
 ## Status
 
-- T01 완료: 클라이언트·서버 체력 등급을 1~5 체력 칸으로 정합화하고 fixture 검증
-- T02 완료: 게임오버 자동 기록/재시도와 게임오버 후 resume 조회 억제
-- T03 완료: rhythm 타겟 HUD 안전 영역·최소 간격·fallback 적용
-- Validation: 계획의 모든 작업 구현·검증 완료
+- T01 완료: 로컬 점수 탑5·최근 기록 저장 및 기존 최고 기록 마이그레이션
+- Validation: T01 구현·검증 완료, 다음 작업은 로컬 순위표 UI
 
 ## Next Step (IMPORTANT)
 
-현재 계획의 T01~T03 작업이 모두 완료되었습니다. 새로운 기능 요청이 있으면 새 계획을 수립합니다.
+T02 청사진을 읽고 내 점수순위·전체 순위 탭, 개인 탑5, 방금 기록 UI를 구현합니다.

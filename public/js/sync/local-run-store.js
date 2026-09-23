@@ -1,5 +1,7 @@
 const LOCAL_RUN_KEY = "cat-runner:active-run";
 const LOCAL_BEST_KEY = "cat-runner:local-best";
+const LOCAL_SCORES_KEY = "cat-runner:local-scores";
+const LOCAL_LAST_RESULT_KEY = "cat-runner:last-result";
 
 function createMemoryStorage() {
   const values = new Map();
@@ -23,6 +25,32 @@ function resolveStorage(storage) {
 
 function createLocalRunStore(storage) {
   const safeStorage = resolveStorage(storage);
+
+  function readJson(key) {
+    try {
+      const raw = safeStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeJson(key, value) {
+    try {
+      safeStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function hasStoredValue(key) {
+    try {
+      return safeStorage.getItem(key) !== null;
+    } catch {
+      return false;
+    }
+  }
 
   function save(run) {
     const value = {
@@ -63,60 +91,149 @@ function createLocalRunStore(storage) {
     }
   }
 
-  function getLocalBest() {
-    try {
-      const raw = safeStorage.getItem(LOCAL_BEST_KEY);
-      if (!raw) {
-        return null;
-      }
-      const record = JSON.parse(raw);
-      if (!record || typeof record !== "object" || !Number.isFinite(record.score)) {
+  function normalizeScoreRecord(record) {
+    const numberOrZero = (value) => {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : 0;
+    };
+    const achievedAt = Number(record?.achievedAt);
+    return {
+      score: numberOrZero(record?.score),
+      distanceM: numberOrZero(record?.distanceM),
+      mouseCount: numberOrZero(record?.mouseCount),
+      rhythmAccuracy: numberOrZero(record?.rhythmAccuracy),
+      catId: typeof record?.catId === "string" && record.catId.length > 0
+        ? record.catId
+        : "black",
+      achievedAt: Number.isFinite(achievedAt) ? achievedAt : Date.now(),
+    };
+  }
+
+  function isValidScoreRecord(record) {
+    return Boolean(
+      record &&
+      typeof record === "object" &&
+      Number.isFinite(Number(record.score)),
+    );
+  }
+
+  function compareScoreRecords(first, second) {
+    if (first.score !== second.score) {
+      return second.score - first.score;
+    }
+    if (first.distanceM !== second.distanceM) {
+      return second.distanceM - first.distanceM;
+    }
+    return first.achievedAt - second.achievedAt;
+  }
+
+  function readLegacyBest() {
+    const record = readJson(LOCAL_BEST_KEY);
+    if (!record) {
+      if (hasStoredValue(LOCAL_BEST_KEY)) {
         clearLocalBest();
-        return null;
       }
-      return record;
-    } catch {
+      return null;
+    }
+    if (!isValidScoreRecord(record)) {
       clearLocalBest();
       return null;
     }
+    return normalizeScoreRecord(record);
   }
 
-  function isBetterBest(next, current) {
-    if (!current) {
-      return true;
+  function getLocalScores() {
+    const raw = readJson(LOCAL_SCORES_KEY);
+    if (raw !== null || hasStoredValue(LOCAL_SCORES_KEY)) {
+      if (!Array.isArray(raw)) {
+        clearLocalScores();
+        return [];
+      }
+      return raw
+        .filter(isValidScoreRecord)
+        .map(normalizeScoreRecord)
+        .sort(compareScoreRecords)
+        .slice(0, 5);
     }
-    if (next.score !== current.score) {
-      return next.score > current.score;
+
+    const legacy = readLegacyBest();
+    if (!legacy) {
+      return [];
     }
-    if (next.distanceM !== current.distanceM) {
-      return next.distanceM > current.distanceM;
-    }
-    return next.achievedAt < current.achievedAt;
+    writeJson(LOCAL_SCORES_KEY, [legacy]);
+    return [legacy];
+  }
+
+  function getLocalBest() {
+    return getLocalScores()[0] || null;
+  }
+
+  function saveLocalResult(record) {
+    const next = normalizeScoreRecord(record);
+    const entries = [...getLocalScores(), next]
+      .sort(compareScoreRecords)
+      .slice(0, 5);
+    const saved = writeJson(LOCAL_SCORES_KEY, entries);
+    const rankIndex = entries.indexOf(next);
+    return {
+      saved,
+      ranked: rankIndex !== -1,
+      rank: rankIndex === -1 ? null : rankIndex + 1,
+      record: next,
+      entries,
+    };
   }
 
   function saveLocalBest(record) {
-    const next = {
-      score: Number(record?.score) || 0,
-      distanceM: Number(record?.distanceM) || 0,
-      mouseCount: Number(record?.mouseCount) || 0,
-      rhythmAccuracy: Number(record?.rhythmAccuracy) || 0,
-      catId: typeof record?.catId === "string" ? record.catId : "black",
-      achievedAt: Number(record?.achievedAt) || Date.now(),
-    };
-    if (!isBetterBest(next, getLocalBest())) {
+    const next = normalizeScoreRecord(record);
+    const current = getLocalBest();
+    if (current && compareScoreRecords(next, current) >= 0) {
       return false;
     }
-    try {
-      safeStorage.setItem(LOCAL_BEST_KEY, JSON.stringify(next));
-      return true;
-    } catch {
+    const result = saveLocalResult(next);
+    if (!result.saved) {
       return false;
+    }
+    writeJson(LOCAL_BEST_KEY, next);
+    return true;
+  }
+
+  function getLastResult() {
+    const record = readJson(LOCAL_LAST_RESULT_KEY);
+    if (!record && !hasStoredValue(LOCAL_LAST_RESULT_KEY)) {
+      return null;
+    }
+    if (!isValidScoreRecord(record)) {
+      clearLastResult();
+      return null;
+    }
+    return normalizeScoreRecord(record);
+  }
+
+  function saveLastResult(record) {
+    return writeJson(LOCAL_LAST_RESULT_KEY, normalizeScoreRecord(record));
+  }
+
+  function clearLastResult() {
+    try {
+      safeStorage.removeItem(LOCAL_LAST_RESULT_KEY);
+    } catch {
+      // Storage is optional when private browsing blocks writes.
+    }
+  }
+
+  function clearLocalScores() {
+    try {
+      safeStorage.removeItem(LOCAL_SCORES_KEY);
+    } catch {
+      // Storage is optional when private browsing blocks writes.
     }
   }
 
   function clearLocalBest() {
     try {
       safeStorage.removeItem(LOCAL_BEST_KEY);
+      safeStorage.removeItem(LOCAL_SCORES_KEY);
     } catch {
       // Storage is optional when private browsing blocks writes.
     }
@@ -126,12 +243,26 @@ function createLocalRunStore(storage) {
     save,
     load,
     clear,
+    getLocalScores,
     getLocalBest,
+    saveLocalResult,
     saveLocalBest,
+    getLastResult,
+    saveLastResult,
+    clearLocalScores,
     clearLocalBest,
+    clearLastResult,
     key: LOCAL_RUN_KEY,
     bestKey: LOCAL_BEST_KEY,
+    scoresKey: LOCAL_SCORES_KEY,
+    lastResultKey: LOCAL_LAST_RESULT_KEY,
   };
 }
 
-export { LOCAL_BEST_KEY, LOCAL_RUN_KEY, createLocalRunStore };
+export {
+  LOCAL_BEST_KEY,
+  LOCAL_RUN_KEY,
+  LOCAL_SCORES_KEY,
+  LOCAL_LAST_RESULT_KEY,
+  createLocalRunStore,
+};
