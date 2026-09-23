@@ -107,7 +107,7 @@ function createPersonalRecordsPanel(callbacks = {}, options = {}) {
     const heading = documentRef.createElement("h1");
     heading.textContent = "개인기록표";
     const intro = documentRef.createElement("p");
-    intro.textContent = "LOCAL 플레이 개인 최고 기록 5개";
+    intro.textContent = "개인 최고 기록 5개";
     const storageWarning = documentRef.createElement("p");
     storageWarning.className = "local-storage-warning";
     storageWarning.textContent = "현재 세션에 저장된 기록입니다. 새로고침하거나 브라우저를 닫으면 기록이 사라질 수 있습니다.";

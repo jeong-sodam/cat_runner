@@ -457,6 +457,8 @@ test("personal records renders local top five and latest rank without server cal
 
   assert.equal(serverCalls, 0);
   assert.match(textOf(root), /개인기록표/);
+  assert.match(textOf(root), /개인 최고 기록 5개/);
+  assert.doesNotMatch(textOf(root), /LOCAL 플레이/);
   assert.match(textOf(root), /방금 기록/);
   assert.match(textOf(root), /개인 순위 6위/);
   assert.match(textOf(root), /정확도 25%/);
