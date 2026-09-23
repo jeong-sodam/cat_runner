@@ -16,6 +16,7 @@ import { renderAuthConfigError, renderAuthScreen, renderLoadingScreen } from "..
 import { createNicknameScreen } from "../ui/nickname-screen.js";
 import { createCharacterSelect } from "../ui/character-select.js";
 import { createLeaderboardPanel } from "../ui/leaderboard.js";
+import { createPersonalRecordsPanel } from "../ui/personal-records.js";
 import { createResultScreen } from "../ui/result-screen.js";
 import { createLocalRunStore } from "../sync/local-run-store.js";
 import { createNetworkMonitor } from "../sync/network-monitor.js";
@@ -30,6 +31,7 @@ const SCREEN_NAMES = Object.freeze({
   CHARACTER_SELECT: "character-select",
   GAME: "game",
   RESULT: "result",
+  PERSONAL_RECORDS: "personal-records",
   LEADERBOARD: "leaderboard",
 });
 
@@ -341,6 +343,7 @@ function createAppController(options = {}) {
       {
         onRetry: () => void completeGameover(),
         onRestart: () => showCharacterSelect({ allowResume: false }),
+        onPersonalRecords: () => showPersonalRecords(),
         onLeaderboard: () => showLeaderboard(),
       },
       { documentRef },
@@ -348,8 +351,47 @@ function createAppController(options = {}) {
     resultScreen.mount(screenRoot);
   }
 
+  function showPersonalRecords() {
+    destroyGame();
+    setScreen(SCREEN_NAMES.PERSONAL_RECORDS);
+    showRoot();
+    const localStore = getLocalRunStore();
+    const personalRecords = createPersonalRecordsPanel(
+      {
+        onBack: () => showResult(
+          state.lastResult || localStore?.getLastResult?.() || { saved: false },
+        ),
+        onRestart: () => showCharacterSelect({ allowResume: false }),
+      },
+      {
+        documentRef,
+        localStore,
+        currentResult: state.lastResult,
+      },
+    );
+    personalRecords.mount(screenRoot);
+  }
+
+  function showServerLeaderboardNotice() {
+    if (state.screen !== SCREEN_NAMES.RESULT) {
+      showResult(state.lastResult || { saved: false, localOnly: true });
+    }
+    const resultSection = screenRoot?.children?.[0] || screenRoot;
+    if (!resultSection || !documentRef?.createElement) {
+      return;
+    }
+    const notice = documentRef.createElement("p");
+    notice.className = "server-leaderboard-notice";
+    notice.textContent = "서버 순위표는 준비 중입니다.";
+    resultSection.append(notice);
+  }
+
   function showLeaderboard() {
     const localMode = state.runMode !== "server";
+    if (localMode) {
+      showServerLeaderboardNotice();
+      return;
+    }
     destroyGame();
     setScreen(SCREEN_NAMES.LEADERBOARD);
     showRoot();
@@ -401,13 +443,30 @@ function createAppController(options = {}) {
         catId: completedState.catId,
         achievedAt,
       };
-      const savedResult = localStore.saveLocalResult(scoreRecord);
-      localStore.saveLastResult(scoreRecord);
+      let savedResult = { saved: false, rank: null };
+      let lastResultSaved = false;
+      try {
+        savedResult = localStore.saveLocalResult(scoreRecord) || savedResult;
+      } catch {
+        // The result screen reports a local save failure without entering server retry flow.
+      }
+      try {
+        lastResultSaved = localStore.saveLastResult(scoreRecord) !== false;
+      } catch {
+        lastResultSaved = false;
+      }
+      const saved = savedResult.saved === true && lastResultSaved;
       showResult({
         ...localResult,
-        isPersonalBest: savedResult.rank === 1,
+        saved,
+        rank: savedResult.rank,
+        isPersonalBest: saved && savedResult.rank === 1,
         localOnly: true,
-        errorMessage: "로컬 플레이 기록은 순위표에 등록되지 않습니다.",
+        catId: completedState.catId,
+        achievedAt,
+        errorMessage: saved
+          ? undefined
+          : "개인기록표에 저장하지 못했습니다. 브라우저 저장소를 확인해주세요.",
       });
       completionInProgress = false;
       return;

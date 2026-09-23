@@ -483,7 +483,7 @@ test("empty personal records renders a safe non-error state", async () => {
   assert.equal(findAll(root, (element) => element.textContent === "다시 시도").length, 0);
 });
 
-test("local gameover saves the latest result and opens the local leaderboard offline", async () => {
+test("local gameover saves the latest result and opens personal records offline", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
   const records = [];
@@ -545,13 +545,22 @@ test("local gameover saves the latest result and opens the local leaderboard off
   assert.equal(saveCalls, 1);
   assert.equal(lastResultCalls, 1);
   assert.equal(controller.getState().screen, SCREEN_NAMES.RESULT);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /개인기록표에 저장되었습니다/);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /개인 순위: 1위/);
   const resultButtons = findAll(documentRef.getElementById("screen-root"), (element) => element.tagName === "BUTTON");
-  resultButtons.find((button) => button.textContent === "순위표").dispatch("click");
+  resultButtons.find((button) => button.textContent === "개인기록표").dispatch("click");
   await new Promise((resolve) => setTimeout(resolve, 0));
 
-  assert.equal(controller.getState().screen, SCREEN_NAMES.LEADERBOARD);
+  assert.equal(controller.getState().screen, SCREEN_NAMES.PERSONAL_RECORDS);
   assert.equal(serverCalls, 0);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /개인기록표/);
   assert.match(textOf(documentRef.getElementById("screen-root")), /방금 기록/);
+  findAll(documentRef.getElementById("screen-root"), (element) => element.textContent === "뒤로")[0].dispatch("click");
+  const localResultButtons = findAll(documentRef.getElementById("screen-root"), (element) => element.tagName === "BUTTON");
+  localResultButtons.find((button) => button.textContent === "순위표").dispatch("click");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.RESULT);
+  assert.equal(serverCalls, 0);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /서버 순위표는 준비 중입니다/);
   controller.destroy();
 });
 
@@ -692,10 +701,12 @@ test("failed server start exposes safe retry/local actions and local mode avoids
   controller.destroy();
 });
 
-test("local result is visibly excluded from ranking without a retry action", async () => {
+test("local result shows save failure without server retry and exposes separate actions", async () => {
   const { createResultScreen } = await import("../public/js/ui/result-screen.js");
   const documentRef = createAppDocument();
   const root = documentRef.createElement("section");
+  let personalOpened = 0;
+  let leaderboardOpened = 0;
   createResultScreen(
     {
       score: 10,
@@ -706,12 +717,22 @@ test("local result is visibly excluded from ranking without a retry action", asy
       rank: null,
       errorMessage: "local only",
     },
-    { onRetry: () => assert.fail("local results must not retry server completion") },
+    {
+      onRetry: () => assert.fail("local results must not retry server completion"),
+      onPersonalRecords: () => { personalOpened += 1; },
+      onLeaderboard: () => { leaderboardOpened += 1; },
+    },
     { documentRef },
   ).mount(root);
 
   assert.equal(findAll(root, (element) => element.className === "local-mode-badge").length, 1);
   assert.match(textOf(root), /local only/);
-  assert.equal(findAll(root, (element) => element.tagName === "BUTTON").length, 2);
+  assert.match(textOf(root), /저장 실패/);
+  assert.equal(findAll(root, (element) => element.tagName === "BUTTON").length, 3);
+  const buttons = findAll(root, (element) => element.tagName === "BUTTON");
+  buttons.find((button) => button.textContent === "개인기록표").dispatch("click");
+  buttons.find((button) => button.textContent === "순위표").dispatch("click");
+  assert.deepEqual({ personalOpened, leaderboardOpened }, { personalOpened: 1, leaderboardOpened: 1 });
+  assert.equal(buttons.find((button) => button.textContent === "순위표").getAttribute("aria-disabled"), "true");
   assert.equal(findAll(root, (element) => element.className === "result-rank").length, 0);
 });
