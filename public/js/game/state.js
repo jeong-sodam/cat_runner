@@ -43,6 +43,7 @@ function createGameState({ catId, seed, randomSource } = {}) {
     zoneId: "home_day",
     worldEntities: [],
     worldGaps: [],
+    formationEvent: null,
     nextPatternX: GAME_CONFIG.canvasWidth + 300,
     lastPatternId: null,
     patternIndex: 0,

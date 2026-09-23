@@ -255,6 +255,163 @@ test("world spawns safe logical entities and removes entities behind the player"
   );
 });
 
+test("world maps normal formation cells into the reserved corridor", async () => {
+  const modules = await loadSystems();
+  const state = createState(modules);
+  state.nextPatternX = 0;
+  const formation = modules.createFormation(() => 0.5, {
+    kind: "heart",
+    forceDex: false,
+  });
+  const pattern = {
+    id: "normal-formation",
+    width: 1400,
+    minGap: 240,
+    patternIndex: 4,
+    formation: { ...formation, anchor: { x: 600, y: 470 } },
+    entities: [
+      {
+        type: "obstacle",
+        x: 260,
+        y: 620,
+        width: 90,
+        height: 80,
+        variant: "box",
+        collectible: false,
+      },
+      ...formation.cells.map((cell) => ({
+        type: "mouse",
+        x: 600 + cell.column * modules.FORMATION_CELL_STEP,
+        y: 470 + cell.row * modules.FORMATION_CELL_STEP,
+        width: modules.FORMATION_CELL_SIZE,
+        height: modules.FORMATION_CELL_SIZE,
+        variant: "toy",
+        collectible: true,
+        formationId: formation.label,
+        formationKind: formation.kind,
+        formationCell: { ...cell },
+      })),
+    ],
+    gaps: [],
+  };
+
+  const spawned = modules.spawnNextPattern(state, { next: () => pattern });
+  const mice = spawned.entities.filter((entity) => entity.formationId === "heart");
+  assert.equal(mice.length, formation.cells.length);
+  assert.ok(mice.every((entity) => entity.patternId === pattern.id));
+  const firstCell = mice.find((entity) =>
+    entity.formationCell.column === 1 && entity.formationCell.row === 0,
+  );
+  assert.equal(firstCell.x, spawned.startX + 600 + modules.FORMATION_CELL_STEP);
+  assert.equal(firstCell.y, 470);
+  assert.equal(state.formationEvent, null);
+  assert.equal(
+    spawned.entities.some((entity) =>
+      entity.type === "obstacle" &&
+      entity.x >= spawned.startX + 600 &&
+      entity.x < spawned.startX + 600 + formation.width,
+    ),
+    false,
+  );
+});
+
+test("DEX formation pauses new obstacle spawns until letters leave the world", async () => {
+  const modules = await loadSystems();
+  const state = createState(modules);
+  state.nextPatternX = 0;
+  const dex = modules.createFormation(() => 0.01, {
+    kind: "alphabet",
+    label: "A",
+  });
+  const dexPattern = {
+    id: "dex-formation",
+    width: 1400,
+    minGap: 240,
+    patternIndex: 8,
+    formation: { ...dex, anchor: { x: 600, y: 470 } },
+    entities: [
+      {
+        type: "obstacle",
+        x: 260,
+        y: 620,
+        width: 90,
+        height: 80,
+        variant: "box",
+        collectible: false,
+      },
+      {
+        type: "mouse",
+        x: 600,
+        y: 470,
+        width: modules.FORMATION_CELL_SIZE,
+        height: modules.FORMATION_CELL_SIZE,
+        variant: "toy",
+        collectible: true,
+        formationId: dex.label,
+        formationKind: dex.kind,
+      },
+    ],
+    gaps: [],
+  };
+  const normalPattern = {
+    id: "after-dex",
+    width: 1400,
+    minGap: 240,
+    patternIndex: 9,
+    entities: [{
+      type: "mouse",
+      x: 100,
+      y: 610,
+      width: modules.FORMATION_CELL_SIZE,
+      height: modules.FORMATION_CELL_SIZE,
+      variant: "toy",
+      collectible: true,
+    }],
+    gaps: [],
+  };
+  let calls = 0;
+  const stream = {
+    next: () => {
+      calls += 1;
+      return calls === 1 ? dexPattern : normalPattern;
+    },
+  };
+
+  const spawned = modules.spawnNextPattern(state, stream);
+  const dexEntities = spawned.entities.filter((entity) => entity.formationId === "DEX");
+  assert.deepEqual(
+    [...new Set(dexEntities.map((entity) => entity.formationLetter))],
+    ["D", "E", "X"],
+  );
+  assert.ok(dexEntities.every((entity) => entity.id.startsWith("dex-formation-8-")));
+  assert.ok(
+    spawned.entities.some((entity) =>
+      entity.type === "obstacle" && entity.x < state.formationEvent.endsAtX,
+    ),
+  );
+  assert.equal(state.formationEvent.type, "dex");
+
+  state.nextPatternX = 0;
+  modules.updateWorldEntities(state, stream);
+  assert.equal(calls, 1);
+  assert.equal(state.formationEvent.type, "dex");
+
+  for (const entity of dexEntities) {
+    entity.collected = true;
+  }
+  state.worldOffset = state.formationEvent.endsAtX - 1;
+  modules.updateWorldEntities(state, stream);
+  assert.equal(state.formationEvent.type, "dex");
+  assert.equal(calls, 1);
+
+  state.worldOffset = state.formationEvent.endsAtX;
+  state.nextPatternX = 0;
+  modules.updateWorldEntities(state, stream);
+  assert.equal(state.formationEvent, null);
+  assert.equal(calls, 2);
+  assert.ok(state.worldEntities.some((entity) => entity.patternId === "after-dex"));
+});
+
 test("jump and slide paths are both valid ways to avoid their obstacle shape", async () => {
   const modules = await loadSystems();
   const state = createState(modules);
