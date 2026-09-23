@@ -5,12 +5,12 @@ const { createTestApp } = require("./helpers/fake-auth");
 
 const fixtures = new Set();
 const HEALTH_BY_CAT = Object.freeze({
-  black: 1,
+  black: 2,
   white: 3,
   calico: 5,
   cheese: 3,
-  mackerel: 3,
-  chaos: 3,
+  mackerel: 2,
+  chaos: 1,
 });
 
 async function startFixture(options = {}) {

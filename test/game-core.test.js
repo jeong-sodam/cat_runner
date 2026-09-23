@@ -89,6 +89,13 @@ function createHarness(modules, catId = "black", options = {}) {
 test("game state contains the six cats and valid lifecycle transitions", async () => {
   const modules = await loadGameModules();
   const expectedCats = ["black", "white", "calico", "cheese", "mackerel", "chaos"];
+  assert.deepEqual(modules.CAT_STAT_KEYS, [
+    "jump",
+    "speed",
+    "health",
+    "itemDuration",
+    "magnetRange",
+  ]);
   assert.deepEqual(Object.keys(modules.CAT_DEFINITIONS), expectedCats);
   for (const cat of Object.values(modules.CAT_DEFINITIONS)) {
     assert.deepEqual(Object.keys(cat.statRatings), modules.CAT_STAT_KEYS);
@@ -108,8 +115,21 @@ test("game state contains the six cats and valid lifecycle transitions", async (
 
   const state = modules.createGameState({ catId: "black", seed: 123 });
   assert.equal(state.status, modules.GAME_STATUSES.READY);
-  assert.equal(state.maxHealth, 1);
-  assert.equal(state.health, 1);
+  assert.equal(state.maxHealth, 2);
+  assert.equal(state.health, 2);
+  assert.deepEqual(
+    Object.fromEntries(
+      Object.entries(modules.CAT_DEFINITIONS).map(([catId, cat]) => [catId, cat.statRatings]),
+    ),
+    {
+      black: { jump: 3, speed: 5, health: 2, itemDuration: 1, magnetRange: 4 },
+      white: { jump: 5, speed: 2, health: 3, itemDuration: 4, magnetRange: 1 },
+      calico: { jump: 3, speed: 1, health: 5, itemDuration: 3, magnetRange: 3 },
+      cheese: { jump: 1, speed: 2, health: 3, itemDuration: 5, magnetRange: 4 },
+      mackerel: { jump: 5, speed: 4, health: 2, itemDuration: 1, magnetRange: 3 },
+      chaos: { jump: 1, speed: 5, health: 1, itemDuration: 4, magnetRange: 4 },
+    },
+  );
   modules.transitionGameState(state, modules.GAME_STATUSES.RUNNING);
   modules.transitionGameState(state, modules.GAME_STATUSES.PAUSED);
   modules.transitionGameState(state, modules.GAME_STATUSES.RUNNING);
@@ -117,6 +137,26 @@ test("game state contains the six cats and valid lifecycle transitions", async (
     () => modules.transitionGameState(state, modules.GAME_STATUSES.READY),
     /Invalid game state transition/,
   );
+});
+
+test("rating one jump reaches above every basic obstacle", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules, "cheese");
+
+  harness.target.dispatch("keydown", "w");
+  for (let frame = 0; frame < 6; frame += 1) {
+    harness.loop.advance(50);
+  }
+
+  const basicObstacle = {
+    x: harness.state.player.x,
+    y: modules.GAME_CONFIG.groundY - 80,
+    width: 90,
+    height: 80,
+  };
+  assert.equal(harness.state.player.y + harness.state.player.height < basicObstacle.y, true);
+  assert.equal(modules.obstacleIntersectsPlayer(basicObstacle, harness.state), false);
+  harness.destroy();
 });
 
 test("W produces at most two jumps and holding W does not repeat", async () => {
@@ -263,7 +303,7 @@ test("rhythm timers pause and gameover includes the rhythm summary once", async 
   assert.equal(harness.state.rhythm.missCount, 0);
 
   harness.target.dispatch("keydown", "p");
-  for (let frame = 0; frame < 15; frame += 1) {
+  for (let frame = 0; frame < 25; frame += 1) {
     harness.loop.advance(50);
   }
   assert.equal(harness.state.rhythm.missCount, 1);

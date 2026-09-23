@@ -1,4 +1,4 @@
-import { CAT_DEFINITIONS, EFFECT_TYPES } from "./constants.js";
+import { EFFECT_TYPES } from "./constants.js";
 import { selectZoneForScore } from "./world.js";
 import { ZONE_DEFINITIONS } from "./patterns.js";
 import { getRhythmSummary } from "./rhythm-targets.js";
@@ -24,7 +24,6 @@ function updateScore(state) {
     mouseCount: state.mouseCount,
     distanceM: state.distanceM,
     activeEffect: state.activeEffect,
-    scoreMultiplier: CAT_DEFINITIONS[state.catId]?.scoreMultiplier || 1,
     rhythmBonusPoints: rhythm.bonusPoints,
     rhythmScoreMultiplier: rhythm.scoreMultiplier,
   });

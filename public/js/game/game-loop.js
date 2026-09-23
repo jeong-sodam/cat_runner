@@ -101,14 +101,10 @@ function createGameLoop({
       state.player.y = GAME_CONFIG.groundY - state.player.height;
     }
 
-    const slideMultiplier = state.player.isSliding
-      ? cat.slideMultiplier
-      : 1;
     state.worldSpeed =
       GAME_CONFIG.baseWorldSpeed *
       cat.speedMultiplier *
       speed *
-      slideMultiplier *
       getEffectSpeedMultiplier(state);
     state.worldOffset += state.worldSpeed * dt;
     state.elapsedMs += stepMs;

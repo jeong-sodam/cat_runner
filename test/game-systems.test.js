@@ -378,7 +378,7 @@ test("effect duration applies to positive effects only", async () => {
   modules.applyEffect(cheese, modules.EFFECT_TYPES.MAGNET, 100);
   modules.applyEffect(black, modules.EFFECT_TYPES.MAGNET, 100);
   assert.equal(cheese.activeEffect.expiresAtMs, 6100);
-  assert.equal(black.activeEffect.expiresAtMs, 5100);
+  assert.equal(black.activeEffect.expiresAtMs, 4100);
 
   modules.applyEffect(cheese, modules.EFFECT_TYPES.SLOW_MISS, 100);
   assert.equal(cheese.activeEffect.expiresAtMs, 5100);
@@ -402,6 +402,15 @@ test("score doubles mouse points but never distance and zones switch at threshol
     }),
     65,
   );
+
+  const cheese = createState(modules, "cheese");
+  const chaos = createState(modules, "chaos");
+  for (const state of [cheese, chaos]) {
+    state.mouseCount = 2;
+    state.distanceM = 25.8;
+    modules.updateScore(state);
+  }
+  assert.equal(cheese.score, chaos.score);
 
   const state = createState(modules);
   state.distanceM = 1000;

@@ -14,52 +14,34 @@ const RHYTHM_FIELDS = Object.freeze([
 ]);
 const CAT_STATS = Object.freeze({
   black: {
-    healthRating: 1,
-    itemDurationMultiplier: 1,
-    magnetRangeMultiplier: 1.2,
-    scoreMultiplier: 1,
-    fallResistanceMultiplier: 0.9,
-    invincibleDurationMultiplier: 1,
+    healthRating: 2,
+    itemDurationMultiplier: 0.8,
+    magnetRangeMultiplier: 1.1,
   },
   white: {
     healthRating: 3,
-    itemDurationMultiplier: 1,
-    magnetRangeMultiplier: 1,
-    scoreMultiplier: 1,
-    fallResistanceMultiplier: 1,
-    invincibleDurationMultiplier: 1.2,
+    itemDurationMultiplier: 1.1,
+    magnetRangeMultiplier: 0.8,
   },
   calico: {
     healthRating: 5,
     itemDurationMultiplier: 1,
     magnetRangeMultiplier: 1,
-    scoreMultiplier: 1,
-    fallResistanceMultiplier: 1.2,
-    invincibleDurationMultiplier: 1,
   },
   cheese: {
     healthRating: 3,
     itemDurationMultiplier: 1.2,
-    magnetRangeMultiplier: 1,
-    scoreMultiplier: 1.2,
-    fallResistanceMultiplier: 1,
-    invincibleDurationMultiplier: 1,
+    magnetRangeMultiplier: 1.1,
   },
   mackerel: {
-    healthRating: 3,
+    healthRating: 2,
     itemDurationMultiplier: 0.8,
     magnetRangeMultiplier: 1,
-    scoreMultiplier: 1,
-    fallResistanceMultiplier: 1.2,
-    invincibleDurationMultiplier: 1,
   },
   chaos: {
-    healthRating: 3,
-    itemDurationMultiplier: 1,
-    magnetRangeMultiplier: 1,
-    scoreMultiplier: 1.2,
-    fallResistanceMultiplier: 1,
-    invincibleDurationMultiplier: 1,
+    healthRating: 1,
+    itemDurationMultiplier: 1.1,
+    magnetRangeMultiplier: 1.1,
   },
 });
 
@@ -178,7 +160,7 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
         throw validationError("GAP_REPEATED", "A fall gap cannot be used more than once.");
       }
       usedGaps.add(gap.id);
-      if (activeEffect?.type !== "invincible" && catStats.fallResistanceMultiplier < 1.2) {
+      if (activeEffect?.type !== "invincible") {
         health -= FALL_DAMAGE;
         if (health <= 0) {
           health = 0;
@@ -214,8 +196,7 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
           throw validationError("EFFECT_MISMATCH", "Grass effect does not match the server roll.");
         }
         const duration = POSITIVE_EFFECTS.has(effectType)
-          ? 5000 * catStats.itemDurationMultiplier *
-            (effectType === "invincible" ? catStats.invincibleDurationMultiplier : 1)
+          ? 5000 * catStats.itemDurationMultiplier
           : 5000;
         activeEffect = {
           type: effectType,
@@ -259,7 +240,7 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
   if (!gameoverSeen) {
     throw validationError("GAMEOVER_MISSING", "A completed run must include run_gameover.");
   }
-  const baseScore = Math.floor((score + Math.floor(distanceM)) * catStats.scoreMultiplier);
+  const baseScore = score + Math.floor(distanceM);
   score = Math.floor(baseScore * rhythmSummary.multiplier) + rhythmSummary.bonusPoints;
   const result = {
     score,

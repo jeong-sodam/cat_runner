@@ -5,12 +5,12 @@ const { calculateVerifiedResult } = require("../src/services/run-validation-serv
 
 const EFFECTS = ["magnet", "invincible", "double_score", "slow_miss"];
 const HEALTH_BY_CAT = Object.freeze({
-  black: 1,
+  black: 2,
   white: 3,
   calico: 5,
   cheese: 3,
-  mackerel: 3,
-  chaos: 3,
+  mackerel: 2,
+  chaos: 1,
 });
 
 function effectFor(entity) {
