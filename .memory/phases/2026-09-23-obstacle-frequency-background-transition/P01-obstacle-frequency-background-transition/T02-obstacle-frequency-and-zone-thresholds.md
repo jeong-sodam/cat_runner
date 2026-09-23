@@ -92,4 +92,4 @@ Task: T02-obstacle-frequency-and-zone-thresholds
 
 - [x] 구현 완료
 - [x] 검증 통과 (`node --test --test-isolation=none --test-concurrency=1 test/game-systems.test.js`)
-- commit: pending
+- commit: 1eb6954
