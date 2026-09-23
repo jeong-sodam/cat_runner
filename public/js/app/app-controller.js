@@ -23,6 +23,7 @@ import { createNetworkMonitor } from "../sync/network-monitor.js";
 import { createRunApiClient } from "../sync/run-api-client.js";
 import { createRunSync } from "../sync/run-sync.js";
 import { waitForFonts } from "../ui/font-loader.js";
+import { fitSingleLineText } from "../ui/text-fitting.js";
 
 const SCREEN_NAMES = Object.freeze({
   LOADING: "loading",
@@ -184,6 +185,7 @@ function createAppController(options = {}) {
     const modal = documentRef.createElement("section");
     modal.className = "resume-modal flow-card";
     const heading = documentRef.createElement("h2");
+    heading.className = "fit-title";
     heading.textContent = "이어서 달릴까요?";
     const description = documentRef.createElement("p");
     description.textContent = "최근 달리기가 남아 있습니다. 24시간 안의 진행 상황을 복구할 수 있어요.";
@@ -214,6 +216,7 @@ function createAppController(options = {}) {
     });
     modal.append(heading, description, continueButton, newButton);
     screenRoot.append(modal);
+    fitSingleLineText(heading, { container: modal, minPx: 18, maxPx: 32 });
   }
 
   async function checkForResume() {
@@ -265,6 +268,7 @@ function createAppController(options = {}) {
     const modal = documentRef.createElement("section");
     modal.className = "start-error-modal flow-card";
     const heading = documentRef.createElement("h2");
+    heading.className = "fit-title";
     heading.textContent = "서버 연결을 확인해주세요";
     const message = documentRef.createElement("p");
     message.textContent = startErrorMessage(error);
@@ -290,6 +294,7 @@ function createAppController(options = {}) {
     actions.append(retryButton, localButton);
     modal.append(heading, message, actions);
     screenRoot.append(modal);
+    fitSingleLineText(heading, { container: modal, minPx: 18, maxPx: 32 });
   }
 
   function showAuth(options = {}) {

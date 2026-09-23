@@ -1,3 +1,5 @@
+import { fitSingleLineText } from "./text-fitting.js";
+
 function numberText(value, fractionDigits = 0) {
   const number = Number(value);
   if (!Number.isFinite(number)) {
@@ -105,6 +107,7 @@ function createPersonalRecordsPanel(callbacks = {}, options = {}) {
     const section = documentRef.createElement("section");
     section.className = "flow-card wide-card personal-records-screen";
     const heading = documentRef.createElement("h1");
+    heading.className = "fit-title";
     heading.textContent = "개인기록표";
     const intro = documentRef.createElement("p");
     intro.textContent = "개인 최고 기록 5개";
@@ -155,6 +158,7 @@ function createPersonalRecordsPanel(callbacks = {}, options = {}) {
 
     section.append(heading, intro, storageWarning, table, emptyElement, latestElement, actions);
     root.append(section);
+    fitSingleLineText(heading, { container: section });
     render();
     return section;
   }

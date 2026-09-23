@@ -10,13 +10,15 @@
 
 ## Active Task
 
-[T02 반응형 텍스트 자동 축소](./phases/2026-09-23-font-clipping-font-application/P01-font-loading-responsive-layout/T02-responsive-text-fitting.md)
+[T03 폰트 및 레이아웃 회귀 검증](./phases/2026-09-23-font-clipping-font-application/P01-font-loading-responsive-layout/T03-font-layout-verification.md)
 
 ## Status
 
 - T01 구현·검증 완료
-- T02 구현 시작 준비 완료
+- T01 구현·검증 완료
+- T02 구현·검증 완료
+- T03 구현 시작 준비 완료
 
 ## Next Step (IMPORTANT)
 
-T02 청사진을 읽고 `public/styles.css`, `public/js/ui/text-fitting.js`, `public/js/render/text-fitting.js`, UI 화면 모듈, HUD 렌더러의 반응형 텍스트 fitting 구현을 시작한다.
+T03 청사진을 읽고 폰트 자산·CSS·DOM fitting·Canvas fitting 회귀 테스트를 추가한 뒤 `npm test`와 브라우저 스모크 검증을 실행한다.

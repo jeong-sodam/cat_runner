@@ -1,6 +1,7 @@
 import { CAT_DEFINITIONS } from "../game/constants.js";
 import { CAT_ASSET_MANIFEST } from "../render/asset-manifest.js";
 import { renderCatCard } from "./cat-card.js";
+import { fitSingleLineText } from "./text-fitting.js";
 
 const CAT_IDS = ["black", "white", "calico", "cheese", "mackerel", "chaos"];
 
@@ -41,6 +42,7 @@ function createCharacterSelect(onStart, options = {}) {
     const section = documentRef.createElement("section");
     section.className = "character-screen flow-card wide-card";
     const heading = documentRef.createElement("h1");
+    heading.className = "fit-title";
     heading.textContent = "이번 달리기의 고양이를 골라주세요";
     const intro = documentRef.createElement("p");
     intro.textContent = "매 판 새롭게 선택하며, 고양이별 장단점을 살펴보세요.";
@@ -57,6 +59,7 @@ function createCharacterSelect(onStart, options = {}) {
     localModeNote.textContent = "서버 연결 없이도 로컬 모드로 플레이할 수 있습니다.";
     section.append(heading, intro, cardsRoot, startButton, localModeNote);
     root.append(section);
+    fitSingleLineText(heading, { container: section });
     renderCards();
     return section;
   }

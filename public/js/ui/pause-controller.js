@@ -1,3 +1,5 @@
+import { fitSingleLineText } from "./text-fitting.js";
+
 const PAUSE_COPY = Object.freeze({
   running: {
     button: "Ⅱ 일시정지",
@@ -62,6 +64,7 @@ function createPauseController(gameLoop, audioManager, options = {}) {
     const card = documentRef.createElement("div");
     card.className = "pause-card";
     const heading = documentRef.createElement("h2");
+    heading.className = "fit-title";
     heading.textContent = "잠깐 쉬어가기";
     const resumeButton = documentRef.createElement("button");
     resumeButton.type = "button";
@@ -90,6 +93,7 @@ function createPauseController(gameLoop, audioManager, options = {}) {
     pauseButton.className = "pause-button game-button";
     pauseButton.addEventListener("click", togglePause);
     root.append(pauseButton);
+    fitSingleLineText(heading, { container: card, minPx: 18, maxPx: 32 });
     sync();
     options.settingsPanel?.mount?.(settingsRoot);
     return overlay;

@@ -1,3 +1,5 @@
+import { fitSingleLineText } from "./text-fitting.js";
+
 function createNicknameScreen(onSaved, options = {}) {
   const fetchFn = options.fetchFn || globalThis.fetch;
   const documentRef = options.documentRef || globalThis.document;
@@ -47,6 +49,7 @@ function createNicknameScreen(onSaved, options = {}) {
     const section = documentRef.createElement("section");
     section.className = "flow-card nickname-screen";
     const heading = documentRef.createElement("h1");
+    heading.className = "fit-title";
     heading.textContent = "고양이 이름을 정해주세요";
     const intro = documentRef.createElement("p");
     intro.textContent = "리더보드에 표시될 이름입니다. 중복 이름도 사용할 수 있어요.";
@@ -71,6 +74,7 @@ function createNicknameScreen(onSaved, options = {}) {
     form.append(input, submitButton, errorElement);
     section.append(heading, intro, email, form);
     root.append(section);
+    fitSingleLineText(heading, { container: section });
     input.focus?.();
     return section;
   }

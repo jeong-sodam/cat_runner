@@ -1,4 +1,5 @@
 import { CAT_DEFINITIONS } from "../game/constants.js";
+import { fitSingleLineText } from "./text-fitting.js";
 
 function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
   const documentRef = options.documentRef || globalThis.document;
@@ -130,6 +131,7 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
     const section = documentRef.createElement("section");
     section.className = "flow-card wide-card leaderboard-screen";
     const heading = documentRef.createElement("h1");
+    heading.className = "fit-title";
     heading.textContent = "순위표";
     if (mode === "local") {
       const tabs = documentRef.createElement("div");
@@ -209,6 +211,7 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
     }
     section.append(actions);
     root.append(section);
+    fitSingleLineText(heading, { container: section });
     void load();
     return section;
   }

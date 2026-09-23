@@ -1,3 +1,5 @@
+import { fitSingleLineText } from "./text-fitting.js";
+
 function numberText(value, fractionDigits = 0) {
   const number = Number(value);
   if (!Number.isFinite(number)) {
@@ -33,6 +35,7 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
     const section = documentRef.createElement("section");
     section.className = "flow-card result-screen";
     const heading = documentRef.createElement("h1");
+    heading.className = "fit-title";
     if (localResult) {
       const badge = documentRef.createElement("span");
       badge.className = "local-mode-badge";
@@ -120,6 +123,7 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
     actions.append(leaderboardButton);
     section.append(actions);
     root.append(section);
+    fitSingleLineText(heading, { container: section });
     return section;
   }
 

@@ -1,3 +1,5 @@
+import { fitSingleLineText } from "./text-fitting.js";
+
 function clearRoot(root) {
   root?.replaceChildren?.();
   if (root) {
@@ -24,7 +26,7 @@ function renderAuthScreen(root, options = {}) {
   const section = documentRef.createElement("section");
   section.className = "auth-screen flow-card";
   appendText(documentRef, section, "p", "고양이 러너", "eyebrow");
-  appendText(documentRef, section, "h1", "집 밖으로, 고양이 출동! ");
+  const heading = appendText(documentRef, section, "h1", "집 밖으로, 고양이 출동! ", "fit-title");
   appendText(
     documentRef,
     section,
@@ -45,6 +47,7 @@ function renderAuthScreen(root, options = {}) {
   }
   appendText(documentRef, section, "small", "게임을 시작하려면 조직 계정 로그인이 필요합니다.");
   root.append(section);
+  fitSingleLineText(heading, { container: section });
   return section;
 }
 
@@ -58,7 +61,7 @@ function renderAuthConfigError(root, options = {}) {
   section.className = "auth-screen flow-card error-card";
   section.dataset.state = "auth-config-error";
   appendText(documentRef, section, "p", "로그인 설정 필요", "eyebrow");
-  appendText(documentRef, section, "h1", "Microsoft Entra ID를 준비해주세요.");
+  const heading = appendText(documentRef, section, "h1", "Microsoft Entra ID를 준비해주세요.", "fit-title");
   appendText(
     documentRef,
     section,
@@ -72,6 +75,7 @@ function renderAuthConfigError(root, options = {}) {
     "ENTRA_CLIENT_ID, ENTRA_CLIENT_SECRET, ENTRA_TENANT_AUTHORITY, ENTRA_REDIRECT_URI를 확인하세요.",
   );
   root.append(section);
+  fitSingleLineText(heading, { container: section });
   return section;
 }
 
@@ -83,8 +87,9 @@ function renderLoadingScreen(root, options = {}) {
   clearRoot(root);
   const section = documentRef.createElement("section");
   section.className = "flow-card loading-card";
-  appendText(documentRef, section, "h1", "고양이 러너 불러오는 중...");
+  const heading = appendText(documentRef, section, "h1", "고양이 러너 불러오는 중...", "fit-title");
   root.append(section);
+  fitSingleLineText(heading, { container: section });
   return section;
 }
 

@@ -4,14 +4,13 @@ import { drawCat } from "./draw-cat.js";
 import { drawGrass, drawMouse, drawObstacle } from "./draw-entities.js";
 import { drawHud } from "./draw-hud.js";
 import { PALETTE } from "./color-palette.js";
+import { fitCanvasText } from "./text-fitting.js";
 
 const CAT_POSE_FRAME = Object.freeze({
   run: 0,
   jump: 1,
   slide: 2,
 });
-
-const CANVAS_FONT_FAMILY = '"Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif';
 
 function getCatPose(player) {
   if (player?.isSliding) {
@@ -96,10 +95,9 @@ function drawRhythmTargets(ctx, rhythmState) {
     ctx.arc(target.x, target.y, target.radius + 5, 0, Math.PI * 2);
     ctx.stroke();
     ctx.fillStyle = PALETTE.ui.ink;
-    ctx.font = `bold 20px ${CANVAS_FONT_FAMILY}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(isSecondary ? "R" : "L", target.x, target.y);
+    fitCanvasText(ctx, isSecondary ? "R" : "L", target.x, target.y, Math.max(20, target.radius * 1.4), { maxPx: 20 });
     ctx.restore();
   }
 }
