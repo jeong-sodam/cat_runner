@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-const { createServerManifest } = require("../src/game/server-pattern-manifest");
+const { createServerManifest, PATTERN_VERSION } = require("../src/game/server-pattern-manifest");
 const { calculateVerifiedResult } = require("../src/services/run-validation-service");
 
 const EFFECTS = ["magnet", "invincible", "double_score", "slow_miss"];
@@ -32,7 +32,7 @@ function makeGameoverEvents(run, options = {}) {
     seq: 0,
     type: "run_started",
     occurredAtMs: 0,
-    payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v4" },
+    payload: { seed: run.seed, catId: run.catId, patternVersion: PATTERN_VERSION },
   }];
   let seq = 1;
   if (grass) {
@@ -158,12 +158,18 @@ test("malformed rhythm summaries are rejected without trusting client score fiel
   }
 });
 
-test("pattern version is validated when present and remains optional for legacy events", () => {
+test("pattern v5 is validated when present and remains optional for legacy events", () => {
   const run = makeRun("pattern-version-seed");
   const mismatched = makeGameoverEvents(run);
   mismatched[0].payload.patternVersion = "cat-runner-patterns-v2";
   assert.throws(
     () => calculateVerifiedResult(run, mismatched, { clientFinishedAt: 5000 }),
+    (error) => error.reason === "PATTERN_VERSION_INVALID",
+  );
+  const staleV4 = makeGameoverEvents(run);
+  staleV4[0].payload.patternVersion = "cat-runner-patterns-v4";
+  assert.throws(
+    () => calculateVerifiedResult(run, staleV4, { clientFinishedAt: 5000 }),
     (error) => error.reason === "PATTERN_VERSION_INVALID",
   );
 
@@ -227,7 +233,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
       payload: {
         seed: invincible.seed,
         catId: "calico",
-        patternVersion: "cat-runner-patterns-v4",
+        patternVersion: PATTERN_VERSION,
       },
     },
     { seq: 1, type: "grass_collected", occurredAtMs: 100, payload: { entityId: invincible.grass.id, effectType: "invincible" } },
@@ -243,7 +249,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
   assert.equal(calculateVerifiedResult(invincibleRun, events, { clientFinishedAt: 10000 }).health, 0);
 });
 
-test("server v4 manifest mirrors client gap ids, widths, entities, and actions", async () => {
+test("server v5 manifest mirrors client gap ids, widths, entities, and actions", async () => {
   const client = await import("../public/js/game/patterns.js");
   const seed = "manifest-parity-seed";
   const server = createServerManifest(seed, { patternCount: 32 });
@@ -282,6 +288,51 @@ test("server v4 manifest mirrors client gap ids, widths, entities, and actions",
   assert.ok(homeDay.patterns.every((pattern) => !pattern.id.startsWith("combo-")));
 });
 
+test("server manifest exposes formation metadata and obstacle-free DEX world entities", () => {
+  const manifest = createServerManifest("dex-0", { patternCount: 128 });
+  const normalPattern = manifest.patterns.find((pattern) =>
+    pattern.formation && !pattern.formation.isDex,
+  );
+  const dexPattern = manifest.patterns.find((pattern) => pattern.formation?.isDex);
+  assert.ok(normalPattern);
+  assert.ok(dexPattern);
+  assert.ok(normalPattern.entities.every((entity) =>
+    entity.formationKind === undefined || entity.formationCell,
+  ));
+
+  const dexEntities = dexPattern.worldEntities.filter((entity) =>
+    entity.formationId === "DEX",
+  );
+  assert.deepEqual(
+    [...new Set(dexEntities.map((entity) => entity.formationLetter))],
+    ["D", "E", "X"],
+  );
+  assert.equal(new Set(dexEntities.map((entity) => entity.id)).size, dexEntities.length);
+  assert.ok(dexEntities.every((entity) => manifest.getEntity(entity.id) === entity));
+  assert.equal(
+    dexPattern.worldEntities.some((entity) =>
+      entity.type === "obstacle" &&
+      entity.x >= dexPattern.startX + dexPattern.formation.anchor.x &&
+      entity.x < dexEntities.at(-1).x + dexEntities.at(-1).width,
+    ),
+    false,
+  );
+});
+
+test("formation mouse events use the existing server score contract", () => {
+  const run = makeRun("dex-0");
+  const manifest = createServerManifest(run.seed);
+  const formationMouse = manifest.entities.find((entity) => entity.formationKind);
+  assert.ok(formationMouse);
+  const result = calculateVerifiedResult(
+    run,
+    makeGameoverEvents(run, { mouse: formationMouse, distanceM: 4 }),
+    { clientFinishedAt: 5000 },
+  );
+  assert.equal(result.mouseCount, 1);
+  assert.equal(result.score, 14);
+});
+
 test("fall damage validates known gaps, ignores fake damage, and rejects replayed ids", () => {
   const run = makeRun("fall-validation-seed", "white");
   const manifest = createServerManifest(run.seed);
@@ -291,7 +342,7 @@ test("fall damage validates known gaps, ignores fake damage, and rejects replaye
       seq: 0,
       type: "run_started",
       occurredAtMs: 0,
-      payload: { seed: run.seed, catId: run.catId, patternVersion: "cat-runner-patterns-v4" },
+      payload: { seed: run.seed, catId: run.catId, patternVersion: PATTERN_VERSION },
     },
     ...gaps.map((gap, index) => ({
       seq: index + 1,

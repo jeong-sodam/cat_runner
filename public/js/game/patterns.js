@@ -13,7 +13,7 @@ const ZONE_DEFINITIONS = Object.freeze({
   home_night: Object.freeze({ id: "home_night", minScore: 1800, background: "dark-home", difficulty: 1.5 }),
 });
 
-const PATTERN_VERSION = "cat-runner-patterns-v4";
+const PATTERN_VERSION = "cat-runner-patterns-v5";
 const COMPOSITE_SAFE_MARGIN = 120;
 
 const ZONE_ORDER = Object.freeze({ home_day: 0, outside: 1, home_night: 2 });

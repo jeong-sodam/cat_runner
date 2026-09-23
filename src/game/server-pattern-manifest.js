@@ -1,19 +1,186 @@
-const PATTERN_VERSION = "cat-runner-patterns-v4";
+const PATTERN_VERSION = "cat-runner-patterns-v5";
 const CANVAS_WIDTH = 1600;
 const PLAYER_WIDTH = 90;
 const GAP_MIN_WIDTH = 140;
 const GAP_MAX_WIDTH = 220;
 const GAP_SAFE_MARGIN = 200;
 const COMPOSITE_SAFE_MARGIN = 120;
+const FORMATION_CELL_SIZE = 42;
+const FORMATION_CELL_STEP = 34;
+const FORMATION_WIDTH = FORMATION_CELL_SIZE + FORMATION_CELL_STEP * 4;
+const FORMATION_HEIGHT = FORMATION_WIDTH;
+const FORMATION_SEQUENCE_GAP = 48;
+const FORMATION_KINDS = Object.freeze([
+  "heart",
+  "star",
+  "clover",
+  "thumbsUp",
+  "alphabet",
+]);
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const FORMATION_MASK_ROWS = Object.freeze({
+  heart: Object.freeze(["01110", "11111", "11111", "01110", "00100"]),
+  star: Object.freeze(["00100", "10101", "01110", "11111", "00100"]),
+  clover: Object.freeze(["01010", "11111", "01110", "11111", "01010"]),
+  thumbsUp: Object.freeze(["00100", "01100", "01111", "11111", "11111"]),
+});
+const ALPHABET_MASK_ROWS = Object.freeze({
+  A: ["01110", "10001", "11111", "10001", "10001"],
+  B: ["11110", "10001", "11110", "10001", "11110"],
+  C: ["01111", "10000", "10000", "10000", "01111"],
+  D: ["11110", "10001", "10001", "10001", "11110"],
+  E: ["11111", "10000", "11110", "10000", "11111"],
+  F: ["11111", "10000", "11110", "10000", "10000"],
+  G: ["01111", "10000", "10111", "10001", "01111"],
+  H: ["10001", "10001", "11111", "10001", "10001"],
+  I: ["11111", "00100", "00100", "00100", "11111"],
+  J: ["00111", "00010", "00010", "10010", "01100"],
+  K: ["10001", "10010", "11100", "10010", "10001"],
+  L: ["10000", "10000", "10000", "10000", "11111"],
+  M: ["10001", "11011", "10101", "10001", "10001"],
+  N: ["10001", "11001", "10101", "10011", "10001"],
+  O: ["01110", "10001", "10001", "10001", "01110"],
+  P: ["11110", "10001", "11110", "10000", "10000"],
+  Q: ["01110", "10001", "10101", "10011", "01111"],
+  R: ["11110", "10001", "11110", "10010", "10001"],
+  S: ["01111", "10000", "01110", "00001", "11110"],
+  T: ["11111", "00100", "00100", "00100", "00100"],
+  U: ["10001", "10001", "10001", "10001", "01110"],
+  V: ["10001", "10001", "10001", "01010", "00100"],
+  W: ["10001", "10001", "10101", "11011", "10001"],
+  X: ["10001", "01010", "00100", "01010", "10001"],
+  Y: ["10001", "01010", "00100", "00100", "00100"],
+  Z: ["11111", "00010", "00100", "01000", "11111"],
+});
 const GAP_CHANCE = Object.freeze({ home_day: 0, outside: 0.15, home_night: 0.3 });
 const ZONE_ORDER = Object.freeze({ home_day: 0, outside: 1, home_night: 2 });
 const GROUND_ACTIONS = Object.freeze(["jump"]);
 const LOW_ACTIONS = Object.freeze(["jump", "slide"]);
 
+function maskRowsToCells(rows) {
+  return rows.flatMap((row, rowIndex) =>
+    [...row].flatMap((cell, columnIndex) =>
+      cell === "1" ? [{ column: columnIndex, row: rowIndex }] : [],
+    ),
+  );
+}
+
+function createFormation(random) {
+  const kind = FORMATION_KINDS[Math.floor(random() * FORMATION_KINDS.length)];
+  if (kind === "alphabet") {
+    const letter = ALPHABET[Math.floor(random() * ALPHABET.length)];
+    const isDex = random() < 0.05;
+    return {
+      kind,
+      label: isDex ? "DEX" : letter,
+      cells: maskRowsToCells(ALPHABET_MASK_ROWS[isDex ? "D" : letter]),
+      width: FORMATION_WIDTH,
+      height: FORMATION_HEIGHT,
+      isDex,
+      obstacleSuppressed: isDex,
+      sequence: isDex ? ["D", "E", "X"] : null,
+    };
+  }
+  return {
+    kind,
+    label: kind,
+    cells: maskRowsToCells(FORMATION_MASK_ROWS[kind]),
+    width: FORMATION_WIDTH,
+    height: FORMATION_HEIGHT,
+    isDex: false,
+    obstacleSuppressed: false,
+    sequence: null,
+  };
+}
+
+function isFormationAnchorSafe(candidate) {
+  const anchor = candidate.formationAnchor;
+  if (!anchor || anchor.x < GAP_SAFE_MARGIN ||
+      anchor.x + FORMATION_WIDTH > candidate.width - GAP_SAFE_MARGIN) {
+    return false;
+  }
+  return candidate.entities.every((entity) =>
+    entity.x + entity.width <= anchor.x ||
+    entity.x >= anchor.x + FORMATION_WIDTH,
+  );
+}
+
+function isEntityClearOfGaps(entity, gaps) {
+  return gaps.every((gap) =>
+    entity.x + entity.width <= gap.x - GAP_SAFE_MARGIN ||
+    entity.x >= gap.x + gap.width + GAP_SAFE_MARGIN,
+  );
+}
+
+function addDenseMice(entities, gaps) {
+  return entities.flatMap((entity) => {
+    if (entity.type !== "mouse") {
+      return [entity];
+    }
+    const forward = { ...entity, x: entity.x + FORMATION_CELL_STEP * 2 };
+    const backward = { ...entity, x: entity.x - FORMATION_CELL_STEP * 2 };
+    const duplicate = isEntityClearOfGaps(forward, gaps)
+      ? forward
+      : isEntityClearOfGaps(backward, gaps) ? backward : null;
+    return [entity, ...(duplicate ? [duplicate] : [])];
+  });
+}
+
+function createFormationEntities(formation, candidate) {
+  return formation.cells.map((cell) => ({
+    type: "mouse",
+    x: candidate.formationAnchor.x + cell.column * FORMATION_CELL_STEP,
+    y: candidate.formationAnchor.y + cell.row * FORMATION_CELL_STEP,
+    width: FORMATION_CELL_SIZE,
+    height: FORMATION_CELL_SIZE,
+    variant: "toy",
+    collectible: true,
+    formationId: formation.label,
+    formationKind: formation.kind,
+    formationCell: { ...cell },
+  }));
+}
+
+function expandDexEntities(patternEntities, formation, patternId, patternIndex, startX) {
+  const baseEntities = patternEntities.filter((entity) =>
+    entity.formationId !== formation.label,
+  );
+  let sequenceOffset = 0;
+  const sequenceEntities = formation.sequence.flatMap((letter, sequenceIndex) => {
+    const cells = maskRowsToCells(ALPHABET_MASK_ROWS[letter]);
+    const currentOffset = sequenceOffset;
+    sequenceOffset += cells.length;
+    const segmentX = formation.anchor.x +
+      sequenceIndex * (FORMATION_WIDTH + FORMATION_SEQUENCE_GAP);
+    return cells.map((cell, cellIndex) => ({
+      id: `${patternId}-${patternIndex}-${baseEntities.length + currentOffset + cellIndex}`,
+      patternId,
+      patternIndex,
+      type: "mouse",
+      x: startX + segmentX + cell.column * FORMATION_CELL_STEP,
+      y: formation.anchor.y + cell.row * FORMATION_CELL_STEP,
+      width: FORMATION_CELL_SIZE,
+      height: FORMATION_CELL_SIZE,
+      variant: "toy",
+      collectible: true,
+      formationId: formation.label,
+      formationKind: formation.kind,
+      formationLetter: letter,
+      formationSequenceIndex: sequenceIndex,
+      formationCell: { ...cell },
+    }));
+  });
+  return baseEntities.map((entity) => ({ ...entity })).concat(sequenceEntities);
+}
+
 function pattern(definition) {
   return Object.freeze({
     ...definition,
     gapAnchor: Object.freeze({ ...definition.gapAnchor }),
+    formationAnchor: Object.freeze({
+      x: definition.formationAnchor?.x ?? definition.gapAnchor.x,
+      y: definition.formationAnchor?.y ?? 470,
+    }),
     requiredActions: Object.freeze([...(definition.requiredActions || [])]),
     actionCandidates: Object.freeze(
       (definition.actionCandidates || []).map((actions) => Object.freeze([...actions])),
@@ -185,7 +352,29 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       actions[Math.floor(random() * actions.length)],
     );
     const gapChance = GAP_CHANCE[zoneId] ?? GAP_CHANCE.home_day;
-    const generated = selected.entities.map((entity, entityIndex) => ({
+    const relativeGaps = gapRoll < gapChance ? [{
+      id: `${selected.id}-gap-${patternIndex}`,
+      patternId: selected.id,
+      patternIndex,
+      x: selected.gapAnchor.x,
+      width: gapWidth,
+      minZone: "outside",
+    }] : [];
+    const generatedGaps = relativeGaps.map((gap) => ({
+      ...gap,
+      x: startX + gap.x,
+    }));
+    const formationRoll = random();
+    const canUseFormation = relativeGaps.length === 0 && isFormationAnchorSafe(selected);
+    const formation = formationRoll < 0.2 && canUseFormation
+      ? { ...createFormation(random), anchor: { ...selected.formationAnchor } }
+      : null;
+    const sourceEntities = formation
+      ? selected.entities
+          .filter((entity) => entity.type !== "mouse")
+          .concat(createFormationEntities(formation, selected))
+      : addDenseMice(selected.entities, relativeGaps);
+    const generated = sourceEntities.map((entity, entityIndex) => ({
       id: `${selected.id}-${patternIndex}-${entityIndex}`,
       patternId: selected.id,
       patternIndex,
@@ -199,16 +388,11 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       minZone: entity.minZone,
       effectRoll: entity.type === "grass" ? random() : undefined,
     })).filter((entity) => isZoneEnabled(entity.minZone, zoneId));
-    const generatedGaps = gapRoll < gapChance ? [{
-      id: `${selected.id}-gap-${patternIndex}`,
-      patternId: selected.id,
-      patternIndex,
-      x: startX + selected.gapAnchor.x,
-      width: gapWidth,
-      minZone: "outside",
-    }] : [];
+    const worldEntities = formation?.isDex
+      ? expandDexEntities(generated, formation, selected.id, patternIndex, startX)
+      : generated;
 
-    entities.push(...generated);
+    entities.push(...worldEntities);
     gaps.push(...generatedGaps);
     patterns.push({
       id: selected.id,
@@ -219,12 +403,16 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       advancedSafeMargin: selected.advancedSafeMargin,
       actionCandidates: (selected.actionCandidates || []).map((actions) => [...actions]),
       requiredActions,
+      formation,
+      obstacleSuppressed: Boolean(formation?.isDex),
       patternIndex,
       startX,
       entities: generated,
+      worldEntities,
       gaps: generatedGaps,
     });
-    nextPatternX = startX + selected.width + selected.minGap;
+    nextPatternX = startX + selected.width +
+      Math.max(selected.minGap * 0.75, PLAYER_WIDTH * 1.5);
     previousId = selected.id;
   }
 

@@ -1,6 +1,6 @@
 # Task: T01 서버 패턴 패리티
 
-## Status: in_progress 🔵
+## Status: done ✅
 
 ## Goal
 
@@ -68,6 +68,6 @@ Task: T01-server-pattern-parity
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: pending (이번 실행에서 생성)
