@@ -2,8 +2,8 @@ import { GAME_CONFIG } from "./constants.js";
 
 const ZONE_DEFINITIONS = Object.freeze({
   home_day: Object.freeze({ id: "home_day", minScore: 0, background: "living-room", difficulty: 1 }),
-  outside: Object.freeze({ id: "outside", minScore: 1000, background: "alley-park", difficulty: 1.2 }),
-  home_night: Object.freeze({ id: "home_night", minScore: 2500, background: "dark-home", difficulty: 1.5 }),
+  outside: Object.freeze({ id: "outside", minScore: 700, background: "alley-park", difficulty: 1.2 }),
+  home_night: Object.freeze({ id: "home_night", minScore: 1800, background: "dark-home", difficulty: 1.5 }),
 });
 
 const PATTERN_VERSION = "cat-runner-patterns-v4";

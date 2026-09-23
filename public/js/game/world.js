@@ -1,6 +1,13 @@
 import { GAME_CONFIG } from "./constants.js";
 import { ZONE_DEFINITIONS } from "./patterns.js";
 
+const PATTERN_SPACING_FACTOR = 0.75;
+
+function resolvePatternSpacing(pattern) {
+  const safeMinimumGap = GAME_CONFIG.playerWidth * 1.5;
+  return Math.max(pattern.minGap * PATTERN_SPACING_FACTOR, safeMinimumGap);
+}
+
 function spawnNextPattern(state, patternStream) {
   let pattern;
   for (let attempts = 0; attempts < 10; attempts += 1) {
@@ -35,7 +42,7 @@ function spawnNextPattern(state, patternStream) {
   }));
   state.worldEntities.push(...entities);
   state.worldGaps.push(...gaps);
-  state.nextPatternX = startX + pattern.width + pattern.minGap;
+  state.nextPatternX = startX + pattern.width + resolvePatternSpacing(pattern);
   state.lastPatternId = pattern.id;
   state.patternIndex = pattern.patternIndex + 1;
 
@@ -69,4 +76,10 @@ function selectZoneForScore(score) {
   return "home_day";
 }
 
-export { selectZoneForScore, spawnNextPattern, updateWorldEntities };
+export {
+  PATTERN_SPACING_FACTOR,
+  resolvePatternSpacing,
+  selectZoneForScore,
+  spawnNextPattern,
+  updateWorldEntities,
+};

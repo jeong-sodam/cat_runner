@@ -416,6 +416,58 @@ test("score doubles mouse points but never distance and zones switch at threshol
   assert.ok(Math.abs(modules.calculateDifficulty(5000, "home_night") - 2.475) < 1e-9);
 });
 
+test("zone thresholds advance background transitions without changing difficulty multipliers", async () => {
+  const modules = await loadSystems();
+  assert.equal(modules.selectZoneForScore(699), "home_day");
+  assert.equal(modules.selectZoneForScore(700), "outside");
+  assert.equal(modules.selectZoneForScore(1799), "outside");
+  assert.equal(modules.selectZoneForScore(1800), "home_night");
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(modules.ZONE_DEFINITIONS).map(([id, zone]) => [id, zone.difficulty])),
+    { home_day: 1, outside: 1.2, home_night: 1.5 },
+  );
+});
+
+test("pattern spacing increases obstacle frequency while preserving the safe minimum", async () => {
+  const modules = await loadSystems();
+  assert.equal(modules.PATTERN_SPACING_FACTOR, 0.75);
+  assert.equal(modules.resolvePatternSpacing({ minGap: 240 }), 180);
+  assert.equal(
+    modules.resolvePatternSpacing({ minGap: 150 }),
+    modules.GAME_CONFIG.playerWidth * 1.5,
+  );
+
+  for (const zoneId of ["home_day", "outside", "home_night"]) {
+    const state = createState(modules);
+    state.zoneId = zoneId;
+    state.nextPatternX = 0;
+    const patternStream = {
+      next: () => ({
+        id: "spacing-test",
+        width: 400,
+        minGap: 240,
+        entities: [],
+        gaps: [],
+      }),
+    };
+    modules.spawnNextPattern(state, patternStream);
+    assert.equal(state.nextPatternX, 1800 + 400 + 180);
+  }
+
+  const floorState = createState(modules);
+  floorState.nextPatternX = 0;
+  modules.spawnNextPattern(floorState, {
+    next: () => ({
+      id: "spacing-floor-test",
+      width: 400,
+      minGap: 150,
+      entities: [],
+      gaps: [],
+    }),
+  });
+  assert.equal(floorState.nextPatternX, 1800 + 400 + 135);
+});
+
 test("rhythm targets use bounded zone counts, expiry, button matching, and bonus points", async () => {
   const modules = await loadSystems();
   assert.equal(modules.RHYTHM_CONFIG.targetLifetimeMs, 1000);
