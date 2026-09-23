@@ -22,6 +22,7 @@ import { createLocalRunStore } from "../sync/local-run-store.js";
 import { createNetworkMonitor } from "../sync/network-monitor.js";
 import { createRunApiClient } from "../sync/run-api-client.js";
 import { createRunSync } from "../sync/run-sync.js";
+import { waitForFonts } from "../ui/font-loader.js";
 
 const SCREEN_NAMES = Object.freeze({
   LOADING: "loading",
@@ -627,6 +628,7 @@ function createAppController(options = {}) {
   async function bootstrap() {
     setScreen(SCREEN_NAMES.LOADING);
     renderLoadingScreen(screenRoot, { documentRef });
+    await waitForFonts(documentRef);
     try {
       await assetLoader.preload?.();
     } catch {
