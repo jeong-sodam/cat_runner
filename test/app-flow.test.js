@@ -367,6 +367,67 @@ test("leaderboard renders full email and XSS-like values as text, with retry", a
   assert.equal(findAll(root, (element) => element.tagName === "TR").length, 2);
 });
 
+test("local leaderboard renders personal top five and latest result without server calls", async () => {
+  const { createLeaderboardPanel } = await import("../public/js/ui/leaderboard.js");
+  const documentRef = createAppDocument();
+  const root = documentRef.createElement("section");
+  let serverCalls = 0;
+  const panel = createLeaderboardPanel(
+    {
+      getLeaderboard: async () => {
+        serverCalls += 1;
+        return { entries: [] };
+      },
+    },
+    {},
+    {
+      documentRef,
+      mode: "local",
+      localStore: {
+        getLocalScores: () => [
+          { score: 50, distanceM: 20, catId: "white", achievedAt: 1 },
+          { score: 40, distanceM: 18, catId: "black", achievedAt: 2 },
+        ],
+        getLastResult: () => ({ score: 5, distanceM: 3, catId: "chaos", achievedAt: 3 }),
+      },
+    },
+  );
+  panel.mount(root);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.equal(serverCalls, 0);
+  assert.match(textOf(root), /내 점수순위/);
+  assert.match(textOf(root), /전체 순위/);
+  assert.match(textOf(root), /로그인 후 제공됩니다/);
+  assert.match(textOf(root), /방금 기록/);
+  assert.match(textOf(root), /점수 5/);
+  assert.equal(findAll(root, (element) => element.tagName === "TR").length, 3);
+  const globalTab = findAll(root, (element) => element.dataset.tab === "global")[0];
+  assert.equal(globalTab.disabled, true);
+  assert.equal(findAll(root, (element) => element.className === "current-result").length, 1);
+});
+
+test("empty local leaderboard shows a non-error state", async () => {
+  const { createLeaderboardPanel } = await import("../public/js/ui/leaderboard.js");
+  const documentRef = createAppDocument();
+  const root = documentRef.createElement("section");
+  createLeaderboardPanel(
+    null,
+    {},
+    {
+      documentRef,
+      mode: "local",
+      localStore: { getLocalScores: () => [], getLastResult: () => null },
+    },
+  ).mount(root);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.match(textOf(root), /아직 저장된 기록이 없습니다/);
+  assert.equal(findAll(root, (element) => element.className === "form-error").length, 1);
+  assert.equal(findAll(root, (element) => element.className === "leaderboard-empty")[0].hidden, false);
+  assert.equal(findAll(root, (element) => element.textContent === "다시 시도").length, 0);
+});
+
 test("API client preserves a pending result and signals sign-in on 401", async () => {
   const {
     createApiClient,

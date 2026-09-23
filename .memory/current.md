@@ -10,13 +10,14 @@
 
 ## Active Task
 
-[T02 Local Leaderboard UI](./phases/2026-09-23-local-leaderboard/P01-local-leaderboard-and-rhythm-ease/T02-local-leaderboard-ui.md)
+[T03 Local Leaderboard Flow](./phases/2026-09-23-local-leaderboard/P01-local-leaderboard-and-rhythm-ease/T03-local-leaderboard-flow.md)
 
 ## Status
 
 - T01 완료: 로컬 점수 탑5·최근 기록 저장 및 기존 최고 기록 마이그레이션
-- Validation: T01 구현·검증 완료, 다음 작업은 로컬 순위표 UI
+- T02 완료: 내 점수순위·전체 순위 탭과 방금 기록 UI
+- Validation: T02 구현·검증 완료, 다음 작업은 로컬 순위표 흐름 연결
 
 ## Next Step (IMPORTANT)
 
-T02 청사진을 읽고 내 점수순위·전체 순위 탭, 개인 탑5, 방금 기록 UI를 구현합니다.
+T03 청사진을 읽고 로컬 게임오버 결과 저장과 서버 호출 없는 로컬 순위표 진입을 연결합니다.

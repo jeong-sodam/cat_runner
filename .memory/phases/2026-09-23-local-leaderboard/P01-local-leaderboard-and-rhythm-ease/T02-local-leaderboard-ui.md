@@ -1,6 +1,6 @@
 # Task: T02 Local Leaderboard UI
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -51,10 +51,10 @@ Extend the existing leaderboard panel to render an offline personal top-five vie
 
 ## Acceptance Criteria
 
-- [ ] Local panel shows personal top five and latest result separately.
-- [ ] Global tab is visible, disabled, and clearly marked as login-gated.
-- [ ] Local mode performs no server leaderboard request.
-- [ ] Existing server leaderboard behavior remains unchanged.
+- [x] Local panel shows personal top five and latest result separately.
+- [x] Global tab is visible, disabled, and clearly marked as login-gated.
+- [x] Local mode performs no server leaderboard request.
+- [x] Existing server leaderboard behavior remains unchanged.
 
 ## Validation
 
@@ -76,6 +76,12 @@ Task: T02-local-leaderboard-ui
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
+
+## Execution Record
+
+- Added local/server rendering modes to the existing leaderboard panel, including personal top-five rows, `방금 기록`, and a disabled global tab.
+- Local mode avoids server loading and retry controls; server mode retains its existing API, error, retry, and XSS-safe text behavior.
+- Validation: `npm.cmd test -- test/app-flow.test.js` (15 passed); `git diff --check` passed.
