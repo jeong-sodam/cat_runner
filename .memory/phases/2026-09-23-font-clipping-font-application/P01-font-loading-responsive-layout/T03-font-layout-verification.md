@@ -1,6 +1,6 @@
 # Task: T03 폰트 및 레이아웃 회귀 검증
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -79,6 +79,13 @@
 - `npm test`
 - `npm start` 후 브라우저 수동 반응형 확인
 
+## Validation Notes
+
+- 지정된 폰트·레이아웃·앱·렌더링 테스트는 46/46 통과했다.
+- `npm test`는 기능 assertion 106개가 통과했으며, Windows Node `v24.21.0`의 worker 격리 종료 시 `better-sqlite3`가 native `RemoveEnvironmentCleanupHook` assertion을 발생시켜 `auth.test.js`, `run-resume.test.js`, `security-regression.test.js` 파일 종료가 실패했다.
+- 위 세 테스트의 독립 실행과 `integration.test.js`는 기능 assertion 통과를 확인했다. 이 native cleanup 문제는 이번 폰트·레이아웃 변경 코드에서 발생한 assertion 실패가 아니다.
+- `npm start` HTTP smoke에서 `/`, `/styles.css`, `/assets/fonts/PretendardVariable.woff2`가 모두 200을 반환했고, `index.html`의 viewport meta와 stylesheet 연결을 확인했다.
+
 ## Commit Message
 
 ```text
@@ -94,7 +101,6 @@ Task: T03-font-layout-verification
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
-
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: d22d72b

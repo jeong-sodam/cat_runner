@@ -10,15 +10,14 @@
 
 ## Active Task
 
-[T03 폰트 및 레이아웃 회귀 검증](./phases/2026-09-23-font-clipping-font-application/P01-font-loading-responsive-layout/T03-font-layout-verification.md)
+없음 — `2026-09-23-font-clipping-font-application` 계획의 모든 Task 완료
 
 ## Status
 
 - T01 구현·검증 완료
-- T01 구현·검증 완료
 - T02 구현·검증 완료
-- T03 구현 시작 준비 완료
+- T03 구현·검증 완료
 
 ## Next Step (IMPORTANT)
 
-T03 청사진을 읽고 폰트 자산·CSS·DOM fitting·Canvas fitting 회귀 테스트를 추가한 뒤 `npm test`와 브라우저 스모크 검증을 실행한다.
+계획 완료. 다음 요청은 새 `/grill-me` 또는 `/memory-plan`으로 진행한다.

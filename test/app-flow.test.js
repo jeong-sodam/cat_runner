@@ -117,6 +117,35 @@ function textOf(element) {
   return [element.textContent || "", ...(element.children || []).map(textOf)].join(" ");
 }
 
+test("bootstrap waits for font readiness before requesting the app screen", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  let resolveFonts;
+  documentRef.fonts = {
+    ready: new Promise((resolve) => {
+      resolveFonts = resolve;
+    }),
+  };
+  let fetchCalls = 0;
+  const controller = createAppController({
+    documentRef,
+    fetchFn: async () => {
+      fetchCalls += 1;
+      return jsonResponse({ authenticated: false });
+    },
+  });
+
+  const bootstrapping = controller.bootstrap();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(controller.getState().screen, SCREEN_NAMES.LOADING);
+  assert.equal(fetchCalls, 0);
+
+  resolveFonts();
+  await bootstrapping;
+  assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
+  assert.equal(fetchCalls, 1);
+});
+
 test("unauthenticated bootstrap shows sign-in and never enters character selection", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();

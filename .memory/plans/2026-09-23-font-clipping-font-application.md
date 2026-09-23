@@ -8,5 +8,4 @@ Pretendard Variable을 로컬 웹폰트로 적용하고, 로그인·게임 HUD·
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | 로컬 폰트 로딩, 반응형 HTML 텍스트, 캔버스 텍스트 자동 축소 및 검증 | [P01](../phases/2026-09-23-font-clipping-font-application/P01-font-loading-responsive-layout/phase.md) |
-
+| P01 | `done` | 로컬 폰트 로딩, 반응형 HTML 텍스트, 캔버스 텍스트 자동 축소 및 검증 | [P01](../phases/2026-09-23-font-clipping-font-application/P01-font-loading-responsive-layout/phase.md) |
