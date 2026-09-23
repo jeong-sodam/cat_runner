@@ -418,13 +418,13 @@ test("score doubles mouse points but never distance and zones switch at threshol
 
 test("rhythm targets use bounded zone counts, expiry, button matching, and bonus points", async () => {
   const modules = await loadSystems();
-  assert.equal(modules.RHYTHM_CONFIG.targetLifetimeMs, 750);
-  assert.equal(modules.RHYTHM_CONFIG.baseSpawnIntervalMs, 750);
-  assert.equal(modules.RHYTHM_CONFIG.targetScale, 1.25);
-  assert.equal(modules.RHYTHM_CONFIG.placement.minimumDistance, 160);
-  assert.equal(modules.RHYTHM_CONFIG.zones.home_day.spawnIntervalMs, 750);
-  assert.equal(modules.RHYTHM_CONFIG.zones.outside.spawnIntervalMs, 500);
-  assert.equal(modules.RHYTHM_CONFIG.zones.home_night.spawnIntervalMs, 375);
+  assert.equal(modules.RHYTHM_CONFIG.targetLifetimeMs, 1000);
+  assert.equal(modules.RHYTHM_CONFIG.baseSpawnIntervalMs, 1000);
+  assert.equal(modules.RHYTHM_CONFIG.targetScale, 1.5625);
+  assert.equal(modules.RHYTHM_CONFIG.placement.minimumDistance, 100);
+  assert.equal(modules.RHYTHM_CONFIG.zones.home_day.spawnIntervalMs, 1000);
+  assert.equal(modules.RHYTHM_CONFIG.zones.outside.spawnIntervalMs, 1000);
+  assert.equal(modules.RHYTHM_CONFIG.zones.home_night.spawnIntervalMs, 1000);
 
   const home = modules.createRhythmState({ randomSource: () => 0.9 });
   modules.updateRhythmTargets(home, {
@@ -435,10 +435,10 @@ test("rhythm targets use bounded zone counts, expiry, button matching, and bonus
   });
   assert.equal(home.targets.filter((target) => target.status === "active").length, 1);
   assert.equal(home.targets[0].button, "primary");
-  assert.equal(home.targets[0].radius, 42.5);
-  assert.equal(home.targets[0].expiresAtMs, 750);
+  assert.equal(home.targets[0].radius, 53.125);
+  assert.equal(home.targets[0].expiresAtMs, 1000);
   modules.updateRhythmTargets(home, {
-    nowMs: 749,
+    nowMs: 999,
     zoneId: "home_day",
     canvasWidth: 200,
     canvasHeight: 120,
@@ -446,6 +446,13 @@ test("rhythm targets use bounded zone counts, expiry, button matching, and bonus
   assert.equal(home.targets[0].status, "active");
   assert.ok(home.targets[0].x >= home.targets[0].radius && home.targets[0].x <= 200 - home.targets[0].radius);
   assert.ok(home.targets[0].y >= home.targets[0].radius && home.targets[0].y <= 120 - home.targets[0].radius);
+  modules.updateRhythmTargets(home, {
+    nowMs: 1000,
+    zoneId: "home_day",
+    canvasWidth: 200,
+    canvasHeight: 120,
+  });
+  assert.equal(home.targets[0].status, "miss");
 
   const outside = modules.createRhythmState({ randomSource: () => 0.9 });
   modules.updateRhythmTargets(outside, { nowMs: 0, zoneId: "outside", canvasWidth: 800, canvasHeight: 600 });
@@ -465,13 +472,13 @@ test("rhythm targets use bounded zone counts, expiry, button matching, and bonus
     button: outside.targets[0].button,
     nowMs: 100,
   });
-  modules.updateRhythmTargets(outside, { nowMs: 750, zoneId: "outside", canvasWidth: 800, canvasHeight: 600 });
+  modules.updateRhythmTargets(outside, { nowMs: 1000, zoneId: "outside", canvasWidth: 800, canvasHeight: 600 });
   assert.equal(outside.missCount, 1);
 
   const night = modules.createRhythmState({ randomSource: () => 0.9 });
   modules.updateRhythmTargets(night, { nowMs: 0, zoneId: "home_night", canvasWidth: 800, canvasHeight: 600 });
   assert.equal(night.targets.filter((target) => target.status === "active").length, 3);
-  assert.equal(night.targets[0].radius, 22.5);
+  assert.equal(night.targets[0].radius, 28.125);
 
   const hitArea = modules.createRhythmState({ randomSource: () => 0.9 });
   modules.updateRhythmTargets(hitArea, {
@@ -489,10 +496,25 @@ test("rhythm targets use bounded zone counts, expiry, button matching, and bonus
   assert.ok(accepted);
   assert.equal(hitArea.hitCount, 1);
 
+  const rejectedArea = modules.createRhythmState({ randomSource: () => 0.9 });
+  modules.updateRhythmTargets(rejectedArea, {
+    nowMs: 0,
+    zoneId: "home_day",
+    canvasWidth: 1600,
+    canvasHeight: 900,
+  });
+  const rejected = modules.resolveRhythmTarget(rejectedArea, {
+    x: rejectedArea.targets[0].x + 54,
+    y: rejectedArea.targets[0].y,
+    button: "primary",
+    nowMs: 100,
+  });
+  assert.equal(rejected, null);
+
   const bonus = modules.createRhythmState({ randomSource: () => 0.1 });
   modules.updateRhythmTargets(bonus, { nowMs: 0, zoneId: "home_day", canvasWidth: 200, canvasHeight: 120 });
   assert.equal(bonus.targets[0].button, "secondary");
-  assert.equal(bonus.targets[0].expiresAtMs, 750);
+  assert.equal(bonus.targets[0].expiresAtMs, 1000);
   modules.resolveRhythmTarget(bonus, {
     x: bonus.targets[0].x,
     y: bonus.targets[0].y,
@@ -527,7 +549,7 @@ test("rhythm targets stay in the HUD-safe area and space consecutive candidates"
     Math.hypot(
       spaced.targets[0].x - spaced.targets[1].x,
       spaced.targets[0].y - spaced.targets[1].y,
-    ) >= 160,
+    ) >= 100,
   );
 
   const fallback = modules.createRhythmState({ randomSource: () => 0.5 });
@@ -538,7 +560,7 @@ test("rhythm targets stay in the HUD-safe area and space consecutive candidates"
     canvasHeight: 900,
   });
   modules.updateRhythmTargets(fallback, {
-    nowMs: 750,
+    nowMs: 1000,
     zoneId: "outside",
     canvasWidth: 1600,
     canvasHeight: 900,
