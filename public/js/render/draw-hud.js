@@ -39,7 +39,7 @@ function drawHud(ctx, state) {
   ctx.font = "bold 22px Trebuchet MS, sans-serif";
   ctx.fillText("정확도 " + Math.round(rhythm.accuracy * 100) + "%", 246, 40);
   ctx.fillText("타겟 " + (state.rhythm?.targets?.filter((target) => target.status === "active").length || 0), 246, 76);
-  ctx.fillText((state.connectionMode || state.runMode || "LOCAL").toUpperCase(), 246, 112);
+  ctx.fillText("LOCAL", 246, 112);
 
   if (state.activeEffect) {
     drawHudPanel(ctx, 570, 14, 250, 92);

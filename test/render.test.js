@@ -223,6 +223,22 @@ test("HUD renders the complete health capacity for four and six health cats", as
   }
 });
 
+test("HUD labels the current release as local even when state has server mode fields", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const renderer = modules.createSceneRenderer(context);
+  const state = createState(modules);
+  state.connectionMode = "server";
+  state.runMode = "server";
+  renderer.render(state);
+
+  const labels = context.calls
+    .filter((call) => call.name === "fillText")
+    .map((call) => call.args[0]);
+  assert.ok(labels.includes("LOCAL"));
+  assert.equal(labels.includes("SERVER"), false);
+});
+
 test("effect colors are distinct and HUD derives three hearts without mutating state", async () => {
   const modules = await loadRenderModules();
   const colors = Object.values(modules.PALETTE.effects);
