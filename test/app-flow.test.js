@@ -428,6 +428,78 @@ test("empty local leaderboard shows a non-error state", async () => {
   assert.equal(findAll(root, (element) => element.textContent === "다시 시도").length, 0);
 });
 
+test("local gameover saves the latest result and opens the local leaderboard offline", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  const records = [];
+  let latest = null;
+  let saveCalls = 0;
+  let lastResultCalls = 0;
+  let serverCalls = 0;
+  let frameCallback = null;
+  let frameTime = 0;
+  const localRunStore = {
+    getLocalScores: () => records,
+    getLastResult: () => latest,
+    saveLocalResult: (record) => {
+      saveCalls += 1;
+      records.push(record);
+      return { saved: true, ranked: true, rank: 1, record, entries: records };
+    },
+    saveLastResult: (record) => {
+      lastResultCalls += 1;
+      latest = record;
+      return true;
+    },
+  };
+  const controller = createAppController({
+    documentRef,
+    localRunStore,
+    runApiClient: {
+      getLeaderboard: async () => {
+        serverCalls += 1;
+        return { entries: [] };
+      },
+    },
+    audioManagerFactory: () => ({
+      unlock: async () => {},
+      startMusic() {},
+      stopMusic() {},
+      playSfx() {},
+      destroy() {},
+    }),
+    settingsPanelFactory: () => ({ mount() {} }),
+    gameClock: {
+      now: () => frameTime,
+      requestFrame: (callback) => {
+        frameCallback = callback;
+        return 1;
+      },
+      cancelFrame() {},
+    },
+  });
+
+  await controller.startGame("black", { runMode: "local" });
+  controller.getState().gameState.health = 0;
+  frameTime = 0;
+  frameCallback(frameTime);
+  frameTime = 50;
+  frameCallback(frameTime);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.equal(saveCalls, 1);
+  assert.equal(lastResultCalls, 1);
+  assert.equal(controller.getState().screen, SCREEN_NAMES.RESULT);
+  const resultButtons = findAll(documentRef.getElementById("screen-root"), (element) => element.tagName === "BUTTON");
+  resultButtons.find((button) => button.textContent === "순위표").dispatch("click");
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.equal(controller.getState().screen, SCREEN_NAMES.LEADERBOARD);
+  assert.equal(serverCalls, 0);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /방금 기록/);
+  controller.destroy();
+});
+
 test("API client preserves a pending result and signals sign-in on 401", async () => {
   const {
     createApiClient,

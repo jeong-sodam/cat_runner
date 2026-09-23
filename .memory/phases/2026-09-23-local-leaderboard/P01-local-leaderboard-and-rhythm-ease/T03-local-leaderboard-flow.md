@@ -1,6 +1,6 @@
 # Task: T03 Local Leaderboard Flow
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -44,10 +44,10 @@ Connect local gameover results and leaderboard navigation so local play persists
 
 ## Acceptance Criteria
 
-- [ ] Every local gameover persists both ranking data and the latest result.
-- [ ] Local leaderboard navigation is offline and server-request free.
-- [ ] Server leaderboard behavior remains available for authenticated deployment.
-- [ ] The latest result survives reload through local storage.
+- [x] Every local gameover persists both ranking data and the latest result.
+- [x] Local leaderboard navigation is offline and server-request free.
+- [x] Server leaderboard behavior remains available for authenticated deployment.
+- [x] The latest result survives reload through local storage.
 
 ## Validation
 
@@ -69,6 +69,12 @@ Task: T03-local-leaderboard-flow
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
+
+## Execution Record
+
+- Local gameover now calls `saveLocalResult` and `saveLastResult` before rendering the result screen.
+- Leaderboard navigation selects local mode without `setupRunSync()` or server leaderboard requests; server mode remains API-backed.
+- Validation: app-flow (16 passed); `git diff --check` passed. The combined and isolated run-resume commands hit the existing Windows native SQLite cleanup abort.

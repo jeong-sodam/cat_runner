@@ -349,17 +349,30 @@ function createAppController(options = {}) {
   }
 
   function showLeaderboard() {
+    const localMode = state.runMode !== "server";
     destroyGame();
     setScreen(SCREEN_NAMES.LEADERBOARD);
     showRoot();
-    setupRunSync();
+    if (!localMode) {
+      setupRunSync();
+    }
+    const localStore = localMode ? getLocalRunStore() : null;
     const leaderboard = createLeaderboardPanel(
-      runApiClient,
+      localMode ? null : runApiClient,
       {
-        onBack: () => showResult(state.lastResult || { saved: false }),
-        onRestart: () => showCharacterSelect(),
+        onBack: () => showResult(
+          state.lastResult || localStore?.getLastResult?.() || { saved: false },
+        ),
+        onRestart: () => showCharacterSelect({ allowResume: !localMode }),
       },
-      { documentRef },
+      localMode
+        ? {
+            documentRef,
+            mode: "local",
+            localStore,
+            currentResult: state.lastResult,
+          }
+        : { documentRef, mode: "server" },
     );
     leaderboard.mount(screenRoot);
   }
@@ -381,14 +394,18 @@ function createAppController(options = {}) {
       saved: false,
     };
     if (runMode === "local") {
-      const isPersonalBest = getLocalRunStore().saveLocalBest({
+      const achievedAt = Date.now();
+      const localStore = getLocalRunStore();
+      const scoreRecord = {
         ...localResult,
         catId: completedState.catId,
-        achievedAt: Date.now(),
-      });
+        achievedAt,
+      };
+      const savedResult = localStore.saveLocalResult(scoreRecord);
+      localStore.saveLastResult(scoreRecord);
       showResult({
         ...localResult,
-        isPersonalBest,
+        isPersonalBest: savedResult.rank === 1,
         localOnly: true,
         errorMessage: "로컬 플레이 기록은 순위표에 등록되지 않습니다.",
       });
