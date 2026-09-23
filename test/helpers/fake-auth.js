@@ -37,6 +37,7 @@ async function createTestApp(options = {}) {
       entraClientSecret: "fake-client-secret",
       entraAuthority: "https://login.microsoftonline.com/organizations",
       entraRedirectUri: "http://localhost:3000/auth/callback",
+      guestMode: false,
       ...(options.config || {}),
     },
     {

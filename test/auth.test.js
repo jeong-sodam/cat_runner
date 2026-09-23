@@ -15,6 +15,7 @@ async function startApp(overrides = {}) {
       databasePath: ":memory:",
       sessionSecret: "test-session-secret",
       authConfigured: false,
+      guestMode: false,
       ...overrides.config,
     },
     {

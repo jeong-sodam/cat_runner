@@ -7,7 +7,7 @@ let baseUrl;
 let app;
 
 before(async () => {
-  app = createApp({ port: 0, databasePath: ":memory:" });
+  app = createApp({ port: 0, databasePath: ":memory:", guestMode: false });
   server = app.listen(0);
   await new Promise((resolve) => server.once("listening", resolve));
   const { port } = server.address();

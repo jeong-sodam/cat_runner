@@ -162,7 +162,7 @@ test("completion endpoint stores an authoritative score and personal best", asyn
   });
   const run = await created.json();
   const manifest = createServerManifest(run.seed);
-  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 1);
+  const obstacles = manifest.entities.filter((entity) => entity.type === "obstacle").slice(0, 2);
   const events = [
     { seq: 0, type: "run_started", occurredAtMs: 0, payload: { seed: run.seed, catId: run.catId } },
     { seq: 1, type: "distance_checkpoint", occurredAtMs: 100, payload: { distanceM: 12 } },
