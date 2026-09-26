@@ -1,24 +1,17 @@
 # Current Context
 
 ## Active Plan
-
-[공중 숙이기·2단 점프·피격범위·무스크롤 UI 개선](./plans/2026-09-26-air-jump-slide-hitbox-ui-fit.md)
+[러너 1단계·장애물 밀도·2단 점프 패턴](./plans/2026-09-26-runner-stage-density-double-jump-patterns.md)
 
 ## Active Phase
-
-없음 — 모든 Phase 완료
+[P02 첫 구간과 쥐 인형 밀도](./phases/2026-09-26-runner-stage-density-double-jump-patterns/P02-stage-mouse-density/phase.md)
 
 ## Active Task
-
-없음 — 모든 Task 완료
+[T01 첫 러너 구간 축소](./phases/2026-09-26-runner-stage-density-double-jump-patterns/P02-stage-mouse-density/T01-shorten-first-stage.md)
 
 ## Status
-
-- 전체 계획 구현·검증 완료
-- focused 자동 테스트와 서버 HTTP smoke 통과
-- 기본 Node 테스트 러너의 `spawn EPERM` 및 native cleanup 환경 문제 기록
-- 실제 브라우저 viewport 수동 측정은 Chromium 미설치로 보류
+- P01-T01 완료 및 커밋 준비 완료
+- 다음 구현은 P02-T01
 
 ## Next Step (IMPORTANT)
-
-계획 완료. 실제 브라우저에서 1280×720, 768×1024, 320×640 viewport를 열어 최종 시각 확인한다.
+P02-T01 청사진을 읽고 `public/js/game/patterns.js`의 외부 구간 전환 기준을 400점으로 변경한 뒤 관련 zone 회귀 테스트를 실행

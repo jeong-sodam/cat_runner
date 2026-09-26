@@ -31,6 +31,23 @@ test("responsive title and body rules avoid clipping contracts", () => {
   assert.match(styles, /#game-shell\[data-screen\]:not\(\[data-screen="game"\]\) #screen-root[\s\S]*?overflow:\s*hidden/);
 });
 
+test("character selection scroll is scoped to the inner panel", () => {
+  const characterRule = styles.match(/\.character-screen\s*\{([^}]+)\}/)?.[1] || "";
+  const scopedCharacterRule = styles.match(
+    /#game-shell\[data-screen\]:not\(\[data-screen="game"\]\) \.character-screen\s*\{([^}]+)\}/,
+  )?.[1] || "";
+
+  assert.match(characterRule, /min-height:\s*0/);
+  assert.match(characterRule, /align-content:\s*start/);
+  assert.match(characterRule, /overflow-x:\s*hidden/);
+  assert.match(characterRule, /overflow-y:\s*auto/);
+  assert.match(scopedCharacterRule, /overflow-y:\s*auto/);
+  assert.match(
+    styles,
+    /#game-shell\[data-screen\]:not\(\[data-screen="game"\]\) \.wide-card[\s\S]*?overflow:\s*hidden/,
+  );
+});
+
 test("index provides the responsive viewport and stylesheet", () => {
   assert.match(index, /name="viewport"/);
   assert.match(index, /href="\/styles\.css"/);

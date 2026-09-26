@@ -285,10 +285,23 @@ body {
   overflow: auto;
 }
 
+.character-screen {
+  min-height: 0;
+  max-height: 100%;
+  align-content: start;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 #game-shell[data-screen]:not([data-screen="game"]) .flow-card,
 #game-shell[data-screen]:not([data-screen="game"]) .wide-card {
   max-height: 100%;
   overflow: hidden;
+}
+
+#game-shell[data-screen]:not([data-screen="game"]) .character-screen {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .nickname-form {
