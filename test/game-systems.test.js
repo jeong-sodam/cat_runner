@@ -195,6 +195,44 @@ test("zone gates composite patterns and increases only outside obstacle density"
   }
 });
 
+test("jump-slide patterns shift the slide obstacle tail by 30 pixels", async () => {
+  const modules = await loadSystems();
+  const cases = [
+    ["combo-jump-slide-jump", ["jump", "slide", "jump", "slide"], 1],
+    ["combo-slide-jump-slide", ["slide", "jump", "slide", "jump"], 2],
+    ["combo-jump-slide-slide", ["jump", "slide", "slide", "jump"], 1],
+    ["combo-jump-jump-slide", ["jump", "jump", "slide", "jump"], 2],
+    ["combo-slide-jump-jump", ["slide", "jump", "jump", "slide"], 3],
+  ];
+
+  for (const [id, requiredActions, firstShiftIndex] of cases) {
+    const source = modules.PATTERN_LIBRARY.find((pattern) => pattern.id === id);
+    const originalObstacles = source.entities.filter((entity) => entity.type === "obstacle");
+    const adjusted = modules.adjustJumpSlideSpacing({ ...source, requiredActions });
+    const adjustedObstacles = adjusted.entities.filter((entity) => entity.type === "obstacle");
+
+    assert.deepEqual(
+      adjustedObstacles.map((entity) => entity.x),
+      originalObstacles.map((entity, index) =>
+        entity.x + (index >= firstShiftIndex ? 30 : 0),
+      ),
+    );
+    assert.deepEqual(adjustedObstacles.map((entity) => entity.variant), originalObstacles.map((entity) => entity.variant));
+    assert.equal(originalObstacles[1]?.x, source.entities.filter((entity) => entity.type === "obstacle")[1]?.x);
+    assert.equal(modules.isValidPattern(adjusted), true);
+  }
+
+  const unchangedSource = modules.PATTERN_LIBRARY.find((pattern) => pattern.id === "combo-slide-slide-jump");
+  const unchanged = modules.adjustJumpSlideSpacing({
+    ...unchangedSource,
+    requiredActions: ["slide", "slide", "jump", "jump"],
+  });
+  assert.deepEqual(
+    unchanged.entities.map((entity) => entity.x),
+    unchangedSource.entities.map((entity) => entity.x),
+  );
+});
+
 test("gaps are deterministic, zone-gated, bounded, and safely separated", async () => {
   const modules = await loadSystems();
   const outsideFirst = modules.createPatternStream("gap-seed");

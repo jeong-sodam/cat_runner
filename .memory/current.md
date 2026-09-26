@@ -10,13 +10,13 @@
 
 ## Active Task
 
-[T01 jump-slide 패턴 간격 보정](./phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P02-pattern-hitbox-calibration/T01-jump-slide-pattern-spacing.md)
+[T02 장애물 전용 피격범위 축소](./phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P02-pattern-hitbox-calibration/T02-obstacle-hitbox-inset.md)
 
 ## Status
 
-- P01 T01·T02 구현·검증 완료
-- P02 T01 진행 준비 완료
+- P02 T01 구현·검증 완료
+- 다음 Task T02 진행 준비 완료
 
 ## Next Step (IMPORTANT)
 
-P02 T01 청사진을 읽고 `public/js/game/patterns.js`, `test/game-systems.test.js`의 jump-slide 후속 장애물 간격 보정을 구현한다.
+T02 청사진을 읽고 `public/js/game/collision.js`, `test/game-systems.test.js`의 장애물 전용 inset 피격범위를 구현한다.

@@ -215,12 +215,73 @@ function isActionSequenceValid(pattern) {
   if (actions.length !== obstacles.length || candidates.length !== obstacles.length) {
     return false;
   }
+  if (candidates.some((candidateActions) => !Array.isArray(candidateActions))) {
+    return false;
+  }
   const safeMargin = pattern.advancedSafeMargin ?? GAME_CONFIG.gapSafeMargin;
   return actions.every((action, index) => candidates[index].includes(action)) &&
     obstacles.every((entity, index) => {
       const next = obstacles[index + 1];
       return !next || next.x - (entity.x + entity.width) >= safeMargin;
     });
+}
+
+function adjustJumpSlideSpacing(pattern) {
+  const entities = Array.isArray(pattern?.entities) ? pattern.entities : [];
+  const obstacles = entities.filter((entity) => entity.type === "obstacle");
+  const candidates = pattern?.actionCandidates || [];
+  const clonePattern = () => ({
+    ...pattern,
+    requiredActions: Array.isArray(pattern?.requiredActions)
+      ? [...pattern.requiredActions]
+      : pattern?.requiredActions,
+    actionCandidates: candidates.map((actions) =>
+      Array.isArray(actions) ? [...actions] : actions,
+    ),
+    entities: entities.map((entity) => ({ ...entity })),
+  });
+  if (obstacles.length < 2 || candidates.length !== obstacles.length) {
+    return clonePattern();
+  }
+  if (candidates.some((actions) => !Array.isArray(actions))) {
+    return clonePattern();
+  }
+
+  const requiredActions = Array.isArray(pattern.requiredActions)
+    ? pattern.requiredActions
+    : [];
+  const hasRequiredActions = requiredActions.length === obstacles.length;
+  const hasJumpSlidePair = (index) => {
+    const current = hasRequiredActions
+      ? requiredActions[index] === "jump"
+      : candidates[index].includes("jump");
+    const next = hasRequiredActions
+      ? requiredActions[index + 1] === "slide"
+      : candidates[index + 1].includes("slide");
+    return current && next;
+  };
+  const jumpSlideIndex = obstacles.findIndex((_, index) =>
+    index < obstacles.length - 1 && hasJumpSlidePair(index),
+  );
+  if (jumpSlideIndex < 0) {
+    return clonePattern();
+  }
+  const firstShiftIndex = jumpSlideIndex + 1;
+
+  let obstacleIndex = 0;
+  return {
+    ...pattern,
+    requiredActions: [...requiredActions],
+    actionCandidates: candidates.map((actions) => [...actions]),
+    entities: entities.map((entity) => {
+      if (entity.type !== "obstacle") {
+        return { ...entity };
+      }
+      const shouldShift = obstacleIndex >= firstShiftIndex;
+      obstacleIndex += 1;
+      return shouldShift ? { ...entity, x: entity.x + 30 } : { ...entity };
+    }),
+  };
 }
 
 function isValidPattern(pattern) {
@@ -318,16 +379,23 @@ function createPatternStream(seed) {
         throw new Error("No valid pattern candidate available.");
       }
 
-      const pattern = candidates[Math.floor(random() * candidates.length)];
+      const sourcePattern = candidates[Math.floor(random() * candidates.length)];
       const patternIndex = sequence;
       sequence += 1;
-      previousPatternId = pattern.id;
+      previousPatternId = sourcePattern.id;
       const gapRoll = random();
       const gapWidth = GAME_CONFIG.gapMinWidth +
         Math.floor(random() * (GAME_CONFIG.gapMaxWidth - GAME_CONFIG.gapMinWidth + 1));
-      const requiredActions = (pattern.actionCandidates || []).map((actions) =>
+      const requiredActions = (sourcePattern.actionCandidates || []).map((actions) =>
         actions[Math.floor(random() * actions.length)],
       );
+      const pattern = adjustJumpSlideSpacing({
+        ...sourcePattern,
+        requiredActions,
+      });
+      if (!isValidPattern(pattern)) {
+        throw new Error("Adjusted pattern failed validation: " + pattern.id);
+      }
       const gapChance = zoneId === "outside"
         ? GAME_CONFIG.gapChanceOutside
         : zoneId === "home_night" ? GAME_CONFIG.gapChanceHomeNight : 0;
@@ -383,6 +451,7 @@ export {
   PATTERN_VERSION,
   ZONE_DEFINITIONS,
   createPatternStream,
+  adjustJumpSlideSpacing,
   isFormationAnchorSafe,
   isActionSequenceValid,
   isValidPattern,
