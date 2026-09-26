@@ -6,7 +6,10 @@ import {
   FORMATION_WIDTH,
   maskRowsToCells,
 } from "./mouse-formations.js";
-import { ZONE_DEFINITIONS } from "./patterns.js";
+import {
+  createBridgeMouseRoute,
+  ZONE_DEFINITIONS,
+} from "./patterns.js";
 
 const PATTERN_SPACING_FACTOR = 0.733;
 const FORMATION_SEQUENCE_GAP = 48;
@@ -68,10 +71,10 @@ function spawnNextPattern(state, patternStream) {
     throw new Error("Unable to spawn a safe pattern.");
   }
 
-  const startX = Math.max(
-    state.nextPatternX,
-    state.worldOffset + GAME_CONFIG.canvasWidth + 200,
-  );
+  const minimumStartX = state.lastPatternEndX == null
+    ? state.worldOffset + GAME_CONFIG.initialPatternX
+    : state.worldOffset + GAME_CONFIG.canvasWidth + 200;
+  const startX = Math.max(state.nextPatternX, minimumStartX);
   const relativeEntities = createDexEntities(pattern);
   const entities = relativeEntities.map((entity, entityIndex) => ({
     ...entity,
@@ -86,9 +89,19 @@ function spawnNextPattern(state, patternStream) {
     patternId: pattern.id,
     patternIndex: pattern.patternIndex,
   }));
-  state.worldEntities.push(...entities);
+  const bridgeEntities = state.lastPatternEndX == null
+    ? []
+    : createBridgeMouseRoute(state.lastPatternEndX, startX, {
+        spacing: pattern.routeSpacing,
+        patternIndex: pattern.patternIndex,
+      }).map((entity) => ({
+        ...entity,
+        patternId: `bridge-${pattern.id}`,
+      }));
+  state.worldEntities.push(...bridgeEntities, ...entities);
   state.worldGaps.push(...gaps);
   state.nextPatternX = startX + pattern.width + resolvePatternSpacing(pattern);
+  state.lastPatternEndX = startX + pattern.width;
   state.lastPatternId = pattern.id;
   state.patternIndex = pattern.patternIndex + 1;
 

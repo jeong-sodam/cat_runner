@@ -83,7 +83,11 @@ test("pattern stream doubles base mice and replaces them with safe formations", 
         pattern.formation.obstacleSuppressed,
         pattern.formation.isDex,
       );
-      assert.equal(mice.length, pattern.formation.cells.length);
+      assert.equal(
+        mice.filter((mouse) => mouse.formationId === pattern.formation.label).length,
+        pattern.formation.cells.length,
+      );
+      assert.ok(mice.length >= pattern.formation.cells.length);
       assert.ok(pattern.entities.every((entity) =>
         entity.type !== "obstacle" ||
         entity.x + entity.width <= pattern.formation.anchor.x ||
@@ -91,9 +95,12 @@ test("pattern stream doubles base mice and replaces them with safe formations", 
       ));
     } else {
       assert.ok(mice.length >= baseCounts[pattern.id]);
-      assert.ok(mice.length <= baseCounts[pattern.id] * modules.GUIDED_MOUSE_MAX_COUNT);
+      assert.ok(mice.length <= Math.ceil(pattern.width / modules.GAME_CONFIG.mouseRouteSpacingMin) +
+        baseCounts[pattern.id] * modules.GUIDED_MOUSE_MAX_COUNT);
+      const guidedMice = mice.filter((mouse) => mouse.routeSeedIndex !== undefined);
+      assert.ok(mice.some((mouse) => mouse.routeKind === "continuous"));
       const routeGroups = new Map();
-      for (const mouse of mice) {
+      for (const mouse of guidedMice) {
         const group = routeGroups.get(mouse.routeSeedIndex) || [];
         group.push(mouse);
         routeGroups.set(mouse.routeSeedIndex, group);
@@ -124,7 +131,9 @@ test("ordinary patterns guide mice along required actions without obstacle overl
     const obstacles = pattern.entities.filter((entity) => entity.type === "obstacle");
     assert.ok(mice.length > 0);
     assert.ok(mice.every((mouse) =>
-      ["jump", "slide", "double_jump"].includes(mouse.routeAction) &&
+      ["ground", "jump", "slide", "double_jump"].includes(mouse.routeAction),
+    ));
+    assert.ok(mice.filter((mouse) => mouse.routeKind !== "continuous").every((mouse) =>
       mouse.routeIndex >= 0 && mouse.routeIndex < modules.GUIDED_MOUSE_MAX_COUNT,
     ));
     assert.ok(mice.every((mouse) => obstacles.every((obstacle) =>
@@ -381,11 +390,21 @@ test("gaps are deterministic, zone-gated, bounded, and safely separated", async 
     .flatMap((pattern) => pattern.gaps)
     .map((gap) => gap.width);
   assert.ok(widths.every((width) =>
-    width >= modules.GAME_CONFIG.gapMinWidth &&
-    width <= modules.GAME_CONFIG.gapMaxWidth,
+    width >= modules.GAME_CONFIG.gapWidthOutsideMin &&
+    width <= modules.GAME_CONFIG.gapWidthOutsideMax,
   ));
-  assert.ok(widths.length > 40 && widths.length < 110);
+  assert.ok(widths.length > 40 && widths.length < 130);
   assert.ok(night.some((pattern) => pattern.gaps.length > 0));
+  assert.ok(outside.filter((pattern) => pattern.gaps.length > 0).every((pattern) =>
+    pattern.gapAction === "jump",
+  ));
+  for (let index = 1; index < outside.length; index += 1) {
+    assert.equal(outside[index - 1].gaps.length > 0 && outside[index].gaps.length > 0, false);
+  }
+  assert.ok(night.flatMap((pattern) => pattern.gaps).every((gap) =>
+    gap.width >= modules.GAME_CONFIG.gapWidthHomeNightMin &&
+    gap.width <= modules.GAME_CONFIG.gapWidthHomeNightMax,
+  ));
 
   for (const pattern of outside) {
     for (const gap of pattern.gaps) {
@@ -394,6 +413,16 @@ test("gaps are deterministic, zone-gated, bounded, and safely separated", async 
         pattern.width - (gap.x + gap.width) >= modules.GAME_CONFIG.gapSafeMargin,
       );
       for (const entity of pattern.entities) {
+        const overlapsGap = entity.x < gap.x + gap.width &&
+          entity.x + entity.width > gap.x;
+        if (overlapsGap) {
+          assert.equal(entity.routeKind, "continuous");
+          assert.ok(entity.y + entity.height <= modules.GAME_CONFIG.groundY - 12);
+          continue;
+        }
+        if (entity.routeKind === "continuous") {
+          continue;
+        }
         const separated =
           entity.x + entity.width <= gap.x - modules.GAME_CONFIG.gapSafeMargin ||
           entity.x >= gap.x + gap.width + modules.GAME_CONFIG.gapSafeMargin;
@@ -421,6 +450,50 @@ test("world spawns safe logical entities and removes entities behind the player"
     ),
     false,
   );
+});
+
+test("world connects consecutive patterns with continuous ground mice", async () => {
+  const modules = await loadSystems();
+  const state = createState(modules);
+  state.nextPatternX = 0;
+  const patterns = [
+    {
+      id: "bridge-first",
+      width: 400,
+      minGap: 240,
+      patternIndex: 0,
+      entities: [{
+        type: "mouse",
+        x: 120,
+        y: modules.GAME_CONFIG.groundY - 90,
+        width: 42,
+        height: 42,
+        collectible: true,
+      }],
+      gaps: [],
+    },
+    {
+      id: "bridge-second",
+      width: 400,
+      minGap: 240,
+      patternIndex: 1,
+      entities: [{
+        type: "mouse",
+        x: 120,
+        y: modules.GAME_CONFIG.groundY - 90,
+        width: 42,
+        height: 42,
+        collectible: true,
+      }],
+      gaps: [],
+    },
+  ];
+  let index = 0;
+  const stream = { next: () => patterns[index++] };
+  modules.spawnNextPattern(state, stream);
+  modules.spawnNextPattern(state, stream);
+  assert.ok(state.worldEntities.some((entity) => entity.routeKind === "connector"));
+  assert.ok(state.worldEntities.every((entity) => entity.x > state.worldOffset));
 });
 
 test("world maps normal formation cells into the reserved corridor", async () => {
@@ -996,7 +1069,7 @@ test("pattern spacing increases obstacle frequency while preserving the safe min
       }),
     };
     modules.spawnNextPattern(state, patternStream);
-    assert.equal(state.nextPatternX, 1800 + 400 + 175.92);
+    assert.equal(state.nextPatternX, modules.GAME_CONFIG.initialPatternX + 400 + 175.92);
   }
 
   const floorState = createState(modules);
@@ -1010,7 +1083,7 @@ test("pattern spacing increases obstacle frequency while preserving the safe min
       gaps: [],
     }),
   });
-  assert.equal(floorState.nextPatternX, 1800 + 400 + 135);
+  assert.equal(floorState.nextPatternX, modules.GAME_CONFIG.initialPatternX + 400 + 135);
 });
 
 test("rhythm targets use single-target zone tempo, button matching, and bonus points", async () => {
