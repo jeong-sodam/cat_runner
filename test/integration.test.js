@@ -110,8 +110,9 @@ test("server manifest keeps an immediate route and staged gap guidance", () => {
           if (bridgeIndex === 0) {
             return true;
           }
-          return entity.x - bridge[bridgeIndex - 1].x >= 34 &&
-            entity.x - bridge[bridgeIndex - 1].x <= 42;
+          return entity.x - bridge[bridgeIndex - 1].x >= 48 &&
+            entity.x - bridge[bridgeIndex - 1].x <= 58 &&
+            entity.y === 610;
         }));
         assert.equal(
           pattern.startX,

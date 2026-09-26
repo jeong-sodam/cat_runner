@@ -197,7 +197,7 @@ test("server recalculates rhythm accuracy and rejects forged accuracy", () => {
   );
 });
 
-test("pattern v9 is validated when present and remains optional for legacy events", () => {
+test("pattern v10 is validated when present and remains optional for legacy events", () => {
   const run = makeRun("pattern-version-seed");
   const mismatched = makeGameoverEvents(run);
   mismatched[0].payload.patternVersion = "cat-runner-patterns-v2";
@@ -288,7 +288,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
   assert.equal(calculateVerifiedResult(invincibleRun, events, { clientFinishedAt: 10000 }).health, 0);
 });
 
-test("server v9 manifest mirrors client route entities, gap ids, widths, and actions", async () => {
+test("server v10 manifest mirrors client route entities, gap ids, widths, and actions", async () => {
   const client = await import("../public/js/game/patterns.js");
   const world = await import("../public/js/game/world.js");
   const seed = "manifest-parity-seed";
@@ -315,7 +315,7 @@ test("server v9 manifest mirrors client route entities, gap ids, widths, and act
       serverPattern.entities.map((entity) => [
         entity.id,
         entity.type,
-        entity.x - serverPattern.startX,
+        Math.round(entity.x - serverPattern.startX),
         entity.y,
         entity.width,
         entity.height,
@@ -354,6 +354,19 @@ test("server v9 manifest mirrors client route entities, gap ids, widths, and act
     assert.deepEqual(serverPattern.advancedSafeMargin, clientPattern.advancedSafeMargin);
     assert.equal(serverPattern.gapAction, clientPattern.gapAction);
     assert.equal(serverPattern.routeSpacing, clientPattern.routeSpacing);
+    assert.ok(serverPattern.routeSpacing >= 48 && serverPattern.routeSpacing <= 58);
+    assert.ok(serverPattern.entities
+      .filter((entity) => entity.type === "mouse" && entity.routeKind === "continuous")
+      .every((entity) => entity.y === 610));
+    const obstacles = serverPattern.entities.filter((entity) => entity.type === "obstacle");
+    assert.ok(serverPattern.entities
+      .filter((entity) => entity.type === "mouse" && !entity.formationId)
+      .every((mouse) => obstacles.every((obstacle) =>
+        mouse.x >= obstacle.x + obstacle.width ||
+        mouse.x + mouse.width <= obstacle.x ||
+        mouse.y >= obstacle.y + obstacle.height ||
+        mouse.y + mouse.height <= obstacle.y,
+      )));
     for (const clientGap of clientPattern.gaps) {
       const serverGap = server.getGap(clientGap.id);
       assert.ok(serverGap);
@@ -379,10 +392,10 @@ test("server v9 manifest mirrors client route entities, gap ids, widths, and act
 test("client and server preserve DEX cooldown metadata in every zone", async () => {
   const client = await import("../public/js/game/patterns.js");
   for (const zoneId of ["home_day", "outside", "home_night"]) {
-    const seed = `dex-parity-${zoneId}`;
+    const seed = `dex-cooldown-${zoneId}`;
     const stream = client.createPatternStream(seed);
-    const server = createServerManifest(seed, { patternCount: 192, zoneId });
-    const clientPatterns = Array.from({ length: 192 }, () => stream.next(zoneId));
+    const server = createServerManifest(seed, { patternCount: 256, zoneId });
+    const clientPatterns = Array.from({ length: 256 }, () => stream.next(zoneId));
     const clientDexIndexes = [];
     const serverDexIndexes = [];
 
@@ -408,7 +421,7 @@ test("client and server preserve DEX cooldown metadata in every zone", async () 
 });
 
 test("server manifest exposes formation metadata and obstacle-free DEX world entities", () => {
-  const manifest = createServerManifest("dex-7", { patternCount: 128 });
+  const manifest = createServerManifest("dex-cooldown-home_day", { patternCount: 256, zoneId: "home_day" });
   const normalPattern = manifest.patterns.find((pattern) =>
     pattern.formation && !pattern.formation.isDex,
   );
