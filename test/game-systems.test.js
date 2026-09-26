@@ -98,17 +98,24 @@ test("pattern stream doubles base mice and replaces them with safe formations", 
       assert.ok(mice.length <= Math.ceil(pattern.width / modules.GAME_CONFIG.mouseRouteSpacingMin) +
         baseCounts[pattern.id] * modules.GUIDED_MOUSE_MAX_COUNT);
       const guidedMice = mice.filter((mouse) => mouse.routeSeedIndex !== undefined);
-      assert.ok(mice.some((mouse) => mouse.routeKind === "continuous"));
+      const continuousMice = mice.filter((mouse) => mouse.routeKind === "continuous");
+      assert.ok(continuousMice.length > 0);
       const routeGroups = new Map();
       for (const mouse of guidedMice) {
         const group = routeGroups.get(mouse.routeSeedIndex) || [];
         group.push(mouse);
         routeGroups.set(mouse.routeSeedIndex, group);
       }
-      assert.equal(routeGroups.size, baseCounts[pattern.id]);
+      assert.ok(routeGroups.size <= baseCounts[pattern.id]);
       assert.ok([...routeGroups.values()].every((group) =>
         group.length >= 1 && group.length <= modules.GUIDED_MOUSE_MAX_COUNT,
       ));
+      assert.ok(guidedMice.every((guided) => continuousMice.every((continuous) =>
+        guided.x >= continuous.x + continuous.width ||
+        guided.x + guided.width <= continuous.x ||
+        guided.y >= continuous.y + continuous.height ||
+        guided.y + guided.height <= continuous.y,
+      )));
     }
   }
 });

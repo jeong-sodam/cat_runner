@@ -514,11 +514,29 @@ function mouseIdentity(mouse) {
   return `${Math.round(mouse.x)}:${Math.round(mouse.y)}:${mouse.width}:${mouse.height}`;
 }
 
+function mouseRectanglesOverlap(first, second) {
+  return first.x < second.x + second.width &&
+    first.x + first.width > second.x &&
+    first.y < second.y + second.height &&
+    first.y + first.height > second.y;
+}
+
 function mergeMouseEntities(entities, additions) {
-  const identities = new Set(
-    entities.filter((entity) => entity.type === "mouse").map(mouseIdentity),
+  const preferredAdditions = additions.filter((entity) =>
+    entity.type === "mouse" && entity.routeKind === "continuous",
   );
-  return entities.concat(additions.filter((entity) => {
+  const retainedEntities = entities.filter((entity) => {
+    if (entity.type !== "mouse" || entity.formationId) {
+      return true;
+    }
+    return preferredAdditions.every((addition) =>
+      !mouseRectanglesOverlap(entity, addition),
+    );
+  });
+  const identities = new Set(
+    retainedEntities.filter((entity) => entity.type === "mouse").map(mouseIdentity),
+  );
+  return retainedEntities.concat(additions.filter((entity) => {
     const identity = mouseIdentity(entity);
     if (identities.has(identity)) {
       return false;
