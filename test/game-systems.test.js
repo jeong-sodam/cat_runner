@@ -184,6 +184,70 @@ test("formation selection is deterministic and alphabet DEX uses the fifteen-per
   assert.equal(ordinary.label, "A");
 });
 
+test("continuous route cleanup removes only overlapping guided mice", async () => {
+  const modules = await loadSystems();
+  const stream = modules.createPatternStream("overlap-cleanup-seed");
+  const patterns = Array.from({ length: 120 }, () => stream.next("home_day"));
+  const sample = patterns.find((pattern) =>
+    !pattern.formation && pattern.entities.some((entity) => entity.routeSeedIndex !== undefined),
+  );
+  assert.ok(sample);
+
+  const continuous = sample.entities.filter((entity) => entity.routeKind === "continuous");
+  const guided = sample.entities.filter((entity) => entity.routeSeedIndex !== undefined);
+  assert.ok(continuous.length > 0);
+  assert.ok(guided.length > 0);
+  assert.ok(guided.every((legacy) => continuous.every((route) =>
+    legacy.x >= route.x + route.width ||
+    legacy.x + legacy.width <= route.x ||
+    legacy.y >= route.y + route.height ||
+    legacy.y + legacy.height <= route.y,
+  )));
+  assert.ok(guided.some((legacy) => continuous.some((route) =>
+    Math.abs(legacy.x - route.x) < route.width &&
+    (legacy.y >= route.y + route.height || legacy.y + legacy.height <= route.y),
+  )));
+
+  const formation = patterns.find((pattern) => pattern.formation);
+  assert.ok(formation);
+  assert.equal(
+    formation.entities.filter((entity) => entity.formationId === formation.formation.label).length,
+    formation.formation.cells.length,
+  );
+});
+
+test("DEX chance and cooldown remain deterministic across a bounded stream", async () => {
+  const modules = await loadSystems();
+  assert.equal(
+    modules.createFormation(() => 0.14, { kind: "alphabet", label: "A" }).isDex,
+    true,
+  );
+  assert.equal(
+    modules.createFormation(() => 0.15, { kind: "alphabet", label: "A" }).isDex,
+    false,
+  );
+  assert.equal(
+    modules.createFormation(() => 0.01, {
+      kind: "alphabet",
+      label: "A",
+      allowDex: false,
+    }).isDex,
+    false,
+  );
+
+  for (const zoneId of ["home_day", "outside", "home_night"]) {
+    const stream = modules.createPatternStream(`dex-cooldown-${zoneId}`);
+    const patterns = Array.from({ length: 256 }, () => stream.next(zoneId));
+    const dexIndexes = patterns.flatMap((pattern, index) =>
+      pattern.formation?.isDex ? [index] : [],
+    );
+    assert.ok(dexIndexes.length > 0);
+    assert.ok(dexIndexes.every((index, position) =>
+      position === 0 || index - dexIndexes[position - 1] >= modules.DEX_COOLDOWN_PATTERNS + 1,
+    ));
+  }
+});
+
 function createState(modules, catId = "black") {
   return modules.createGameState({ catId, seed: "systems-seed" });
 }

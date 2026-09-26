@@ -376,6 +376,37 @@ test("server v9 manifest mirrors client route entities, gap ids, widths, and act
   assert.ok(homeDay.patterns.every((pattern) => !pattern.id.startsWith("combo-")));
 });
 
+test("client and server preserve DEX cooldown metadata in every zone", async () => {
+  const client = await import("../public/js/game/patterns.js");
+  for (const zoneId of ["home_day", "outside", "home_night"]) {
+    const seed = `dex-parity-${zoneId}`;
+    const stream = client.createPatternStream(seed);
+    const server = createServerManifest(seed, { patternCount: 192, zoneId });
+    const clientPatterns = Array.from({ length: 192 }, () => stream.next(zoneId));
+    const clientDexIndexes = [];
+    const serverDexIndexes = [];
+
+    for (let index = 0; index < clientPatterns.length; index += 1) {
+      const clientPattern = clientPatterns[index];
+      const serverPattern = server.patterns[index];
+      assert.deepEqual(serverPattern.formation, clientPattern.formation);
+      assert.equal(serverPattern.obstacleSuppressed, clientPattern.formation?.isDex === true);
+      if (clientPattern.formation?.isDex) {
+        clientDexIndexes.push(index);
+      }
+      if (serverPattern.formation?.isDex) {
+        serverDexIndexes.push(index);
+      }
+    }
+
+    assert.deepEqual(serverDexIndexes, clientDexIndexes);
+    assert.ok(clientDexIndexes.length > 0);
+    assert.ok(clientDexIndexes.every((index, position) =>
+      position === 0 || index - clientDexIndexes[position - 1] >= 3,
+    ));
+  }
+});
+
 test("server manifest exposes formation metadata and obstacle-free DEX world entities", () => {
   const manifest = createServerManifest("dex-7", { patternCount: 128 });
   const normalPattern = manifest.patterns.find((pattern) =>

@@ -142,6 +142,25 @@ test("server manifest keeps an immediate route and staged gap guidance", () => {
   }
 });
 
+test("server manifest spaces DEX formations by two patterns", () => {
+  for (const zoneId of ["home_day", "outside", "home_night"]) {
+    const manifest = createServerManifest(`dex-cooldown-${zoneId}`, {
+      patternCount: 256,
+      zoneId,
+    });
+    const dexIndexes = manifest.patterns.flatMap((pattern, index) =>
+      pattern.formation?.isDex ? [index] : [],
+    );
+    assert.ok(dexIndexes.length > 0);
+    assert.ok(dexIndexes.every((index, position) =>
+      position === 0 || index - dexIndexes[position - 1] >= 3,
+    ));
+    assert.ok(manifest.patterns.every((pattern) =>
+      !pattern.formation?.isDex || pattern.formation.sequence?.join("") === "DEX",
+    ));
+  }
+});
+
 test("fake authenticated flow completes a run, keeps personal best, and expires resumable runs", async () => {
   const fixture = await startFixture({ now: Date.now() });
   const unauthenticated = await fetch(fixture.baseUrl + "/api/me");
