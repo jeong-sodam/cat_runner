@@ -72,6 +72,9 @@ test("pattern stream doubles base mice and replaces them with safe formations", 
   assert.ok(basePatterns.length > 20);
   assert.ok(basePatterns.some((pattern) => pattern.formation));
   assert.ok(basePatterns.some((pattern) => !pattern.formation));
+  const formationRatio = basePatterns.filter((pattern) => pattern.formation).length /
+    basePatterns.length;
+  assert.ok(formationRatio >= 0.2 && formationRatio <= 0.4);
 
   for (const pattern of basePatterns) {
     const mice = pattern.entities.filter((entity) => entity.type === "mouse");
@@ -87,7 +90,7 @@ test("pattern stream doubles base mice and replaces them with safe formations", 
         entity.x >= pattern.formation.anchor.x + pattern.formation.width,
       ));
     } else {
-      assert.equal(mice.length, baseCounts[pattern.id] * 2);
+      assert.equal(mice.length, baseCounts[pattern.id] * 3);
     }
   }
 });

@@ -337,12 +337,12 @@ function addDenseMice(entities, gaps = []) {
     }
     const forward = { ...entity, x: entity.x + FORMATION_CELL_STEP * 2 };
     const backward = { ...entity, x: entity.x - FORMATION_CELL_STEP * 2 };
-    const duplicate = isEntityClearOfGaps(forward, gaps)
-      ? forward
-      : isEntityClearOfGaps(backward, gaps) ? backward : null;
+    const safeDuplicates = [forward, backward].filter((candidate) =>
+      isEntityClearOfGaps(candidate, gaps),
+    );
     return [
       entity,
-      ...(duplicate ? [duplicate] : []),
+      ...safeDuplicates,
     ];
   });
 }
@@ -407,7 +407,7 @@ function createPatternStream(seed) {
       }] : [];
       const formationRoll = random();
       const canUseFormation = gaps.length === 0 && isFormationAnchorSafe(pattern);
-      const formation = formationRoll < 0.2 && canUseFormation
+      const formation = formationRoll < 0.3 && canUseFormation
         ? {
             ...createFormation(random),
             anchor: { ...pattern.formationAnchor },

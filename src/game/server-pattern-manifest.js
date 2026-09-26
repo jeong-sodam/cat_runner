@@ -119,10 +119,10 @@ function addDenseMice(entities, gaps) {
     }
     const forward = { ...entity, x: entity.x + FORMATION_CELL_STEP * 2 };
     const backward = { ...entity, x: entity.x - FORMATION_CELL_STEP * 2 };
-    const duplicate = isEntityClearOfGaps(forward, gaps)
-      ? forward
-      : isEntityClearOfGaps(backward, gaps) ? backward : null;
-    return [entity, ...(duplicate ? [duplicate] : [])];
+    const safeDuplicates = [forward, backward].filter((candidate) =>
+      isEntityClearOfGaps(candidate, gaps),
+    );
+    return [entity, ...safeDuplicates];
   });
 }
 
@@ -366,7 +366,7 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
     }));
     const formationRoll = random();
     const canUseFormation = relativeGaps.length === 0 && isFormationAnchorSafe(selected);
-    const formation = formationRoll < 0.2 && canUseFormation
+    const formation = formationRoll < 0.3 && canUseFormation
       ? { ...createFormation(random), anchor: { ...selected.formationAnchor } }
       : null;
     const sourceEntities = formation

@@ -1,6 +1,6 @@
 # Task: T02 쥐 인형 밀도 증가
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -47,6 +47,19 @@
 - 진형 선택 시 장애물이 진형 예약 영역과 겹치지 않고, 진형 미선택 시 복제 쥐가 갭과 겹치지 않는지 검증한다.
 - `createFormation(() => 0.01)`의 DEX 분기와 `0.99`의 일반 알파벳 분기는 기존대로 검증한다.
 
+### I03. 서버 패턴 manifest 동기화
+
+- Related Files:
+  - `src/game/server-pattern-manifest.js` :: `addDenseMice`, `createServerManifest`의 formation 선택; modify
+  - `test/score-validation.test.js` :: `server v5 manifest mirrors client gap ids, widths, entities, and actions`; verify
+
+#### Details
+
+- 서버 `addDenseMice`도 클라이언트와 동일하게 원본, gap-safe forward, gap-safe backward를 모두 반환한다.
+- 서버 formation threshold도 `formationRoll < 0.3`으로 맞춘다.
+- `PATTERN_VERSION`은 P03의 패턴 구조 변경 전까지 `v5`로 유지한다.
+- 동일 seed/zone에 대해 서버 manifest와 클라이언트 stream의 pattern id, gap, entity, action 순서가 계속 일치해야 한다.
+
 ## Acceptance Criteria
 
 - [ ] 갭이 없는 기본 패턴에서 각 일반 쥐가 최대 3개 출력된다.
@@ -54,6 +67,7 @@
 - [ ] 진형 선택 확률이 약 30%로 증가한다.
 - [ ] 동일 seed의 패턴 스트림은 계속 결정적이다.
 - [ ] DEX 5% 분기와 선택적 수집/장애물 억제 규칙은 회귀하지 않는다.
+- [ ] 클라이언트와 서버 pattern manifest가 동일 seed에서 일치한다.
 
 ## Validation
 
@@ -75,6 +89,6 @@ Task: T02-increase-mouse-density
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
