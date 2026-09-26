@@ -11,11 +11,11 @@ import {
 
 const ZONE_DEFINITIONS = Object.freeze({
   home_day: Object.freeze({ id: "home_day", minScore: 0, background: "living-room", difficulty: 1 }),
-  outside: Object.freeze({ id: "outside", minScore: 400, background: "alley-park", difficulty: 1.2 }),
-  home_night: Object.freeze({ id: "home_night", minScore: 1800, background: "dark-home", difficulty: 1.5 }),
+  outside: Object.freeze({ id: "outside", minScore: 800, background: "alley-park", difficulty: 1.2 }),
+  home_night: Object.freeze({ id: "home_night", minScore: 3600, background: "dark-home", difficulty: 1.5 }),
 });
 
-const PATTERN_VERSION = "cat-runner-patterns-v9";
+const PATTERN_VERSION = "cat-runner-patterns-v10";
 const COMPOSITE_SAFE_MARGIN = 120;
 const PATTERN_INTERNAL_SCALE = 1.15;
 
@@ -565,7 +565,7 @@ function createContinuousMouseRoute(pattern, gaps = [], spacing = 38) {
     const candidate = {
       type: "mouse",
       x,
-      y: routeYForPoint(pattern, x, obstacles, gaps, mouseHeight),
+      y: GAME_CONFIG.groundY - 90,
       width: mouseWidth,
       height: mouseHeight,
       variant: "toy",
@@ -627,48 +627,9 @@ function resolveGuidedActions(pattern, requiredActions, obstacles) {
 
 function createGuidedMouseRoute(pattern, requiredActions = [], gaps = []) {
   const entities = Array.isArray(pattern?.entities) ? pattern.entities : [];
-  const obstacles = entities.filter((entity) => entity.type === "obstacle");
-  const mouseEntities = entities.filter((entity) => entity.type === "mouse");
-  if (!obstacles.length) {
-    return mergeMouseEntities(
-      entities.map((entity) => ({ ...entity })),
-      createContinuousMouseRoute(pattern, gaps, pattern.routeSpacing),
-    );
-  }
-  const guidedActions = resolveGuidedActions(pattern, requiredActions, obstacles);
-
-  const seeds = mouseEntities.length > 0
-    ? mouseEntities
-    : obstacles.map((obstacle) => ({
-        type: "mouse",
-        x: Math.max(0, obstacle.x - 68),
-        y: GAME_CONFIG.groundY - 90,
-        width: 42,
-        height: 42,
-        variant: "toy",
-        collectible: true,
-      }));
-  const nonMice = entities.filter((entity) => entity.type !== "mouse");
-  const guidedMice = seeds.flatMap((seed, seedIndex) => {
-    const obstacle = selectRouteObstacle(seed, obstacles);
-    const obstacleIndex = obstacles.indexOf(obstacle);
-    const action = guidedActions[obstacleIndex] || "jump";
-    return GUIDED_MOUSE_OFFSETS.map((offset, routeIndex) => {
-      const candidate = {
-        ...seed,
-        x: Math.max(0, seed.x + offset),
-        y: routeYForAction(action, obstacle, routeIndex / (GUIDED_MOUSE_MAX_COUNT - 1), seed.height),
-        routeAction: action,
-        routeIndex,
-        routeSeedIndex: seedIndex,
-      };
-      return isEntityClearOfGaps(candidate, gaps) &&
-        isMouseClearOfObstacles(candidate, obstacles)
-        ? candidate
-        : null;
-    }).filter(Boolean);
-  });
-  const routedEntities = nonMice.concat(guidedMice);
+  const routedEntities = entities.filter((entity) =>
+    entity.type !== "mouse" || entity.formationId,
+  );
   return mergeMouseEntities(
     routedEntities,
     createContinuousMouseRoute({ ...pattern, entities: routedEntities }, gaps, pattern.routeSpacing),
@@ -738,9 +699,10 @@ function createPatternStream(seed) {
         : GAME_CONFIG.gapWidthOutsideMax;
       const gapWidth = gapWidthMin +
         Math.floor(random() * (gapWidthMax - gapWidthMin + 1));
-      const routeSpacing = Math.floor(
-        (GAME_CONFIG.mouseRouteSpacingMin + GAME_CONFIG.mouseRouteSpacingMax) / 2,
-      );
+      const routeSpacing = GAME_CONFIG.mouseRouteSpacingMin +
+        Math.floor(random() * (
+          GAME_CONFIG.mouseRouteSpacingMax - GAME_CONFIG.mouseRouteSpacingMin + 1
+        ));
       const requiredActions = (sourcePattern.actionCandidates || []).map((actions) =>
         actions[Math.floor(random() * actions.length)],
       );
@@ -764,8 +726,14 @@ function createPatternStream(seed) {
       const gapAction = zoneId === "home_night" && pattern.family === "double-jump"
         ? "double_jump"
         : "jump";
+      const zoneEntities = pattern.entities.filter((entity) =>
+        isZoneEnabled(entity.minZone, zoneId),
+      );
       const formationRoll = random();
-      const canUseFormation = gaps.length === 0 && isFormationAnchorSafe(pattern);
+      const canUseFormation = gaps.length === 0 && isFormationAnchorSafe({
+        ...pattern,
+        entities: zoneEntities,
+      });
       const formation = formationRoll < 0.3 && canUseFormation
         ? {
             ...createFormation(random, { allowDex: dexCooldownRemaining === 0 }),
@@ -777,11 +745,16 @@ function createPatternStream(seed) {
       } else if (dexCooldownRemaining > 0) {
         dexCooldownRemaining -= 1;
       }
-      const configuredPattern = { ...pattern, gapAction, routeSpacing };
+      const configuredPattern = {
+        ...pattern,
+        entities: zoneEntities,
+        gapAction,
+        routeSpacing,
+      };
       const baseEntities = formation
-        ? pattern.entities
+        ? configuredPattern.entities
             .filter((entity) => entity.type !== "mouse")
-            .concat(createFormationEntities(formation, pattern))
+            .concat(createFormationEntities(formation, configuredPattern))
         : addDenseMice(configuredPattern.entities, gaps, configuredPattern, requiredActions);
       const sourceEntities = formation
         ? mergeMouseEntities(

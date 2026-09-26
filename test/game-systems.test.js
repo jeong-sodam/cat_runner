@@ -120,7 +120,7 @@ test("pattern stream doubles base mice and replaces them with safe formations", 
   }
 });
 
-test("ordinary patterns guide mice along required actions without obstacle overlap", async () => {
+test("ordinary patterns keep mice on a fixed row without obstacle overlap", async () => {
   const modules = await loadSystems();
   const stream = modules.createPatternStream("guided-route-seed");
   const patterns = Array.from({ length: 240 }, () => stream.next("outside"));
@@ -140,22 +140,11 @@ test("ordinary patterns guide mice along required actions without obstacle overl
     assert.ok(mice.every((mouse) =>
       ["ground", "jump", "slide", "double_jump"].includes(mouse.routeAction),
     ));
-    assert.ok(mice.filter((mouse) => mouse.routeKind !== "continuous").every((mouse) =>
-      mouse.routeIndex >= 0 && mouse.routeIndex < modules.GUIDED_MOUSE_MAX_COUNT,
-    ));
+    assert.ok(mice.every((mouse) => mouse.routeKind === "continuous"));
+    assert.ok(mice.every((mouse) => mouse.y === modules.GAME_CONFIG.groundY - 90));
     assert.ok(mice.every((mouse) => obstacles.every((obstacle) =>
       !intersects(mouse, obstacle),
     )));
-    const jumpMice = mice.filter((mouse) =>
-      mouse.routeAction === "jump" || mouse.routeAction === "double_jump",
-    );
-    const slideMice = mice.filter((mouse) => mouse.routeAction === "slide");
-    if (jumpMice.length) {
-      assert.ok(Math.min(...jumpMice.map((mouse) => mouse.y)) < 610);
-    }
-    if (slideMice.length) {
-      assert.ok(slideMice.every((mouse) => mouse.y >= 640));
-    }
   }
 });
 
@@ -184,29 +173,22 @@ test("formation selection is deterministic and alphabet DEX uses the fifteen-per
   assert.equal(ordinary.label, "A");
 });
 
-test("continuous route cleanup removes only overlapping guided mice", async () => {
+test("continuous route cleanup removes legacy guided mice while preserving formations", async () => {
   const modules = await loadSystems();
   const stream = modules.createPatternStream("overlap-cleanup-seed");
   const patterns = Array.from({ length: 120 }, () => stream.next("home_day"));
   const sample = patterns.find((pattern) =>
-    !pattern.formation && pattern.entities.some((entity) => entity.routeSeedIndex !== undefined),
+    !pattern.formation && pattern.entities.some((entity) => entity.type === "mouse"),
   );
   assert.ok(sample);
 
-  const continuous = sample.entities.filter((entity) => entity.routeKind === "continuous");
+  const continuous = sample.entities.filter((entity) =>
+    entity.type === "mouse" && entity.routeKind === "continuous",
+  );
   const guided = sample.entities.filter((entity) => entity.routeSeedIndex !== undefined);
   assert.ok(continuous.length > 0);
-  assert.ok(guided.length > 0);
-  assert.ok(guided.every((legacy) => continuous.every((route) =>
-    legacy.x >= route.x + route.width ||
-    legacy.x + legacy.width <= route.x ||
-    legacy.y >= route.y + route.height ||
-    legacy.y + legacy.height <= route.y,
-  )));
-  assert.ok(guided.some((legacy) => continuous.some((route) =>
-    Math.abs(legacy.x - route.x) < route.width &&
-    (legacy.y >= route.y + route.height || legacy.y + legacy.height <= route.y),
-  )));
+  assert.equal(guided.length, 0);
+  assert.ok(continuous.every((mouse) => mouse.y === modules.GAME_CONFIG.groundY - 90));
 
   const formation = patterns.find((pattern) => pattern.formation);
   assert.ok(formation);
@@ -519,11 +501,17 @@ test("continuous routes reach the first viewport and guide each staged gap", asy
     ));
 
     for (const pattern of patterns) {
-      assert.equal(pattern.routeSpacing, 38);
+      assert.ok(
+        pattern.routeSpacing >= modules.GAME_CONFIG.mouseRouteSpacingMin &&
+        pattern.routeSpacing <= modules.GAME_CONFIG.mouseRouteSpacingMax,
+      );
       const continuousRoute = pattern.entities
         .filter((entity) => entity.type === "mouse" && entity.routeKind === "continuous")
         .sort((left, right) => left.x - right.x)
         .filter((entity, index, entities) => index === 0 || entity.x !== entities[index - 1].x);
+      assert.ok(continuousRoute.every((entity) =>
+        entity.y === modules.GAME_CONFIG.groundY - 90,
+      ));
       for (let index = 1; index < continuousRoute.length; index += 1) {
         const previous = continuousRoute[index - 1];
         const current = continuousRoute[index];
@@ -1174,10 +1162,10 @@ test("score doubles mouse points but never distance and zones switch at threshol
 
 test("zone thresholds advance background transitions without changing difficulty multipliers", async () => {
   const modules = await loadSystems();
-  assert.equal(modules.selectZoneForScore(399), "home_day");
-  assert.equal(modules.selectZoneForScore(400), "outside");
-  assert.equal(modules.selectZoneForScore(1799), "outside");
-  assert.equal(modules.selectZoneForScore(1800), "home_night");
+  assert.equal(modules.selectZoneForScore(799), "home_day");
+  assert.equal(modules.selectZoneForScore(800), "outside");
+  assert.equal(modules.selectZoneForScore(3599), "outside");
+  assert.equal(modules.selectZoneForScore(3600), "home_night");
   assert.deepEqual(
     Object.fromEntries(Object.entries(modules.ZONE_DEFINITIONS).map(([id, zone]) => [id, zone.difficulty])),
     { home_day: 1, outside: 1.2, home_night: 1.5 },
