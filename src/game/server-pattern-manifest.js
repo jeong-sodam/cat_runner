@@ -222,6 +222,7 @@ const PATTERNS = Object.freeze([
       { type: "obstacle", x: 420, y: 620, width: 90, height: 80, variant: "box", collectible: false },
       { type: "mouse", x: 300, y: 610, width: 42, height: 42, variant: "toy", collectible: true },
       { type: "mouse", x: 500, y: 490, width: 42, height: 42, variant: "toy", collectible: true },
+      { type: "obstacle", x: 60, y: 620, width: 90, height: 80, variant: "pot", collectible: false, minZone: "outside" },
       { type: "obstacle", x: 180, y: 620, width: 90, height: 80, variant: "pot", collectible: false, minZone: "outside" },
     ],
   }),
@@ -231,6 +232,7 @@ const PATTERNS = Object.freeze([
       { type: "obstacle", x: 420, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
       { type: "mouse", x: 280, y: 640, width: 42, height: 42, variant: "toy", collectible: true },
       { type: "grass", x: 610, y: 585, width: 48, height: 72, variant: "cat-grass", collectible: true },
+      { type: "obstacle", x: 20, y: 620, width: 90, height: 80, variant: "box", collectible: false, minZone: "outside" },
       { type: "obstacle", x: 140, y: 620, width: 90, height: 80, variant: "box", collectible: false, minZone: "outside" },
     ],
   }),
@@ -241,6 +243,7 @@ const PATTERNS = Object.freeze([
       { type: "obstacle", x: 610, y: 560, width: 130, height: 40, variant: "yarn", collectible: false },
       { type: "mouse", x: 250, y: 600, width: 42, height: 42, variant: "toy", collectible: true },
       { type: "grass", x: 520, y: 600, width: 48, height: 72, variant: "cat-grass", collectible: true },
+      { type: "obstacle", x: 20, y: 620, width: 90, height: 80, variant: "box", collectible: false, minZone: "outside" },
       { type: "obstacle", x: 120, y: 620, width: 90, height: 80, variant: "box", collectible: false, minZone: "outside" },
     ],
   }),
@@ -468,7 +471,7 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       gaps: generatedGaps,
     });
     nextPatternX = startX + selected.width +
-      Math.max(selected.minGap * 0.75, PLAYER_WIDTH * 1.5);
+      Math.max(selected.minGap * 0.6375, PLAYER_WIDTH * 1.5);
     previousId = selected.id;
   }
 

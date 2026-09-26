@@ -8,9 +8,9 @@
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `pending` | 캐릭터 선택 패널 내부 세로 스크롤 | [P01](../phases/2026-09-26-runner-stage-density-double-jump-patterns/P01-character-select-scroll/phase.md) |
-| P02 | `pending` | 첫 구간 전환 기준과 쥐 인형 밀도 조정 | [P02](../phases/2026-09-26-runner-stage-density-double-jump-patterns/P02-stage-mouse-density/phase.md) |
-| P03 | `pending` | 장애물 밀도와 2단 점프 패턴 3종 추가 | [P03](../phases/2026-09-26-runner-stage-density-double-jump-patterns/P03-obstacle-double-jump-patterns/phase.md) |
+| P01 | `done` | 캐릭터 선택 패널 내부 세로 스크롤 | [P01](../phases/2026-09-26-runner-stage-density-double-jump-patterns/P01-character-select-scroll/phase.md) |
+| P02 | `done` | 첫 구간 전환 기준과 쥐 인형 밀도 조정 | [P02](../phases/2026-09-26-runner-stage-density-double-jump-patterns/P02-stage-mouse-density/phase.md) |
+| P03 | `done` | 장애물 밀도와 2단 점프 패턴 3종 추가 | [P03](../phases/2026-09-26-runner-stage-density-double-jump-patterns/P03-obstacle-double-jump-patterns/phase.md) |
 
 ## Decision Source
 

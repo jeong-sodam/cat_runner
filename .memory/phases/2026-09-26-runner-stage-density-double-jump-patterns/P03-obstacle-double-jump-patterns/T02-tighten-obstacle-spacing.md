@@ -1,6 +1,6 @@
 # Task: T02 장애물 밀도와 2단 점프 안전 검증
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -20,6 +20,7 @@
 - Related Files:
   - `public/js/game/world.js` :: `PATTERN_SPACING_FACTOR`, `resolvePatternSpacing`; modify
   - `public/js/game/patterns.js` :: `jump-basic`, `slide-basic`, `mixed-safe` entities; modify
+  - `src/game/server-pattern-manifest.js` :: basic pattern entities and spacing; modify for manifest parity
 
 #### Details
 
@@ -49,12 +50,12 @@
 
 ## Acceptance Criteria
 
-- [ ] 패턴 간 실제 spacing factor가 15% 줄어든다.
-- [ ] 기본 3패턴에 outside 전용 장애물이 하나씩 추가된다.
-- [ ] 새 패턴과 기존 패턴이 모두 `isValidPattern`을 통과한다.
-- [ ] 점프력 1 고양이가 high box를 1단 점프로 회피한다.
-- [ ] 2단 점프 패턴의 짧은 간격은 80px 안전 margin을 유지한다.
-- [ ] 기존 렌더러와 충돌 polygon에 불필요한 variant 회귀가 없다.
+- [x] 패턴 간 실제 spacing factor가 15% 줄어든다.
+- [x] 기본 3패턴에 outside 전용 장애물이 하나씩 추가된다.
+- [x] 새 패턴과 기존 패턴이 모두 `isValidPattern`을 통과한다.
+- [x] 점프력 1 고양이가 high box를 1단 점프로 회피한다.
+- [x] 2단 점프 패턴의 짧은 간격은 80px 안전 margin을 유지한다.
+- [x] 기존 렌더러와 충돌 polygon에 불필요한 variant 회귀가 없다.
 
 ## Validation
 
@@ -76,6 +77,6 @@ Task: T02-tighten-obstacle-spacing
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending

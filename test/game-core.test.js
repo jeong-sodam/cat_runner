@@ -151,9 +151,9 @@ test("rating one jump reaches above every basic obstacle", async () => {
 
   const basicObstacle = {
     x: harness.state.player.x,
-    y: modules.GAME_CONFIG.groundY - 80,
+    y: modules.GAME_CONFIG.groundY - 100,
     width: 90,
-    height: 80,
+    height: 100,
   };
   assert.equal(harness.state.player.y + harness.state.player.height < basicObstacle.y, true);
   assert.equal(modules.obstacleIntersectsPlayer(basicObstacle, harness.state), false);

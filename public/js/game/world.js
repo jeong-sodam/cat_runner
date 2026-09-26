@@ -8,7 +8,7 @@ import {
 } from "./mouse-formations.js";
 import { ZONE_DEFINITIONS } from "./patterns.js";
 
-const PATTERN_SPACING_FACTOR = 0.75;
+const PATTERN_SPACING_FACTOR = 0.6375;
 const FORMATION_SEQUENCE_GAP = 48;
 
 function createDexEntities(pattern) {
