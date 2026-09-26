@@ -6,17 +6,17 @@
 
 ## Active Phase
 
-[P01 공중 입력과 2단 점프](./phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P01-air-input-and-double-jump/phase.md)
+[P02 패턴과 피격범위 보정](./phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P02-pattern-hitbox-calibration/phase.md)
 
 ## Active Task
 
-[T02 공중 하강과 2단 점프 물리](./phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P01-air-input-and-double-jump/T02-air-action-physics.md)
+[T01 jump-slide 패턴 간격 보정](./phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P02-pattern-hitbox-calibration/T01-jump-slide-pattern-spacing.md)
 
 ## Status
 
-- T01 구현·검증 완료
-- 다음 Task T02 진행 준비 완료
+- P01 T01·T02 구현·검증 완료
+- P02 T01 진행 준비 완료
 
 ## Next Step (IMPORTANT)
 
-T02 청사진을 읽고 `public/js/game/game-loop.js`, `test/game-core.test.js`의 공중 하강·2단 점프 물리를 구현한다.
+P02 T01 청사진을 읽고 `public/js/game/patterns.js`, `test/game-systems.test.js`의 jump-slide 후속 장애물 간격 보정을 구현한다.

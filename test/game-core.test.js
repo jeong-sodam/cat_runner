@@ -181,7 +181,65 @@ test("W produces at most two jumps and holding W does not repeat", async () => {
   harness.destroy();
 });
 
-test("S changes the hitbox only while grounded", async () => {
+test("the second W preserves the current airborne position", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules, "white");
+
+  harness.target.dispatch("keydown", "w");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  for (let frame = 0; frame < 8; frame += 1) {
+    harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  }
+
+  const yBeforeSecondJump = harness.state.player.y;
+  assert.equal(harness.state.player.isGrounded, false);
+  harness.target.dispatch("keydown", "w");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+
+  const expectedY =
+    yBeforeSecondJump +
+    (modules.GAME_CONFIG.jumpVelocity * modules.CAT_DEFINITIONS.white.jumpMultiplier +
+      modules.GAME_CONFIG.gravity * (modules.GAME_CONFIG.fixedStepMs / 1000)) *
+      (modules.GAME_CONFIG.fixedStepMs / 1000);
+  assert.equal(harness.state.player.jumpsUsed, 2);
+  assert.equal(harness.state.player.y, expectedY);
+  harness.destroy();
+});
+
+test("airborne S starts one fast descent without consuming the second jump", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules, "white");
+
+  harness.target.dispatch("keydown", "w");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  const yBeforeSlide = harness.state.player.y;
+
+  harness.target.dispatch("keydown", "s");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  const dt = modules.GAME_CONFIG.fixedStepMs / 1000;
+  assert.equal(harness.state.player.airSlideUsed, true);
+  assert.equal(harness.state.player.jumpsUsed, 1);
+  assert.equal(
+    harness.state.player.vy,
+    Math.abs(modules.GAME_CONFIG.jumpVelocity) + modules.GAME_CONFIG.gravity * dt,
+  );
+  assert.ok(harness.state.player.y > yBeforeSlide);
+
+  const vyAfterFirstSlide = harness.state.player.vy;
+  harness.target.dispatch("keydown", "s", true);
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  assert.notEqual(harness.state.player.vy, vyAfterFirstSlide);
+  assert.equal(harness.state.player.jumpsUsed, 1);
+
+  harness.target.dispatch("keydown", "w");
+  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  assert.equal(harness.state.player.jumpsUsed, 2);
+  assert.equal(harness.state.player.airSlideUsed, true);
+  harness.destroy();
+});
+
+test("S changes the hitbox after fast airborne descent lands", async () => {
   const modules = await loadGameModules();
   const harness = createHarness(modules);
 
@@ -204,8 +262,8 @@ test("S changes the hitbox only while grounded", async () => {
   harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
   harness.target.dispatch("keydown", "s");
   harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
-  assert.equal(harness.state.player.isSliding, false);
-  assert.equal(harness.state.player.height, modules.GAME_CONFIG.playerHeight);
+  assert.equal(harness.state.player.isSliding, true);
+  assert.equal(harness.state.player.height, modules.GAME_CONFIG.slideHeight);
   harness.destroy();
 });
 

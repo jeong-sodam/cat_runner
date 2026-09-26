@@ -56,9 +56,9 @@ function createGameLoop({
     state.rhythm ||= createRhythmState();
     updateActiveEffect(state, state.elapsedMs, state.worldEntities);
     const speed = difficultyMultiplier(state.distanceM, state.zoneId);
-    const isSliding =
-      input.isSliding() && state.player.isGrounded && !state.player.isFalling;
     const jumpPressed = input.consumeJumpPress();
+    const slidePressed = input.consumeSlidePress?.() ?? false;
+    const wasAirborne = !state.player.isGrounded && !state.player.isFalling;
 
     if (
       !state.player.isFalling &&
@@ -66,12 +66,25 @@ function createGameLoop({
       state.player.jumpsUsed < GAME_CONFIG.maxJumps
     ) {
       state.player.height = GAME_CONFIG.playerHeight;
-      state.player.y = GAME_CONFIG.groundY - state.player.height;
+      if (state.player.isGrounded) {
+        state.player.y = GAME_CONFIG.groundY - state.player.height;
+        state.player.airSlideUsed = false;
+      }
       state.player.vy = GAME_CONFIG.jumpVelocity * cat.jumpMultiplier;
       state.player.isGrounded = false;
       state.player.isSliding = false;
       state.player.jumpsUsed += 1;
       emit("player_jump", { jumpsUsed: state.player.jumpsUsed });
+    }
+
+    if (
+      !state.player.isFalling &&
+      wasAirborne &&
+      slidePressed &&
+      !state.player.airSlideUsed
+    ) {
+      state.player.vy = Math.abs(GAME_CONFIG.jumpVelocity);
+      state.player.airSlideUsed = true;
     }
 
     if (state.player.isFalling) {
@@ -90,10 +103,12 @@ function createGameLoop({
         state.player.vy = 0;
         state.player.isGrounded = true;
         state.player.jumpsUsed = 0;
+        state.player.airSlideUsed = false;
       }
     }
 
     if (state.player.isGrounded) {
+      const isSliding = input.isSliding() && !state.player.isFalling;
       state.player.isSliding = isSliding;
       state.player.height = isSliding
         ? GAME_CONFIG.slideHeight
@@ -130,6 +145,7 @@ function createGameLoop({
         state.player.isFalling = false;
         state.player.isGrounded = true;
         state.player.jumpsUsed = 0;
+        state.player.airSlideUsed = false;
         state.player.fallRecoveryUntilMs =
           state.elapsedMs + GAME_CONFIG.fallRecoveryMs;
       }
