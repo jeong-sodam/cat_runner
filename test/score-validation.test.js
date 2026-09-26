@@ -158,7 +158,7 @@ test("malformed rhythm summaries are rejected without trusting client score fiel
   }
 });
 
-test("pattern v5 is validated when present and remains optional for legacy events", () => {
+test("pattern v7 is validated when present and remains optional for legacy events", () => {
   const run = makeRun("pattern-version-seed");
   const mismatched = makeGameoverEvents(run);
   mismatched[0].payload.patternVersion = "cat-runner-patterns-v2";
@@ -249,7 +249,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
   assert.equal(calculateVerifiedResult(invincibleRun, events, { clientFinishedAt: 10000 }).health, 0);
 });
 
-test("server v5 manifest mirrors client gap ids, widths, entities, and actions", async () => {
+test("server v7 manifest mirrors client route entities, gap ids, widths, and actions", async () => {
   const client = await import("../public/js/game/patterns.js");
   const seed = "manifest-parity-seed";
   const server = createServerManifest(seed, { patternCount: 32 });
@@ -269,9 +269,42 @@ test("server v5 manifest mirrors client gap ids, widths, entities, and actions",
   for (let index = 0; index < clientPatterns.length; index += 1) {
     const clientPattern = clientPatterns[index];
     const serverPattern = server.patterns[index];
+    assert.equal(serverPattern.width, clientPattern.width);
     assert.deepEqual(
-      serverPattern.entities.map((entity) => [entity.id, entity.width, entity.height]),
-      clientPattern.entities.map((entity) => [entity.id, entity.width, entity.height]),
+      serverPattern.entities.map((entity) => [
+        entity.id,
+        entity.type,
+        entity.x - serverPattern.startX,
+        entity.y,
+        entity.width,
+        entity.height,
+        entity.minZone ?? null,
+        entity.routeAction ?? null,
+        entity.routeIndex ?? null,
+        entity.routeSeedIndex ?? null,
+        entity.formationId ?? null,
+        entity.formationKind ?? null,
+        entity.formationLetter ?? null,
+        entity.formationSequenceIndex ?? null,
+        entity.formationCell ?? null,
+      ]),
+      clientPattern.entities.map((entity) => [
+        entity.id,
+        entity.type,
+        entity.x,
+        entity.y,
+        entity.width,
+        entity.height,
+        entity.minZone ?? null,
+        entity.routeAction ?? null,
+        entity.routeIndex ?? null,
+        entity.routeSeedIndex ?? null,
+        entity.formationId ?? null,
+        entity.formationKind ?? null,
+        entity.formationLetter ?? null,
+        entity.formationSequenceIndex ?? null,
+        entity.formationCell ?? null,
+      ]),
     );
     assert.deepEqual(serverPattern.requiredActions, clientPattern.requiredActions);
     assert.deepEqual(serverPattern.actionCandidates, clientPattern.actionCandidates);

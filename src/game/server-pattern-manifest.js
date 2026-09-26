@@ -1,6 +1,8 @@
-const PATTERN_VERSION = "cat-runner-patterns-v6";
+const PATTERN_VERSION = "cat-runner-patterns-v7";
 const CANVAS_WIDTH = 1600;
 const PLAYER_WIDTH = 90;
+const PLAYER_HEIGHT = 110;
+const GROUND_Y = 700;
 const GAP_MIN_WIDTH = 140;
 const GAP_MAX_WIDTH = 220;
 const GAP_SAFE_MARGIN = 200;
@@ -57,6 +59,8 @@ const ZONE_ORDER = Object.freeze({ home_day: 0, outside: 1, home_night: 2 });
 const GROUND_ACTIONS = Object.freeze(["jump"]);
 const LOW_ACTIONS = Object.freeze(["jump", "slide"]);
 const DOUBLE_JUMP_ACTIONS = Object.freeze(["double_jump"]);
+const GUIDED_MOUSE_MAX_COUNT = 7;
+const GUIDED_MOUSE_OFFSETS = Object.freeze([-102, -68, -34, 0, 34, 68, 102]);
 
 function maskRowsToCells(rows) {
   return rows.flatMap((row, rowIndex) =>
@@ -138,17 +142,111 @@ function isEntityClearOfGaps(entity, gaps) {
   );
 }
 
-function addDenseMice(entities, gaps) {
+function intersects(first, second) {
+  return first.x < second.x + second.width &&
+    first.x + first.width > second.x &&
+    first.y < second.y + second.height &&
+    first.y + first.height > second.y;
+}
+
+function isMouseClearOfObstacles(mouse, obstacles) {
+  return obstacles.every((obstacle) => !intersects(mouse, obstacle));
+}
+
+function selectRouteObstacle(mouse, obstacles) {
+  return obstacles.reduce((closest, obstacle) => {
+    if (!closest) {
+      return obstacle;
+    }
+    const closestDistance = Math.abs(mouse.x - (closest.x + closest.width / 2));
+    const obstacleDistance = Math.abs(mouse.x - (obstacle.x + obstacle.width / 2));
+    return obstacleDistance < closestDistance ? obstacle : closest;
+  }, null);
+}
+
+function routeYForAction(action, obstacle, progress, mouseHeight) {
+  const groundY = GROUND_Y - 90;
+  if (action === "slide") {
+    return groundY + 30;
+  }
+  const heightBonus = action === "double_jump" ? 36 : 12;
+  const peakY = obstacle
+    ? obstacle.y - PLAYER_HEIGHT - mouseHeight - heightBonus
+    : groundY - PLAYER_HEIGHT;
+  const arc = Math.sin(Math.PI * progress);
+  return Math.round(groundY + (peakY - groundY) * arc);
+}
+
+function resolveGuidedActions(pattern, requiredActions, obstacles) {
+  if (requiredActions.length === obstacles.length) {
+    return requiredActions;
+  }
+  return obstacles.map((obstacle) => {
+    if (pattern.safePath === "slide") {
+      return "slide";
+    }
+    if (pattern.safePath === "mixed") {
+      return obstacle.y <= 580 ? "slide" : "jump";
+    }
+    return "jump";
+  });
+}
+
+function createGuidedMouseRoute(pattern, requiredActions = [], gaps = []) {
+  const entities = Array.isArray(pattern?.entities) ? pattern.entities : [];
+  const obstacles = entities.filter((entity) => entity.type === "obstacle");
+  const mouseEntities = entities.filter((entity) => entity.type === "mouse");
+  if (!obstacles.length) {
+    return entities.map((entity) => ({ ...entity }));
+  }
+  const guidedActions = resolveGuidedActions(pattern, requiredActions, obstacles);
+  const seeds = mouseEntities.length > 0
+    ? mouseEntities
+    : obstacles.map((obstacle) => ({
+        type: "mouse",
+        x: Math.max(0, obstacle.x - 68),
+        y: GROUND_Y - 90,
+        width: 42,
+        height: 42,
+        variant: "toy",
+        collectible: true,
+      }));
+  const nonMice = entities.filter((entity) => entity.type !== "mouse");
+  const guidedMice = seeds.flatMap((seed, seedIndex) => {
+    const obstacle = selectRouteObstacle(seed, obstacles);
+    const obstacleIndex = obstacles.indexOf(obstacle);
+    const action = guidedActions[obstacleIndex] || "jump";
+    return GUIDED_MOUSE_OFFSETS.map((offset, routeIndex) => {
+      const candidate = {
+        ...seed,
+        x: Math.max(0, seed.x + offset),
+        y: routeYForAction(action, obstacle, routeIndex / (GUIDED_MOUSE_MAX_COUNT - 1), seed.height),
+        routeAction: action,
+        routeIndex,
+        routeSeedIndex: seedIndex,
+      };
+      return isEntityClearOfGaps(candidate, gaps) &&
+        isMouseClearOfObstacles(candidate, obstacles)
+        ? candidate
+        : null;
+    }).filter(Boolean);
+  });
+  return nonMice.concat(guidedMice);
+}
+
+function addDenseMice(entities, gaps, pattern = null, requiredActions = []) {
+  if (pattern) {
+    return createGuidedMouseRoute({ ...pattern, entities }, requiredActions, gaps);
+  }
   return entities.flatMap((entity) => {
     if (entity.type !== "mouse") {
       return [entity];
     }
-    const forward = { ...entity, x: entity.x + FORMATION_CELL_STEP * 2 };
-    const backward = { ...entity, x: entity.x - FORMATION_CELL_STEP * 2 };
-    const safeDuplicates = [forward, backward].filter((candidate) =>
-      isEntityClearOfGaps(candidate, gaps),
-    );
-    return [entity, ...safeDuplicates];
+    return GUIDED_MOUSE_OFFSETS.map((offset, routeIndex) => ({
+      ...entity,
+      x: Math.max(0, entity.x + offset),
+      routeIndex,
+    }));
   });
 }
 
@@ -388,6 +486,64 @@ function isValidPattern(pattern) {
     pattern.entities.every((entity) => entity.x >= 0 && entity.width > 0 && entity.height > 0);
 }
 
+function adjustJumpSlideSpacing(pattern) {
+  const entities = Array.isArray(pattern?.entities) ? pattern.entities : [];
+  const obstacles = entities.filter((entity) => entity.type === "obstacle");
+  const candidates = pattern?.actionCandidates || [];
+  const clonePattern = () => ({
+    ...pattern,
+    requiredActions: Array.isArray(pattern?.requiredActions)
+      ? [...pattern.requiredActions]
+      : pattern?.requiredActions,
+    actionCandidates: candidates.map((actions) =>
+      Array.isArray(actions) ? [...actions] : actions,
+    ),
+    entities: entities.map((entity) => ({ ...entity })),
+  });
+  if (obstacles.length < 2 || candidates.length !== obstacles.length) {
+    return clonePattern();
+  }
+  if (candidates.some((actions) => !Array.isArray(actions))) {
+    return clonePattern();
+  }
+
+  const requiredActions = Array.isArray(pattern.requiredActions)
+    ? pattern.requiredActions
+    : [];
+  const hasRequiredActions = requiredActions.length === obstacles.length;
+  const hasJumpSlidePair = (index) => {
+    const current = hasRequiredActions
+      ? requiredActions[index] === "jump"
+      : candidates[index].includes("jump");
+    const next = hasRequiredActions
+      ? requiredActions[index + 1] === "slide"
+      : candidates[index + 1].includes("slide");
+    return current && next;
+  };
+  const jumpSlideIndex = obstacles.findIndex((_, index) =>
+    index < obstacles.length - 1 && hasJumpSlidePair(index),
+  );
+  if (jumpSlideIndex < 0) {
+    return clonePattern();
+  }
+
+  const firstShiftIndex = jumpSlideIndex + 1;
+  let obstacleIndex = 0;
+  return {
+    ...pattern,
+    requiredActions: [...requiredActions],
+    actionCandidates: candidates.map((actions) => [...actions]),
+    entities: entities.map((entity) => {
+      if (entity.type !== "obstacle") {
+        return { ...entity };
+      }
+      const shouldShift = obstacleIndex >= firstShiftIndex;
+      obstacleIndex += 1;
+      return shouldShift ? { ...entity, x: entity.x + 30 } : { ...entity };
+    }),
+  };
+}
+
 function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } = {}) {
   const random = createRandom(seed);
   let previousId = null;
@@ -409,12 +565,19 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
     const requiredActions = (selected.actionCandidates || []).map((actions) =>
       actions[Math.floor(random() * actions.length)],
     );
+    const adjusted = adjustJumpSlideSpacing({
+      ...selected,
+      requiredActions,
+    });
+    if (!isValidPattern(adjusted)) {
+      throw new Error("Adjusted pattern failed validation: " + adjusted.id);
+    }
     const gapChance = GAP_CHANCE[zoneId] ?? GAP_CHANCE.home_day;
     const relativeGaps = gapRoll < gapChance ? [{
-      id: `${selected.id}-gap-${patternIndex}`,
-      patternId: selected.id,
+      id: `${adjusted.id}-gap-${patternIndex}`,
+      patternId: adjusted.id,
       patternIndex,
-      x: selected.gapAnchor.x,
+      x: adjusted.gapAnchor.x,
       width: gapWidth,
       minZone: "outside",
     }] : [];
@@ -423,15 +586,15 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       x: startX + gap.x,
     }));
     const formationRoll = random();
-    const canUseFormation = relativeGaps.length === 0 && isFormationAnchorSafe(selected);
+    const canUseFormation = relativeGaps.length === 0 && isFormationAnchorSafe(adjusted);
     const formation = formationRoll < 0.3 && canUseFormation
-      ? { ...createFormation(random), anchor: { ...selected.formationAnchor } }
+      ? { ...createFormation(random), anchor: { ...adjusted.formationAnchor } }
       : null;
     const sourceEntities = formation
-      ? selected.entities
+      ? adjusted.entities
           .filter((entity) => entity.type !== "mouse")
-          .concat(createFormationEntities(formation, selected))
-      : addDenseMice(selected.entities, relativeGaps);
+          .concat(createFormationEntities(formation, adjusted))
+      : addDenseMice(adjusted.entities, relativeGaps, adjusted, requiredActions);
     const generated = sourceEntities.map((entity, entityIndex) => ({
       id: `${selected.id}-${patternIndex}-${entityIndex}`,
       patternId: selected.id,
@@ -444,23 +607,31 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       variant: entity.variant,
       collectible: entity.collectible,
       minZone: entity.minZone,
+      ...(entity.routeAction === undefined ? {} : { routeAction: entity.routeAction }),
+      ...(entity.routeIndex === undefined ? {} : { routeIndex: entity.routeIndex }),
+      ...(entity.routeSeedIndex === undefined ? {} : { routeSeedIndex: entity.routeSeedIndex }),
+      ...(entity.formationId === undefined ? {} : { formationId: entity.formationId }),
+      ...(entity.formationKind === undefined ? {} : { formationKind: entity.formationKind }),
+      ...(entity.formationLetter === undefined ? {} : { formationLetter: entity.formationLetter }),
+      ...(entity.formationSequenceIndex === undefined ? {} : { formationSequenceIndex: entity.formationSequenceIndex }),
+      ...(entity.formationCell === undefined ? {} : { formationCell: entity.formationCell }),
       effectRoll: entity.type === "grass" ? random() : undefined,
     })).filter((entity) => isZoneEnabled(entity.minZone, zoneId));
     const worldEntities = formation?.isDex
-      ? expandDexEntities(generated, formation, selected.id, patternIndex, startX)
+      ? expandDexEntities(generated, formation, adjusted.id, patternIndex, startX)
       : generated;
 
     entities.push(...worldEntities);
     gaps.push(...generatedGaps);
     patterns.push({
-      id: selected.id,
-      width: selected.width,
-      minGap: selected.minGap,
-      safePath: selected.safePath,
-      family: selected.family,
-      minZone: selected.minZone,
-      advancedSafeMargin: selected.advancedSafeMargin,
-      actionCandidates: (selected.actionCandidates || []).map((actions) => [...actions]),
+      id: adjusted.id,
+      width: adjusted.width,
+      minGap: adjusted.minGap,
+      safePath: adjusted.safePath,
+      family: adjusted.family,
+      minZone: adjusted.minZone,
+      advancedSafeMargin: adjusted.advancedSafeMargin,
+      actionCandidates: (adjusted.actionCandidates || []).map((actions) => [...actions]),
       requiredActions,
       formation,
       obstacleSuppressed: Boolean(formation?.isDex),
@@ -470,9 +641,9 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       worldEntities,
       gaps: generatedGaps,
     });
-    nextPatternX = startX + selected.width +
-      Math.max(selected.minGap * 0.6375, PLAYER_WIDTH * 1.5);
-    previousId = selected.id;
+    nextPatternX = startX + adjusted.width +
+      Math.max(adjusted.minGap * 0.6375, PLAYER_WIDTH * 1.5);
+    previousId = adjusted.id;
   }
 
   const entityById = new Map(entities.map((entity) => [entity.id, entity]));
