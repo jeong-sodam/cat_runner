@@ -41,6 +41,8 @@ function freezePattern(pattern) {
 const GROUND_ACTIONS = Object.freeze(["jump"]);
 const LOW_ACTIONS = Object.freeze(["jump", "slide"]);
 const DOUBLE_JUMP_ACTIONS = Object.freeze(["double_jump"]);
+const GUIDED_MOUSE_MAX_COUNT = 7;
+const GUIDED_MOUSE_OFFSETS = Object.freeze([-102, -68, -34, 0, 34, 68, 102]);
 
 const PATTERN_LIBRARY = Object.freeze([
   freezePattern({
@@ -403,20 +405,112 @@ function isEntityClearOfGaps(entity, gaps) {
   );
 }
 
-function addDenseMice(entities, gaps = []) {
+function intersects(first, second) {
+  return first.x < second.x + second.width &&
+    first.x + first.width > second.x &&
+    first.y < second.y + second.height &&
+    first.y + first.height > second.y;
+}
+
+function isMouseClearOfObstacles(mouse, obstacles) {
+  return obstacles.every((obstacle) => !intersects(mouse, obstacle));
+}
+
+function selectRouteObstacle(mouse, obstacles) {
+  return obstacles.reduce((closest, obstacle) => {
+    if (!closest) {
+      return obstacle;
+    }
+    const closestDistance = Math.abs(mouse.x - (closest.x + closest.width / 2));
+    const obstacleDistance = Math.abs(mouse.x - (obstacle.x + obstacle.width / 2));
+    return obstacleDistance < closestDistance ? obstacle : closest;
+  }, null);
+}
+
+function routeYForAction(action, obstacle, progress, mouseHeight) {
+  const groundY = GAME_CONFIG.groundY - 90;
+  if (action === "slide") {
+    return groundY + 30;
+  }
+  const heightBonus = action === "double_jump" ? 36 : 12;
+  const peakY = obstacle
+    ? obstacle.y - GAME_CONFIG.playerHeight - mouseHeight - heightBonus
+    : groundY - GAME_CONFIG.playerHeight;
+  const arc = Math.sin(Math.PI * progress);
+  return Math.round(groundY + (peakY - groundY) * arc);
+}
+
+function resolveGuidedActions(pattern, requiredActions, obstacles) {
+  if (requiredActions.length === obstacles.length) {
+    return requiredActions;
+  }
+  return obstacles.map((obstacle) => {
+    if (pattern.safePath === "slide") {
+      return "slide";
+    }
+    if (pattern.safePath === "mixed") {
+      return obstacle.y <= 580 ? "slide" : "jump";
+    }
+    return "jump";
+  });
+}
+
+function createGuidedMouseRoute(pattern, requiredActions = [], gaps = []) {
+  const entities = Array.isArray(pattern?.entities) ? pattern.entities : [];
+  const obstacles = entities.filter((entity) => entity.type === "obstacle");
+  const mouseEntities = entities.filter((entity) => entity.type === "mouse");
+  if (!obstacles.length) {
+    return entities.map((entity) => ({ ...entity }));
+  }
+  const guidedActions = resolveGuidedActions(pattern, requiredActions, obstacles);
+
+  const seeds = mouseEntities.length > 0
+    ? mouseEntities
+    : obstacles.map((obstacle) => ({
+        type: "mouse",
+        x: Math.max(0, obstacle.x - 68),
+        y: GAME_CONFIG.groundY - 90,
+        width: 42,
+        height: 42,
+        variant: "toy",
+        collectible: true,
+      }));
+  const nonMice = entities.filter((entity) => entity.type !== "mouse");
+  const guidedMice = seeds.flatMap((seed, seedIndex) => {
+    const obstacle = selectRouteObstacle(seed, obstacles);
+    const obstacleIndex = obstacles.indexOf(obstacle);
+    const action = guidedActions[obstacleIndex] || "jump";
+    return GUIDED_MOUSE_OFFSETS.map((offset, routeIndex) => {
+      const candidate = {
+        ...seed,
+        x: Math.max(0, seed.x + offset),
+        y: routeYForAction(action, obstacle, routeIndex / (GUIDED_MOUSE_MAX_COUNT - 1), seed.height),
+        routeAction: action,
+        routeIndex,
+        routeSeedIndex: seedIndex,
+      };
+      return isEntityClearOfGaps(candidate, gaps) &&
+        isMouseClearOfObstacles(candidate, obstacles)
+        ? candidate
+        : null;
+    }).filter(Boolean);
+  });
+  return nonMice.concat(guidedMice);
+}
+
+function addDenseMice(entities, gaps = [], pattern = null, requiredActions = []) {
+  if (pattern) {
+    return createGuidedMouseRoute({ ...pattern, entities }, requiredActions, gaps);
+  }
   return entities.flatMap((entity) => {
     if (entity.type !== "mouse") {
       return [entity];
     }
-    const forward = { ...entity, x: entity.x + FORMATION_CELL_STEP * 2 };
-    const backward = { ...entity, x: entity.x - FORMATION_CELL_STEP * 2 };
-    const safeDuplicates = [forward, backward].filter((candidate) =>
-      isEntityClearOfGaps(candidate, gaps),
-    );
-    return [
-      entity,
-      ...safeDuplicates,
-    ];
+    return GUIDED_MOUSE_OFFSETS.map((offset, routeIndex) => ({
+      ...entity,
+      x: Math.max(0, entity.x + offset),
+      routeIndex,
+    }));
   });
 }
 
@@ -490,7 +584,7 @@ function createPatternStream(seed) {
         ? pattern.entities
             .filter((entity) => entity.type !== "mouse")
             .concat(createFormationEntities(formation, pattern))
-        : addDenseMice(pattern.entities, gaps);
+        : addDenseMice(pattern.entities, gaps, pattern, requiredActions);
       const entities = sourceEntities.map((entity, entityIndex) => ({
         ...entity,
         id: `${pattern.id}-${patternIndex}-${entityIndex}`,
@@ -520,7 +614,9 @@ function createPatternStream(seed) {
 
 export {
   COMPOSITE_SAFE_MARGIN,
+  GUIDED_MOUSE_MAX_COUNT,
   addDenseMice,
+  createGuidedMouseRoute,
   PATTERN_LIBRARY,
   PATTERN_VERSION,
   ZONE_DEFINITIONS,

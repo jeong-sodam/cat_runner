@@ -90,7 +90,55 @@ test("pattern stream doubles base mice and replaces them with safe formations", 
         entity.x >= pattern.formation.anchor.x + pattern.formation.width,
       ));
     } else {
-      assert.equal(mice.length, baseCounts[pattern.id] * 3);
+      assert.ok(mice.length >= baseCounts[pattern.id]);
+      assert.ok(mice.length <= baseCounts[pattern.id] * modules.GUIDED_MOUSE_MAX_COUNT);
+      const routeGroups = new Map();
+      for (const mouse of mice) {
+        const group = routeGroups.get(mouse.routeSeedIndex) || [];
+        group.push(mouse);
+        routeGroups.set(mouse.routeSeedIndex, group);
+      }
+      assert.equal(routeGroups.size, baseCounts[pattern.id]);
+      assert.ok([...routeGroups.values()].every((group) =>
+        group.length >= 1 && group.length <= modules.GUIDED_MOUSE_MAX_COUNT,
+      ));
+    }
+  }
+});
+
+test("ordinary patterns guide mice along required actions without obstacle overlap", async () => {
+  const modules = await loadSystems();
+  const stream = modules.createPatternStream("guided-route-seed");
+  const patterns = Array.from({ length: 240 }, () => stream.next("outside"));
+  const intersects = (first, second) =>
+    first.x < second.x + second.width &&
+    first.x + first.width > second.x &&
+    first.y < second.y + second.height &&
+    first.y + first.height > second.y;
+
+  for (const pattern of patterns) {
+    if (pattern.formation) {
+      continue;
+    }
+    const mice = pattern.entities.filter((entity) => entity.type === "mouse");
+    const obstacles = pattern.entities.filter((entity) => entity.type === "obstacle");
+    assert.ok(mice.length > 0);
+    assert.ok(mice.every((mouse) =>
+      ["jump", "slide", "double_jump"].includes(mouse.routeAction) &&
+      mouse.routeIndex >= 0 && mouse.routeIndex < modules.GUIDED_MOUSE_MAX_COUNT,
+    ));
+    assert.ok(mice.every((mouse) => obstacles.every((obstacle) =>
+      !intersects(mouse, obstacle),
+    )));
+    const jumpMice = mice.filter((mouse) =>
+      mouse.routeAction === "jump" || mouse.routeAction === "double_jump",
+    );
+    const slideMice = mice.filter((mouse) => mouse.routeAction === "slide");
+    if (jumpMice.length) {
+      assert.ok(Math.min(...jumpMice.map((mouse) => mouse.y)) < 610);
+    }
+    if (slideMice.length) {
+      assert.ok(slideMice.every((mouse) => mouse.y >= 640));
     }
   }
 });
