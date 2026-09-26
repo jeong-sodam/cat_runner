@@ -525,6 +525,69 @@ test("obstacle polygons follow each silhouette while collection entities keep AA
   );
 });
 
+test("obstacle hitbox uses an inset while pickup hitbox stays full size", async () => {
+  const modules = await loadSystems();
+  const state = createState(modules);
+  const fullHitbox = modules.getPlayerHitbox(state);
+  const obstacleHitbox = modules.getObstaclePlayerHitbox(state);
+
+  assert.deepEqual(fullHitbox, {
+    x: state.player.x,
+    y: state.player.y,
+    width: state.player.width,
+    height: state.player.height,
+  });
+  assert.deepEqual(obstacleHitbox, {
+    x: state.player.x + 10,
+    y: state.player.y + 4,
+    width: state.player.width - 20,
+    height: state.player.height - 8,
+  });
+
+  const edgeObstacle = {
+    id: "edge-obstacle",
+    type: "obstacle",
+    variant: "box",
+    x: state.player.x + state.player.width - 10,
+    y: 620,
+    width: 90,
+    height: 80,
+  };
+  assert.equal(modules.obstacleIntersectsPlayer(edgeObstacle, state), false);
+
+  const innerObstacle = {
+    ...edgeObstacle,
+    id: "inner-obstacle",
+    x: state.player.x + state.player.width - 30,
+  };
+  assert.equal(modules.obstacleIntersectsPlayer(innerObstacle, state), true);
+
+  const mouse = {
+    id: "edge-mouse",
+    type: "mouse",
+    x: state.player.x + state.player.width - 5,
+    y: 610,
+    width: 42,
+    height: 42,
+    collected: false,
+    hitByPlayer: false,
+  };
+  const grass = {
+    id: "edge-grass",
+    type: "grass",
+    x: state.player.x + state.player.width - 5,
+    y: 610,
+    width: 48,
+    height: 72,
+    collected: false,
+    hitByPlayer: false,
+    effectRoll: 0,
+  };
+  modules.resolveEntityCollisions(state, [mouse, grass]);
+  assert.equal(mouse.collected, true);
+  assert.equal(grass.collected, true);
+});
+
 test("obstacle collision damages once and invincibility prevents damage", async () => {
   const modules = await loadSystems();
   const state = createState(modules, "white");

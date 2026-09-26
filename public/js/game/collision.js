@@ -16,6 +16,15 @@ function getPlayerHitbox(state) {
   };
 }
 
+function getObstaclePlayerHitbox(state) {
+  return {
+    x: state.player.x + 10,
+    y: state.player.y + 4,
+    width: Math.max(0, state.player.width - 20),
+    height: Math.max(0, state.player.height - 8),
+  };
+}
+
 function getEntityHitbox(entity, state) {
   return {
     x: entity.x - state.worldOffset,
@@ -128,12 +137,13 @@ function polygonsIntersect(first, second) {
 
 function obstacleIntersectsPlayer(entity, state) {
   const entityHitbox = getEntityHitbox(entity, state);
+  const playerHitbox = getObstaclePlayerHitbox(state);
   const playerPolygon = rectanglePolygon(
-    state.player.width,
-    state.player.height,
+    playerHitbox.width,
+    playerHitbox.height,
   ).map((point) => ({
-    x: point.x + state.player.x,
-    y: point.y + state.player.y,
+    x: point.x + playerHitbox.x,
+    y: point.y + playerHitbox.y,
   }));
   return getObstaclePolygons(entity).some((polygon) =>
     polygonsIntersect(
@@ -266,6 +276,7 @@ function resolveEntityCollisions(
 export {
   getEntityHitbox,
   getObstaclePolygons,
+  getObstaclePlayerHitbox,
   getPlayerHitbox,
   startPlayerFall,
   intersects,
