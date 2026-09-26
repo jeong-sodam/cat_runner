@@ -832,8 +832,8 @@ test("score doubles mouse points but never distance and zones switch at threshol
 
 test("zone thresholds advance background transitions without changing difficulty multipliers", async () => {
   const modules = await loadSystems();
-  assert.equal(modules.selectZoneForScore(699), "home_day");
-  assert.equal(modules.selectZoneForScore(700), "outside");
+  assert.equal(modules.selectZoneForScore(399), "home_day");
+  assert.equal(modules.selectZoneForScore(400), "outside");
   assert.equal(modules.selectZoneForScore(1799), "outside");
   assert.equal(modules.selectZoneForScore(1800), "home_night");
   assert.deepEqual(

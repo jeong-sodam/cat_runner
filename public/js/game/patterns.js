@@ -9,7 +9,7 @@ import {
 
 const ZONE_DEFINITIONS = Object.freeze({
   home_day: Object.freeze({ id: "home_day", minScore: 0, background: "living-room", difficulty: 1 }),
-  outside: Object.freeze({ id: "outside", minScore: 700, background: "alley-park", difficulty: 1.2 }),
+  outside: Object.freeze({ id: "outside", minScore: 400, background: "alley-park", difficulty: 1.2 }),
   home_night: Object.freeze({ id: "home_night", minScore: 1800, background: "dark-home", difficulty: 1.5 }),
 });
 

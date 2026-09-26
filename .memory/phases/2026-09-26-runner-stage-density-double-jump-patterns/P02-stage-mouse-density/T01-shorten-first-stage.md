@@ -1,6 +1,6 @@
 # Task: T01 첫 러너 구간 축소
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -64,6 +64,6 @@ Task: T01-shorten-first-stage
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
