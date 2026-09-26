@@ -1,4 +1,4 @@
-const PATTERN_VERSION = "cat-runner-patterns-v5";
+const PATTERN_VERSION = "cat-runner-patterns-v6";
 const CANVAS_WIDTH = 1600;
 const PLAYER_WIDTH = 90;
 const GAP_MIN_WIDTH = 140;
@@ -56,6 +56,7 @@ const GAP_CHANCE = Object.freeze({ home_day: 0, outside: 0.15, home_night: 0.3 }
 const ZONE_ORDER = Object.freeze({ home_day: 0, outside: 1, home_night: 2 });
 const GROUND_ACTIONS = Object.freeze(["jump"]);
 const LOW_ACTIONS = Object.freeze(["jump", "slide"]);
+const DOUBLE_JUMP_ACTIONS = Object.freeze(["double_jump"]);
 
 function maskRowsToCells(rows) {
   return rows.flatMap((row, rowIndex) =>
@@ -103,6 +104,31 @@ function isFormationAnchorSafe(candidate) {
     entity.x + entity.width <= anchor.x ||
     entity.x >= anchor.x + FORMATION_WIDTH,
   );
+}
+
+function selectPatternCandidate(candidates, random) {
+  const doubleJumpPatterns = candidates.filter((candidate) =>
+    candidate.family === "double-jump",
+  );
+  const legacyPatterns = candidates.filter((candidate) =>
+    candidate.family !== "double-jump",
+  );
+  const roll = random();
+  if (doubleJumpPatterns.length && (!legacyPatterns.length || roll < 0.2)) {
+    const normalized = legacyPatterns.length ? roll / 0.2 : roll;
+    return doubleJumpPatterns[Math.min(
+      doubleJumpPatterns.length - 1,
+      Math.floor(normalized * doubleJumpPatterns.length),
+    )];
+  }
+  const normalized = doubleJumpPatterns.length
+    ? (roll - 0.2) / 0.8
+    : roll;
+  const preferred = legacyPatterns.length ? legacyPatterns : doubleJumpPatterns;
+  return preferred[Math.min(
+    preferred.length - 1,
+    Math.floor(normalized * preferred.length),
+  )];
 }
 
 function isEntityClearOfGaps(entity, gaps) {
@@ -216,6 +242,35 @@ const PATTERNS = Object.freeze([
       { type: "mouse", x: 250, y: 600, width: 42, height: 42, variant: "toy", collectible: true },
       { type: "grass", x: 520, y: 600, width: 48, height: 72, variant: "cat-grass", collectible: true },
       { type: "obstacle", x: 120, y: 620, width: 90, height: 80, variant: "box", collectible: false, minZone: "outside" },
+    ],
+  }),
+  pattern({
+    id: "double-jump-basic", width: 1500, minGap: 260, family: "double-jump", safePath: "jump",
+    advancedSafeMargin: 80, gapAnchor: { x: 1050 },
+    actionCandidates: [GROUND_ACTIONS, DOUBLE_JUMP_ACTIONS],
+    entities: [
+      { type: "obstacle", x: 300, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 470, y: 600, width: 90, height: 100, variant: "box", collectible: false },
+    ],
+  }),
+  pattern({
+    id: "double-jump-slide", width: 1800, minGap: 260, family: "double-jump", safePath: "mixed",
+    advancedSafeMargin: 80, gapAnchor: { x: 1250 },
+    actionCandidates: [GROUND_ACTIONS, DOUBLE_JUMP_ACTIONS, LOW_ACTIONS],
+    entities: [
+      { type: "obstacle", x: 260, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 440, y: 600, width: 90, height: 100, variant: "box", collectible: false },
+      { type: "obstacle", x: 700, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
+    ],
+  }),
+  pattern({
+    id: "slide-double-jump", width: 1800, minGap: 260, family: "double-jump", safePath: "mixed",
+    advancedSafeMargin: 80, gapAnchor: { x: 1250 },
+    actionCandidates: [LOW_ACTIONS, GROUND_ACTIONS, DOUBLE_JUMP_ACTIONS],
+    entities: [
+      { type: "obstacle", x: 260, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
+      { type: "obstacle", x: 510, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 690, y: 600, width: 90, height: 100, variant: "box", collectible: false },
     ],
   }),
   pattern({
@@ -344,7 +399,7 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       isValidPattern(candidate) &&
       isZoneEnabled(candidate.minZone, zoneId),
     );
-    const selected = candidates[Math.floor(random() * candidates.length)];
+    const selected = selectPatternCandidate(candidates, random);
     const startX = nextPatternX;
     const gapRoll = random();
     const gapWidth = GAP_MIN_WIDTH + Math.floor(random() * (GAP_MAX_WIDTH - GAP_MIN_WIDTH + 1));
@@ -399,6 +454,7 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       width: selected.width,
       minGap: selected.minGap,
       safePath: selected.safePath,
+      family: selected.family,
       minZone: selected.minZone,
       advancedSafeMargin: selected.advancedSafeMargin,
       actionCandidates: (selected.actionCandidates || []).map((actions) => [...actions]),

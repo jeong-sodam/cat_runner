@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const { afterEach, test } = require("node:test");
 const { createTestApp } = require("./helpers/fake-auth");
+const { PATTERN_VERSION } = require("../src/game/server-pattern-manifest");
 
 const fixtures = new Set();
 
@@ -140,7 +141,7 @@ test("malformed, oversized, invalid, and expired requests use stable safe errors
           payload: {
             seed: run.seed,
             catId: run.catId,
-            patternVersion: "cat-runner-patterns-v5",
+            patternVersion: PATTERN_VERSION,
           },
         },
         {

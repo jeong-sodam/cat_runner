@@ -13,7 +13,7 @@ const ZONE_DEFINITIONS = Object.freeze({
   home_night: Object.freeze({ id: "home_night", minScore: 1800, background: "dark-home", difficulty: 1.5 }),
 });
 
-const PATTERN_VERSION = "cat-runner-patterns-v5";
+const PATTERN_VERSION = "cat-runner-patterns-v6";
 const COMPOSITE_SAFE_MARGIN = 120;
 
 const ZONE_ORDER = Object.freeze({ home_day: 0, outside: 1, home_night: 2 });
@@ -40,6 +40,7 @@ function freezePattern(pattern) {
 
 const GROUND_ACTIONS = Object.freeze(["jump"]);
 const LOW_ACTIONS = Object.freeze(["jump", "slide"]);
+const DOUBLE_JUMP_ACTIONS = Object.freeze(["double_jump"]);
 
 const PATTERN_LIBRARY = Object.freeze([
   freezePattern({
@@ -80,6 +81,50 @@ const PATTERN_LIBRARY = Object.freeze([
       { type: "mouse", x: 250, y: 600, width: 42, height: 42, variant: "toy", collectible: true },
       { type: "grass", x: 520, y: 600, width: 48, height: 72, variant: "cat-grass", collectible: true },
       { type: "obstacle", x: 120, y: 620, width: 90, height: 80, variant: "box", collectible: false, minZone: "outside" },
+    ],
+  }),
+  freezePattern({
+    id: "double-jump-basic",
+    width: 1500,
+    minGap: 260,
+    family: "double-jump",
+    safePath: "jump",
+    advancedSafeMargin: 80,
+    gapAnchor: { x: 1050 },
+    actionCandidates: [GROUND_ACTIONS, DOUBLE_JUMP_ACTIONS],
+    entities: [
+      { type: "obstacle", x: 300, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 470, y: 600, width: 90, height: 100, variant: "box", collectible: false },
+    ],
+  }),
+  freezePattern({
+    id: "double-jump-slide",
+    width: 1800,
+    minGap: 260,
+    family: "double-jump",
+    safePath: "mixed",
+    advancedSafeMargin: 80,
+    gapAnchor: { x: 1250 },
+    actionCandidates: [GROUND_ACTIONS, DOUBLE_JUMP_ACTIONS, LOW_ACTIONS],
+    entities: [
+      { type: "obstacle", x: 260, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 440, y: 600, width: 90, height: 100, variant: "box", collectible: false },
+      { type: "obstacle", x: 700, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
+    ],
+  }),
+  freezePattern({
+    id: "slide-double-jump",
+    width: 1800,
+    minGap: 260,
+    family: "double-jump",
+    safePath: "mixed",
+    advancedSafeMargin: 80,
+    gapAnchor: { x: 1250 },
+    actionCandidates: [LOW_ACTIONS, GROUND_ACTIONS, DOUBLE_JUMP_ACTIONS],
+    entities: [
+      { type: "obstacle", x: 260, y: 560, width: 140, height: 40, variant: "fence", collectible: false },
+      { type: "obstacle", x: 510, y: 620, width: 90, height: 80, variant: "box", collectible: false },
+      { type: "obstacle", x: 690, y: 600, width: 90, height: 100, variant: "box", collectible: false },
     ],
   }),
   freezePattern({
@@ -323,6 +368,31 @@ function isFormationAnchorSafe(pattern) {
   );
 }
 
+function selectPatternCandidate(candidates, random) {
+  const doubleJumpPatterns = candidates.filter((pattern) =>
+    pattern.family === "double-jump",
+  );
+  const legacyPatterns = candidates.filter((pattern) =>
+    pattern.family !== "double-jump",
+  );
+  const roll = random();
+  if (doubleJumpPatterns.length && (!legacyPatterns.length || roll < 0.2)) {
+    const normalized = legacyPatterns.length ? roll / 0.2 : roll;
+    return doubleJumpPatterns[Math.min(
+      doubleJumpPatterns.length - 1,
+      Math.floor(normalized * doubleJumpPatterns.length),
+    )];
+  }
+  const normalized = doubleJumpPatterns.length
+    ? (roll - 0.2) / 0.8
+    : roll;
+  const preferred = legacyPatterns.length ? legacyPatterns : doubleJumpPatterns;
+  return preferred[Math.min(
+    preferred.length - 1,
+    Math.floor(normalized * preferred.length),
+  )];
+}
+
 function isEntityClearOfGaps(entity, gaps) {
   return gaps.every((gap) =>
     entity.x + entity.width <= gap.x - GAME_CONFIG.gapSafeMargin ||
@@ -379,7 +449,7 @@ function createPatternStream(seed) {
         throw new Error("No valid pattern candidate available.");
       }
 
-      const sourcePattern = candidates[Math.floor(random() * candidates.length)];
+      const sourcePattern = selectPatternCandidate(candidates, random);
       const patternIndex = sequence;
       sequence += 1;
       previousPatternId = sourcePattern.id;
@@ -431,6 +501,7 @@ function createPatternStream(seed) {
         width: pattern.width,
         minGap: pattern.minGap,
         safePath: pattern.safePath,
+        family: pattern.family,
         minZone: pattern.minZone,
         advancedSafeMargin: pattern.advancedSafeMargin,
         actionCandidates: (pattern.actionCandidates || []).map((actions) => [...actions]),
@@ -455,4 +526,5 @@ export {
   isFormationAnchorSafe,
   isActionSequenceValid,
   isValidPattern,
+  selectPatternCandidate,
 };

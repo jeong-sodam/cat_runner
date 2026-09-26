@@ -289,7 +289,7 @@ test("server v5 manifest mirrors client gap ids, widths, entities, and actions",
 });
 
 test("server manifest exposes formation metadata and obstacle-free DEX world entities", () => {
-  const manifest = createServerManifest("dex-0", { patternCount: 128 });
+  const manifest = createServerManifest("dex-7", { patternCount: 128 });
   const normalPattern = manifest.patterns.find((pattern) =>
     pattern.formation && !pattern.formation.isDex,
   );
@@ -320,7 +320,7 @@ test("server manifest exposes formation metadata and obstacle-free DEX world ent
 });
 
 test("formation mouse events use the existing server score contract", () => {
-  const run = makeRun("dex-0");
+  const run = makeRun("dex-7");
   const manifest = createServerManifest(run.seed);
   const formationMouse = manifest.entities.find((entity) => entity.formationKind);
   assert.ok(formationMouse);

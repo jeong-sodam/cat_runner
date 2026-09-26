@@ -198,6 +198,45 @@ test("zone gates composite patterns and increases only outside obstacle density"
   }
 });
 
+test("double-jump patterns start in home day at a low weighted rate", async () => {
+  const modules = await loadSystems();
+  const doubleJumpDefinitions = modules.PATTERN_LIBRARY.filter((pattern) =>
+    pattern.family === "double-jump",
+  );
+  assert.equal(doubleJumpDefinitions.length, 3);
+
+  const stream = modules.createPatternStream("double-jump-frequency-seed");
+  const patterns = Array.from({ length: 600 }, () => stream.next("home_day"));
+  const doubleJumpPatterns = patterns.filter((pattern) =>
+    pattern.family === "double-jump",
+  );
+  const ratio = doubleJumpPatterns.length / patterns.length;
+  assert.ok(ratio >= 0.15 && ratio <= 0.25);
+  assert.deepEqual(
+    new Set(doubleJumpPatterns.map((pattern) => pattern.id)),
+    new Set(doubleJumpDefinitions.map((pattern) => pattern.id)),
+  );
+
+  for (const pattern of doubleJumpPatterns) {
+    const definition = doubleJumpDefinitions.find((candidate) =>
+      candidate.id === pattern.id,
+    );
+    assert.equal(modules.isValidPattern(definition), true);
+    assert.ok(pattern.requiredActions.includes("double_jump"));
+    assert.ok(pattern.requiredActions.every((action, index) =>
+      pattern.actionCandidates[index].includes(action),
+    ));
+    const obstacles = definition.entities.filter((entity) => entity.type === "obstacle");
+    assert.ok(obstacles.slice(1).every((entity, index) =>
+      entity.x - (obstacles[index].x + obstacles[index].width) >= 80,
+    ));
+  }
+
+  const outsideStream = modules.createPatternStream("double-jump-frequency-seed");
+  const outsidePatterns = Array.from({ length: 120 }, () => outsideStream.next("outside"));
+  assert.ok(outsidePatterns.some((pattern) => pattern.family === "double-jump"));
+});
+
 test("jump-slide patterns shift the slide obstacle tail by 30 pixels", async () => {
   const modules = await loadSystems();
   const cases = [

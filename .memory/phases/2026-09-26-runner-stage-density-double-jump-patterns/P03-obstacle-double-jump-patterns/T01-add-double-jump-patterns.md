@@ -1,6 +1,6 @@
 # Task: T01 2단 점프 패턴 3종 추가
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -73,6 +73,19 @@
 - 새 패턴의 `requiredActions` 중 두 번째 또는 세 번째 action이 `double_jump`이고 해당 `actionCandidates`에 포함되는지 검증한다.
 - 새 패턴 entity 간 간격과 `isValidPattern(pattern)`이 true인지 검증한다.
 
+### I04. 서버 manifest parity
+
+- Related Files:
+  - `src/game/server-pattern-manifest.js` :: `PATTERN_VERSION`, `PATTERNS`, `selectPatternCandidate`, `createServerManifest`; modify
+  - `test/score-validation.test.js` :: client/server manifest parity and formation seed fixtures; modify
+
+#### Details
+
+- 서버 manifest에 동일한 3개 `family: "double-jump"` 패턴, `double_jump` action candidate, 100px high box, `advancedSafeMargin: 80`을 추가한다.
+- 서버의 패턴 선택 branch와 client의 one-roll 20% selection mapping을 동일하게 유지한다.
+- client/server `PATTERN_VERSION`을 `cat-runner-patterns-v6`으로 맞춘다.
+- DEX 검증 fixture는 새 deterministic stream에서도 실제 DEX 진형을 생성하는 seed를 사용한다.
+
 ## Acceptance Criteria
 
 - [ ] 새 패턴 3종이 첫 구간부터 등장한다.
@@ -101,6 +114,6 @@ Task: T01-add-double-jump-patterns
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
