@@ -117,6 +117,7 @@ test("game state contains the six cats and valid lifecycle transitions", async (
   assert.equal(state.status, modules.GAME_STATUSES.READY);
   assert.equal(state.maxHealth, 2);
   assert.equal(state.health, 2);
+  assert.equal(state.player.airSlideUsed, false);
   assert.deepEqual(
     Object.fromEntries(
       Object.entries(modules.CAT_DEFINITIONS).map(([catId, cat]) => [catId, cat.statRatings]),
@@ -205,6 +206,36 @@ test("S changes the hitbox only while grounded", async () => {
   harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
   assert.equal(harness.state.player.isSliding, false);
   assert.equal(harness.state.player.height, modules.GAME_CONFIG.playerHeight);
+  harness.destroy();
+});
+
+test("S exposes one press edge while keeping the held state", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules);
+
+  harness.target.dispatch("keydown", "s");
+  assert.equal(harness.input.isSliding(), true);
+  assert.equal(harness.input.consumeSlidePress(), true);
+  assert.equal(harness.input.consumeSlidePress(), false);
+
+  harness.target.dispatch("keydown", "s", true);
+  assert.equal(harness.input.isSliding(), true);
+  assert.equal(harness.input.consumeSlidePress(), false);
+
+  harness.target.dispatch("keyup", "s");
+  assert.equal(harness.input.isSliding(), false);
+  harness.destroy();
+});
+
+test("S keyup does not cancel an unconsumed press edge", async () => {
+  const modules = await loadGameModules();
+  const harness = createHarness(modules);
+
+  harness.target.dispatch("keydown", "s");
+  harness.target.dispatch("keyup", "s");
+  assert.equal(harness.input.isSliding(), false);
+  assert.equal(harness.input.consumeSlidePress(), true);
+  assert.equal(harness.input.consumeSlidePress(), false);
   harness.destroy();
 });
 

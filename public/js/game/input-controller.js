@@ -3,6 +3,7 @@ function createInputController(canvas, onPause, options = {}) {
   const onPointerTarget = options.onPointerDown || (() => {});
   let jumpPressed = false;
   let slideHeld = false;
+  let slidePressed = false;
 
   function normalizeKey(event) {
     return typeof event.key === "string" ? event.key.toLowerCase() : "";
@@ -20,6 +21,9 @@ function createInputController(canvas, onPause, options = {}) {
       }
     } else if (key === "s") {
       slideHeld = true;
+      if (!event.repeat) {
+        slidePressed = true;
+      }
     } else if (key === "p" && !event.repeat) {
       onPause?.();
     }
@@ -82,6 +86,11 @@ function createInputController(canvas, onPause, options = {}) {
     },
     isSliding() {
       return slideHeld;
+    },
+    consumeSlidePress() {
+      const pressed = slidePressed;
+      slidePressed = false;
+      return pressed;
     },
     destroy() {
       target.removeEventListener?.("keydown", onKeyDown);

@@ -2,22 +2,21 @@
 
 ## Active Plan
 
-[폰트 적용 및 글씨 잘림 개선](./plans/2026-09-23-font-clipping-font-application.md)
+[공중 숙이기·2단 점프·피격범위·무스크롤 UI 개선](./plans/2026-09-26-air-jump-slide-hitbox-ui-fit.md)
 
 ## Active Phase
 
-[P01 폰트 로딩 및 반응형 텍스트 레이아웃](./phases/2026-09-23-font-clipping-font-application/P01-font-loading-responsive-layout/phase.md)
+[P01 공중 입력과 2단 점프](./phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P01-air-input-and-double-jump/phase.md)
 
 ## Active Task
 
-없음 — `2026-09-23-font-clipping-font-application` 계획의 모든 Task 완료
+[T02 공중 하강과 2단 점프 물리](./phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P01-air-input-and-double-jump/T02-air-action-physics.md)
 
 ## Status
 
 - T01 구현·검증 완료
-- T02 구현·검증 완료
-- T03 구현·검증 완료
+- 다음 Task T02 진행 준비 완료
 
 ## Next Step (IMPORTANT)
 
-계획 완료. 다음 요청은 새 `/grill-me` 또는 `/memory-plan`으로 진행한다.
+T02 청사진을 읽고 `public/js/game/game-loop.js`, `test/game-core.test.js`의 공중 하강·2단 점프 물리를 구현한다.

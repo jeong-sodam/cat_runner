@@ -32,6 +32,7 @@ function createGameState({ catId, seed, randomSource } = {}) {
       height: playerHeight,
       isGrounded: true,
       jumpsUsed: 0,
+      airSlideUsed: false,
       isSliding: false,
       isFalling: false,
       fallGapId: null,
