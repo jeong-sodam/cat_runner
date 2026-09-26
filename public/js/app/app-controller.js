@@ -432,12 +432,13 @@ function createAppController(options = {}) {
     completionInProgress = true;
     const completedState = state.gameState || finalGameState;
     const runMode = completedState.runMode || state.runMode || "server";
-    const rhythmAccuracy = getRhythmSummary(completedState.rhythm).accuracy;
+    const rhythm = getRhythmSummary(completedState.rhythm);
     const localResult = {
       score: completedState.score,
       distanceM: completedState.distanceM,
       mouseCount: completedState.mouseCount,
-      rhythmAccuracy,
+      rhythmAccuracy: rhythm.accuracy,
+      rhythmMultiplier: rhythm.scoreMultiplier,
       isPersonalBest: false,
       saved: false,
     };

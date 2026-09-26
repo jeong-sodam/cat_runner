@@ -344,6 +344,8 @@ test("result screen shows local retry state without claiming an unsaved rank", a
       mouseCount: 3,
       rank: 2,
       saved: false,
+      rhythmAccuracy: 0.5,
+      rhythmMultiplier: 1,
       errorMessage: "저장하지 못했습니다.",
     },
     {
@@ -356,6 +358,8 @@ test("result screen shows local retry state without claiming an unsaved rank", a
 
   assert.match(textOf(root), /저장하지 못했습니다/);
   assert.doesNotMatch(textOf(root), /순위표 순위/);
+  assert.match(textOf(root), /50%/);
+  assert.match(textOf(root), /x1\.00/);
   const buttons = findAll(root, (element) => element.tagName === "BUTTON");
   buttons[0].dispatch("click");
   buttons[1].dispatch("click");
@@ -420,8 +424,8 @@ test("local leaderboard renders personal top five and latest result without serv
       mode: "local",
       localStore: {
         getLocalScores: () => [
-          { score: 50, distanceM: 20, catId: "white", achievedAt: 1 },
-          { score: 40, distanceM: 18, catId: "black", achievedAt: 2 },
+          { score: 50, distanceM: 20, catId: "white", rhythmAccuracy: 0.9, rhythmMultiplier: 1.4, achievedAt: 1 },
+          { score: 40, distanceM: 18, catId: "black", rhythmAccuracy: 0.8, rhythmMultiplier: 1.3, achievedAt: 2 },
         ],
         getLastResult: () => ({ score: 5, distanceM: 3, catId: "chaos", achievedAt: 3 }),
       },
@@ -474,13 +478,13 @@ test("personal records renders local top five and latest rank without server cal
       documentRef,
       localStore: {
         getLocalScores: () => [
-          { score: 50, distanceM: 20, rhythmAccuracy: 90, achievedAt: 1 },
-          { score: 40, distanceM: 18, rhythmAccuracy: 80, achievedAt: 2 },
-          { score: 30, distanceM: 16, rhythmAccuracy: 70, achievedAt: 3 },
-          { score: 20, distanceM: 14, rhythmAccuracy: 60, achievedAt: 4 },
-          { score: 10, distanceM: 12, rhythmAccuracy: 50, achievedAt: 5 },
+          { score: 50, distanceM: 20, rhythmAccuracy: 0.9, rhythmMultiplier: 1.4, achievedAt: 1 },
+          { score: 40, distanceM: 18, rhythmAccuracy: 0.8, rhythmMultiplier: 1.3, achievedAt: 2 },
+          { score: 30, distanceM: 16, rhythmAccuracy: 0.7, rhythmMultiplier: 1.2, achievedAt: 3 },
+          { score: 20, distanceM: 14, rhythmAccuracy: 0.6, rhythmMultiplier: 1.1, achievedAt: 4 },
+          { score: 10, distanceM: 12, rhythmAccuracy: 0.5, rhythmMultiplier: 1, achievedAt: 5 },
         ],
-        getLastResult: () => ({ score: 5, distanceM: 3, rhythmAccuracy: 25, achievedAt: 6 }),
+        getLastResult: () => ({ score: 5, distanceM: 3, rhythmAccuracy: 0.25, rhythmMultiplier: 0.75, achievedAt: 6 }),
         getLocalRank: () => 6,
         getLeaderboard: () => {
           serverCalls += 1;
@@ -498,6 +502,7 @@ test("personal records renders local top five and latest rank without server cal
   assert.match(textOf(root), /방금 기록/);
   assert.match(textOf(root), /개인 순위 6위/);
   assert.match(textOf(root), /정확도 25%/);
+  assert.match(textOf(root), /정확도 보정 x0.75/);
   assert.equal(findAll(root, (element) => element.tagName === "TR").length, 6);
   assert.equal(findAll(root, (element) => element.className === "latest-local-result").length, 1);
   assert.equal(findAll(root, (element) => element.className === "leaderboard-empty personal-records-empty")[0].hidden, true);
@@ -604,7 +609,7 @@ test("local gameover saves the latest result and opens personal records offline"
 test("local fallback result keeps rank and explains session-only persistence", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
-  const records = [{ score: 25, distanceM: 10, rhythmAccuracy: 80, achievedAt: 1 }];
+  const records = [{ score: 25, distanceM: 10, rhythmAccuracy: 0.8, rhythmMultiplier: 1.3, achievedAt: 1 }];
   let latest = null;
   let frameCallback = null;
   let frameTime = 0;

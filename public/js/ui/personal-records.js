@@ -11,7 +11,19 @@ function numberText(value, fractionDigits = 0) {
 }
 
 function accuracyText(value) {
-  return numberText(value, 1) + "%";
+  const number = Number(value);
+  const accuracy = Number.isFinite(number) ? Math.min(1, Math.max(0, number)) : 0;
+  return Math.round(accuracy * 100) + "%";
+}
+
+function multiplierText(value, accuracy) {
+  const number = Number(value);
+  const multiplier = Number.isFinite(number)
+    ? number
+    : 0.5 + (Number.isFinite(Number(accuracy))
+      ? Math.min(1, Math.max(0, Number(accuracy)))
+      : 0);
+  return "x" + multiplier.toFixed(2);
 }
 
 function dateText(value) {
@@ -85,6 +97,7 @@ function createPersonalRecordsPanel(callbacks = {}, options = {}) {
       "점수 " + numberText(result.score),
       "거리 " + numberText(result.distanceM, 1) + "m",
       "정확도 " + accuracyText(result.rhythmAccuracy),
+      "정확도 보정 " + multiplierText(result.rhythmMultiplier, result.rhythmAccuracy),
       "플레이 날짜 " + dateText(result.achievedAt),
     ].join(" · ");
     latestElement.append(heading, summary);

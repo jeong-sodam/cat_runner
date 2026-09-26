@@ -18,7 +18,8 @@
 - P03-T01 완료
 - P03 전체 완료
 - P04-T01 완료
-- 다음 구현은 P04-T02
+- P04-T02 완료
+- 전체 계획 완료
 
 ## Next Step (IMPORTANT)
-P04-T02 청사진을 읽고 결과 화면·개인기록표에 정확도 보정 배율을 표시하고 local/server/fallback 저장 경로를 검증한 뒤 app-flow/run-resume/text-fitting/npm test를 실행
+전체 계획의 구현이 완료되었습니다. 필요 시 better-sqlite3 Windows 네이티브 cleanup assertion 환경을 정비한 뒤 전체 npm test를 재실행

@@ -112,11 +112,16 @@ function createLocalRunStore(storage) {
       return Number.isFinite(number) ? number : 0;
     };
     const achievedAt = Number(record?.achievedAt);
+    const rhythmAccuracy = numberOrZero(record?.rhythmAccuracy);
+    const storedMultiplier = Number(record?.rhythmMultiplier);
     return {
       score: numberOrZero(record?.score),
       distanceM: numberOrZero(record?.distanceM),
       mouseCount: numberOrZero(record?.mouseCount),
-      rhythmAccuracy: numberOrZero(record?.rhythmAccuracy),
+      rhythmAccuracy,
+      rhythmMultiplier: Number.isFinite(storedMultiplier)
+        ? storedMultiplier
+        : 0.5 + Math.min(1, Math.max(0, rhythmAccuracy)),
       catId: typeof record?.catId === "string" && record.catId.length > 0
         ? record.catId
         : "black",

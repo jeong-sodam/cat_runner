@@ -10,6 +10,23 @@ function numberText(value, fractionDigits = 0) {
   });
 }
 
+function normalizedAccuracy(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(1, Math.max(0, number)) : 0;
+}
+
+function accuracyText(value) {
+  return Math.round(normalizedAccuracy(value) * 100) + "%";
+}
+
+function multiplierText(value, accuracy) {
+  const number = Number(value);
+  const multiplier = Number.isFinite(number)
+    ? number
+    : 0.5 + normalizedAccuracy(accuracy);
+  return "x" + multiplier.toFixed(2);
+}
+
 function createResultScreen(result = {}, callbacks = {}, options = {}) {
   const documentRef = options.documentRef || globalThis.document;
 
@@ -52,6 +69,8 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
     addStat(documentRef, stats, "점수", numberText(result.score));
     addStat(documentRef, stats, "거리", numberText(result.distanceM, 1) + "m");
     addStat(documentRef, stats, "쥐 인형", numberText(result.mouseCount));
+    addStat(documentRef, stats, "정확도", accuracyText(result.rhythmAccuracy));
+    addStat(documentRef, stats, "정확도 보정", multiplierText(result.rhythmMultiplier, result.rhythmAccuracy));
 
     const status = documentRef.createElement("p");
     status.className = result.saved === false

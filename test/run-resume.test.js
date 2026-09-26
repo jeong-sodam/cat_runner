@@ -322,7 +322,8 @@ test("local best records replace only when score or earlier time improves", asyn
     score: 10,
     distanceM: 5,
     mouseCount: 2,
-    rhythmAccuracy: 80,
+    rhythmAccuracy: 0.8,
+    rhythmMultiplier: 1.3,
     catId: "black",
     achievedAt: 200,
   }), true);
@@ -341,6 +342,7 @@ test("local best records replace only when score or earlier time improves", asyn
     distanceM: 4,
     mouseCount: 0,
     rhythmAccuracy: 0,
+    rhythmMultiplier: 0.5,
     catId: "black",
     achievedAt: 100,
   });
@@ -389,6 +391,7 @@ test("local score history keeps all records and exposes a top five view", async 
     distanceM: 1,
     mouseCount: 0,
     rhythmAccuracy: 0,
+    rhythmMultiplier: 0.5,
     catId: "chaos",
     achievedAt: 99,
   });
@@ -415,6 +418,7 @@ test("local score history migrates legacy data and clears malformed data safely"
     distanceM: 3,
     mouseCount: 0,
     rhythmAccuracy: 0,
+    rhythmMultiplier: 0.5,
     catId: "white",
     achievedAt: 10,
   }]);
