@@ -8,8 +8,8 @@ const RHYTHM_CONFIG = Object.freeze({
   bonusPoints: 5,
   accuracyMin: 0,
   accuracyMax: 1,
-  scoreMultiplierMin: 0.8,
-  scoreMultiplierMax: 1.2,
+  scoreMultiplierMin: 0.5,
+  scoreMultiplierMax: 1.5,
   placement: Object.freeze({
     left: 120,
     right: 120,
@@ -46,6 +46,14 @@ function zoneConfig(zoneId) {
 
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
+}
+
+function calculateRhythmScoreMultiplier(accuracy) {
+  return clamp(
+    0.5 + clamp(Number(accuracy) || 0, 0, 1),
+    RHYTHM_CONFIG.scoreMultiplierMin,
+    RHYTHM_CONFIG.scoreMultiplierMax,
+  );
 }
 
 function createRhythmState({ randomSource = Math.random } = {}) {
@@ -187,13 +195,9 @@ function resolveRhythmTarget(state, { x, y, button, nowMs = 0 } = {}) {
 function getRhythmSummary(state = createRhythmState()) {
   const attempts = state.hitCount + state.missCount;
   const accuracy = attempts === 0
-    ? 1
+    ? 0
     : clamp(state.hitCount / attempts, RHYTHM_CONFIG.accuracyMin, RHYTHM_CONFIG.accuracyMax);
-  const scoreMultiplier = clamp(
-    0.8 + accuracy * 0.4,
-    RHYTHM_CONFIG.scoreMultiplierMin,
-    RHYTHM_CONFIG.scoreMultiplierMax,
-  );
+  const scoreMultiplier = calculateRhythmScoreMultiplier(accuracy);
   return {
     accuracy,
     hitCount: state.hitCount,
@@ -206,6 +210,7 @@ function getRhythmSummary(state = createRhythmState()) {
 
 export {
   RHYTHM_CONFIG,
+  calculateRhythmScoreMultiplier,
   createRhythmState,
   getRhythmSummary,
   resolveRhythmTarget,

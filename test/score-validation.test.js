@@ -120,8 +120,8 @@ test("rhythm accuracy uses bounded multipliers and exact bonus points", () => {
     }),
     { clientFinishedAt: 5000 },
   );
-  assert.equal(lowAccuracy.rhythmMultiplier, 0.8);
-  assert.equal(lowAccuracy.score, 17);
+  assert.equal(lowAccuracy.rhythmMultiplier, 0.5);
+  assert.equal(lowAccuracy.score, 11);
 
   const highAccuracyRun = makeRun("rhythm-high");
   const highAccuracy = calculateVerifiedResult(
@@ -137,9 +137,27 @@ test("rhythm accuracy uses bounded multipliers and exact bonus points", () => {
     }),
     { clientFinishedAt: 5000 },
   );
-  assert.equal(highAccuracy.rhythmMultiplier, 1.2);
+  assert.equal(highAccuracy.rhythmMultiplier, 1.5);
   assert.equal(highAccuracy.rhythmBonusPoints, 5);
-  assert.equal(highAccuracy.score, 31);
+  assert.equal(highAccuracy.score, 40);
+
+  const noAttemptRun = makeRun("rhythm-no-attempt");
+  const noAttempt = calculateVerifiedResult(
+    noAttemptRun,
+    makeGameoverEvents(noAttemptRun, {
+      rhythm: {
+        rhythmAccuracy: 0,
+        rhythmHitCount: 0,
+        rhythmMissCount: 0,
+        rhythmBonusHits: 0,
+        rhythmBonusPoints: 0,
+      },
+    }),
+    { clientFinishedAt: 5000 },
+  );
+  assert.equal(noAttempt.rhythmAccuracy, 0);
+  assert.equal(noAttempt.rhythmMultiplier, 0.5);
+  assert.equal(noAttempt.score, 11);
 });
 
 test("malformed rhythm summaries are rejected without trusting client score fields", () => {
@@ -160,6 +178,23 @@ test("malformed rhythm summaries are rejected without trusting client score fiel
       (error) => error.code === "SCORE_EVENT_INVALID" && error.reason === reason,
     );
   }
+});
+
+test("server recalculates rhythm accuracy and rejects forged accuracy", () => {
+  const run = makeRun("rhythm-accuracy-mismatch");
+  const events = makeGameoverEvents(run, {
+    rhythm: {
+      rhythmAccuracy: 1,
+      rhythmHitCount: 0,
+      rhythmMissCount: 1,
+      rhythmBonusHits: 0,
+      rhythmBonusPoints: 0,
+    },
+  });
+  assert.throws(
+    () => calculateVerifiedResult(run, events, { clientFinishedAt: 5000 }),
+    (error) => error.code === "SCORE_EVENT_INVALID" && error.reason === "RHYTHM_ACCURACY_MISMATCH",
+  );
 });
 
 test("pattern v7 is validated when present and remains optional for legacy events", () => {

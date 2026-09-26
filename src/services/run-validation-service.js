@@ -80,14 +80,18 @@ function rhythmSummaryFromEvent(event) {
   if (attempts > maxAttempts) {
     throw validationError("RHYTHM_COUNT_EXCESSIVE", "Rhythm counts exceed the run duration.");
   }
-  const accuracy = payload.rhythmAccuracy ?? 1;
-  const multiplier = Math.min(1.2, Math.max(0.8, 0.8 + accuracy * 0.4));
+  const accuracy = attempts === 0 ? 0 : hitCount / attempts;
+  if (Object.prototype.hasOwnProperty.call(payload, "rhythmAccuracy") &&
+      Math.abs(payload.rhythmAccuracy - accuracy) > 1e-9) {
+    throw validationError("RHYTHM_ACCURACY_MISMATCH", "Rhythm accuracy does not match the hit and miss counts.");
+  }
+  const multiplier = Math.min(1.5, Math.max(0.5, 0.5 + accuracy));
   return {
     provided: true,
     accuracy,
     multiplier,
     bonusHits,
-    bonusPoints: payload.rhythmBonusPoints ?? bonusHits * 5,
+    bonusPoints: bonusHits * 5,
   };
 }
 
@@ -240,8 +244,8 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
   if (!gameoverSeen) {
     throw validationError("GAMEOVER_MISSING", "A completed run must include run_gameover.");
   }
-  const baseScore = score + Math.floor(distanceM);
-  score = Math.floor(baseScore * rhythmSummary.multiplier) + rhythmSummary.bonusPoints;
+  const baseScore = score + Math.floor(distanceM) + rhythmSummary.bonusPoints;
+  score = Math.floor(baseScore * rhythmSummary.multiplier);
   const result = {
     score,
     distanceM,

@@ -863,7 +863,7 @@ test("formation mice collect individually and use the full magnet range", async 
     onEvent: (event) => events.push(event),
   });
   assert.equal(state.mouseCount, 1);
-  assert.equal(state.score, 12);
+  assert.equal(state.score, 5);
   assert.deepEqual(events[0], {
     type: "mouse_collected",
     payload: {
@@ -948,6 +948,7 @@ test("score doubles mouse points but never distance and zones switch at threshol
   assert.equal(cheese.score, chaos.score);
 
   const state = createState(modules);
+  state.rhythm.hitCount = 1;
   state.distanceM = 1000;
   modules.updateScore(state);
   assert.equal(state.zoneId, "outside");
@@ -1144,7 +1145,7 @@ test("rhythm targets use single-target zone tempo, button matching, and bonus po
   assert.equal(summary.bonusHitCount, 1);
   assert.equal(summary.bonusPoints, 5);
   assert.equal(summary.accuracy, 1);
-  assert.equal(summary.scoreMultiplier, 1.2);
+  assert.equal(summary.scoreMultiplier, 1.5);
 });
 
 test("rhythm targets stay in the HUD-safe area and space consecutive candidates", async () => {
@@ -1194,4 +1195,17 @@ test("rhythm targets stay in the HUD-safe area and space consecutive candidates"
   assert.equal(fallback.targets.filter((target) => target.status === "active").length, 1);
   assert.ok(fallback.targets.every((target) => target.x >= 120 && target.x <= 1480));
   assert.ok(fallback.targets.every((target) => target.y >= 140 && target.y <= 780));
+});
+
+test("rhythm accuracy maps to the extreme score multiplier range", async () => {
+  const modules = await loadSystems();
+  assert.equal(modules.calculateRhythmScoreMultiplier(0), 0.5);
+  assert.equal(modules.calculateRhythmScoreMultiplier(0.5), 1);
+  assert.equal(modules.calculateRhythmScoreMultiplier(1), 1.5);
+  assert.equal(modules.calculateRhythmScoreMultiplier(-1), 0.5);
+  assert.equal(modules.calculateRhythmScoreMultiplier(2), 1.5);
+
+  const untouched = modules.getRhythmSummary(modules.createRhythmState());
+  assert.equal(untouched.accuracy, 0);
+  assert.equal(untouched.scoreMultiplier, 0.5);
 });

@@ -7,7 +7,7 @@
 [P04 정확도 점수 보정과 결과 표시](./phases/2026-09-26-cookie-route-rhythm-score-balance/P04-accuracy-score-breakdown/phase.md)
 
 ## Active Task
-[T01 정확도 0.5~1.5배 점수 보정과 서버 재계산](./phases/2026-09-26-cookie-route-rhythm-score-balance/P04-accuracy-score-breakdown/T01-apply-accuracy-score-multiplier.md)
+[T02 결과 화면과 로컬 기록에 정확도 보정 표시](./phases/2026-09-26-cookie-route-rhythm-score-balance/P04-accuracy-score-breakdown/T02-display-score-breakdown.md)
 
 ## Status
 - P01-T02 완료 및 커밋 완료
@@ -17,7 +17,8 @@
 - P02 전체 완료
 - P03-T01 완료
 - P03 전체 완료
-- 다음 구현은 P04-T01
+- P04-T01 완료
+- 다음 구현은 P04-T02
 
 ## Next Step (IMPORTANT)
-P04-T01 청사진을 읽고 client/server 정확도 점수 보정 수식을 0.5~1.5배로 맞춘 뒤 game-systems/score-validation/integration/security 테스트를 실행
+P04-T02 청사진을 읽고 결과 화면·개인기록표에 정확도 보정 배율을 표시하고 local/server/fallback 저장 경로를 검증한 뒤 app-flow/run-resume/text-fitting/npm test를 실행

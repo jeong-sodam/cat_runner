@@ -171,7 +171,7 @@ test("malformed, oversized, invalid, and expired requests use stable safe errors
   const rhythmManifest = require("../src/game/server-pattern-manifest").createServerManifest(rhythmRun.seed);
   const rhythmObstacles = rhythmManifest.entities
     .filter((entity) => entity.type === "obstacle")
-    .slice(0, 1);
+    .slice(0, 2);
   const invalidRhythmEvents = [
     {
       seq: 0,
@@ -202,6 +202,28 @@ test("malformed, oversized, invalid, and expired requests use stable safe errors
   );
   assert.equal(invalidRhythm.status, 422);
   assert.equal((await invalidRhythm.json()).error.reason, "RHYTHM_ACCURACY_INVALID");
+
+  const forgedAccuracyEvents = invalidRhythmEvents.map((event) => ({
+    ...event,
+    payload: { ...event.payload },
+  }));
+  forgedAccuracyEvents.at(-1).payload = {
+    rhythmAccuracy: 1,
+    rhythmHitCount: 0,
+    rhythmMissCount: 1,
+    rhythmBonusHits: 0,
+    rhythmBonusPoints: 0,
+  };
+  const forgedAccuracy = await fetch(
+    fixture.baseUrl + "/api/runs/" + rhythmRun.runId + "/complete",
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ events: forgedAccuracyEvents, clientFinishedAt: Date.now() }),
+    },
+  );
+  assert.equal(forgedAccuracy.status, 422);
+  assert.equal((await forgedAccuracy.json()).error.reason, "RHYTHM_ACCURACY_MISMATCH");
 
   await fetch(fixture.baseUrl + "/auth/signout", {
     headers: { Cookie: cookie },
