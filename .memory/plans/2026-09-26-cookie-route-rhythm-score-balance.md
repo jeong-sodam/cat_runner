@@ -10,8 +10,8 @@
 | :--- | :--- | :--- | :--- |
 | P01 | `done` | 일반 패턴 쥐 인형의 안전 유도 루트·7배 밀도·클라이언트/서버 재현성 | [P01](../phases/2026-09-26-cookie-route-rhythm-score-balance/P01-guided-mouse-route/phase.md) |
 | P02 | `done` | 장애물 내부 간격과 패턴 외부 간격을 15% 완화하고 패턴 길이 확장 | [P02](../phases/2026-09-26-cookie-route-rhythm-score-balance/P02-obstacle-spacing-expansion/phase.md) |
-| P03 | `in_progress` | 단계별 오수 1개 유지와 1000/800/600ms 템포 조정 | [P03](../phases/2026-09-26-cookie-route-rhythm-score-balance/P03-rhythm-tempo/phase.md) |
-| P04 | `pending` | 정확도 0.5~1.5배 점수 보정, 서버 검증, 결과·개인기록 표시 | [P04](../phases/2026-09-26-cookie-route-rhythm-score-balance/P04-accuracy-score-breakdown/phase.md) |
+| P03 | `done` | 단계별 오수 1개 유지와 1000/800/600ms 템포 조정 | [P03](../phases/2026-09-26-cookie-route-rhythm-score-balance/P03-rhythm-tempo/phase.md) |
+| P04 | `in_progress` | 정확도 0.5~1.5배 점수 보정, 서버 검증, 결과·개인기록 표시 | [P04](../phases/2026-09-26-cookie-route-rhythm-score-balance/P04-accuracy-score-breakdown/phase.md) |
 
 ## Decision Source
 

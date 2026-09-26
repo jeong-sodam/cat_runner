@@ -19,9 +19,24 @@ const RHYTHM_CONFIG = Object.freeze({
     maxAttempts: 24,
   }),
   zones: Object.freeze({
-    home_day: Object.freeze({ activeCount: 1, difficultyScale: 1, spawnIntervalMs: 1000 }),
-    outside: Object.freeze({ activeCount: 2, difficultyScale: 1.5, spawnIntervalMs: 1000 }),
-    home_night: Object.freeze({ activeCount: 3, difficultyScale: 2, spawnIntervalMs: 1000 }),
+    home_day: Object.freeze({
+      activeCount: 1,
+      difficultyScale: 1,
+      spawnIntervalMs: 1000,
+      targetLifetimeMs: 1000,
+    }),
+    outside: Object.freeze({
+      activeCount: 1,
+      difficultyScale: 1.5,
+      spawnIntervalMs: 800,
+      targetLifetimeMs: 800,
+    }),
+    home_night: Object.freeze({
+      activeCount: 1,
+      difficultyScale: 2,
+      spawnIntervalMs: 600,
+      targetLifetimeMs: 600,
+    }),
   }),
 });
 
@@ -122,7 +137,7 @@ function spawnTarget(state, { nowMs, config, canvasWidth, canvasHeight }) {
     radius,
     button: isBonus ? "secondary" : "primary",
     spawnedAtMs: nowMs,
-    expiresAtMs: nowMs + RHYTHM_CONFIG.targetLifetimeMs,
+    expiresAtMs: nowMs + config.targetLifetimeMs,
     status: "active",
   };
   state.targets.push(target);
