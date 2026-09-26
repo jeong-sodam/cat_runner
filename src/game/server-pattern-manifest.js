@@ -1,4 +1,4 @@
-const PATTERN_VERSION = "cat-runner-patterns-v8";
+const PATTERN_VERSION = "cat-runner-patterns-v9";
 const PATTERN_INTERNAL_SCALE = 1.15;
 const PATTERN_SPACING_FACTOR = 0.733;
 const CANVAS_WIDTH = 1600;
@@ -15,6 +15,8 @@ const FORMATION_CELL_STEP = 34;
 const FORMATION_WIDTH = FORMATION_CELL_SIZE + FORMATION_CELL_STEP * 4;
 const FORMATION_HEIGHT = FORMATION_WIDTH;
 const FORMATION_SEQUENCE_GAP = 48;
+const DEX_CHANCE = 0.15;
+const DEX_COOLDOWN_PATTERNS = 2;
 const FORMATION_KINDS = Object.freeze([
   "heart",
   "star",
@@ -80,11 +82,12 @@ function maskRowsToCells(rows) {
   );
 }
 
-function createFormation(random) {
+function createFormation(random, { allowDex = true, dexChance = DEX_CHANCE } = {}) {
   const kind = FORMATION_KINDS[Math.floor(random() * FORMATION_KINDS.length)];
   if (kind === "alphabet") {
     const letter = ALPHABET[Math.floor(random() * ALPHABET.length)];
-    const isDex = random() < 0.05;
+    const dexRoll = random();
+    const isDex = allowDex && dexRoll < dexChance;
     return {
       kind,
       label: isDex ? "DEX" : letter,
@@ -734,7 +737,8 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
   let previousPatternHadGap = false;
   const entities = [];
   const gaps = [];
-  const patterns = [];
+const patterns = [];
+  let dexCooldownRemaining = 0;
 
   for (let patternIndex = 0; patternIndex < patternCount; patternIndex += 1) {
     const candidates = PATTERNS.filter((candidate) =>
@@ -780,8 +784,16 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
     const formationRoll = random();
     const canUseFormation = relativeGaps.length === 0 && isFormationAnchorSafe(adjusted);
     const formation = formationRoll < 0.3 && canUseFormation
-      ? { ...createFormation(random), anchor: { ...adjusted.formationAnchor } }
+      ? {
+          ...createFormation(random, { allowDex: dexCooldownRemaining === 0 }),
+          anchor: { ...adjusted.formationAnchor },
+        }
       : null;
+    if (formation?.isDex) {
+      dexCooldownRemaining = DEX_COOLDOWN_PATTERNS;
+    } else if (dexCooldownRemaining > 0) {
+      dexCooldownRemaining -= 1;
+    }
     const configuredPattern = { ...adjusted, gapAction, routeSpacing };
     const baseEntities = formation
       ? adjusted.entities
@@ -883,6 +895,8 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
 
 module.exports = {
   COMPOSITE_SAFE_MARGIN,
+  DEX_CHANCE,
+  DEX_COOLDOWN_PATTERNS,
   PATTERN_INTERNAL_SCALE,
   PATTERN_SPACING_FACTOR,
   PATTERN_VERSION,

@@ -4,6 +4,8 @@ import {
   FORMATION_CELL_STEP,
   FORMATION_HEIGHT,
   FORMATION_WIDTH,
+  DEX_CHANCE,
+  DEX_COOLDOWN_PATTERNS,
   createFormation,
 } from "./mouse-formations.js";
 
@@ -13,7 +15,7 @@ const ZONE_DEFINITIONS = Object.freeze({
   home_night: Object.freeze({ id: "home_night", minScore: 1800, background: "dark-home", difficulty: 1.5 }),
 });
 
-const PATTERN_VERSION = "cat-runner-patterns-v8";
+const PATTERN_VERSION = "cat-runner-patterns-v9";
 const COMPOSITE_SAFE_MARGIN = 120;
 const PATTERN_INTERNAL_SCALE = 1.15;
 
@@ -710,6 +712,7 @@ function createPatternStream(seed) {
   let previousPatternId = null;
   let sequence = 0;
   let previousPatternHadGap = false;
+  let dexCooldownRemaining = 0;
 
   return {
     next(zoneId = "home_day") {
@@ -765,10 +768,15 @@ function createPatternStream(seed) {
       const canUseFormation = gaps.length === 0 && isFormationAnchorSafe(pattern);
       const formation = formationRoll < 0.3 && canUseFormation
         ? {
-            ...createFormation(random),
+            ...createFormation(random, { allowDex: dexCooldownRemaining === 0 }),
             anchor: { ...pattern.formationAnchor },
           }
         : null;
+      if (formation?.isDex) {
+        dexCooldownRemaining = DEX_COOLDOWN_PATTERNS;
+      } else if (dexCooldownRemaining > 0) {
+        dexCooldownRemaining -= 1;
+      }
       const configuredPattern = { ...pattern, gapAction, routeSpacing };
       const baseEntities = formation
         ? pattern.entities
@@ -816,6 +824,8 @@ function createPatternStream(seed) {
 
 export {
   COMPOSITE_SAFE_MARGIN,
+  DEX_CHANCE,
+  DEX_COOLDOWN_PATTERNS,
   GUIDED_MOUSE_MAX_COUNT,
   addDenseMice,
   createBridgeMouseRoute,

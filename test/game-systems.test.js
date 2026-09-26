@@ -159,8 +159,9 @@ test("ordinary patterns guide mice along required actions without obstacle overl
   }
 });
 
-test("formation selection is deterministic and alphabet DEX uses the five-percent branch", async () => {
+test("formation selection is deterministic and alphabet DEX uses the fifteen-percent branch", async () => {
   const modules = await loadSystems();
+  assert.equal(modules.DEX_CHANCE, 0.15);
   const firstStream = modules.createPatternStream("formation-determinism");
   const secondStream = modules.createPatternStream("formation-determinism");
   const first = Array.from({ length: 120 }, () => firstStream.next("outside"));

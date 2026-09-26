@@ -10,6 +10,8 @@ const FORMATION_KINDS = Object.freeze([
   "alphabet",
 ]);
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const DEX_CHANCE = 0.15;
+const DEX_COOLDOWN_PATTERNS = 2;
 
 const FORMATION_MASK_ROWS = Object.freeze({
   heart: Object.freeze([
@@ -116,8 +118,12 @@ function createFormation(randomSource = Math.random, options = {}) {
     if (!ALPHABET_MASKS[label]) {
       throw new Error("Unknown formation letter: " + label);
     }
+    const dexRoll = random();
+    const dexChance = Number.isFinite(options.dexChance)
+      ? Math.max(0, Math.min(1, options.dexChance))
+      : DEX_CHANCE;
     const isDex = options.forceDex === true ||
-      (options.forceDex !== false && random() < 0.05);
+      (options.forceDex !== false && options.allowDex !== false && dexRoll < dexChance);
     const sequence = isDex ? Object.freeze(["D", "E", "X"]) : null;
     return Object.freeze({
       kind,
@@ -145,6 +151,8 @@ function createFormation(randomSource = Math.random, options = {}) {
 
 export {
   ALPHABET_MASKS,
+  DEX_CHANCE,
+  DEX_COOLDOWN_PATTERNS,
   FORMATION_CELL_SIZE,
   FORMATION_CELL_STEP,
   FORMATION_HEIGHT,
@@ -154,4 +162,3 @@ export {
   createFormation,
   maskRowsToCells,
 };
-
