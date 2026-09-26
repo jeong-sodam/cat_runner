@@ -15,26 +15,55 @@ const ZONE_DEFINITIONS = Object.freeze({
 
 const PATTERN_VERSION = "cat-runner-patterns-v7";
 const COMPOSITE_SAFE_MARGIN = 120;
+const PATTERN_INTERNAL_SCALE = 1.15;
 
 const ZONE_ORDER = Object.freeze({ home_day: 0, outside: 1, home_night: 2 });
+
+function scalePatternX(value, scale) {
+  return Number.isFinite(value) ? Math.round(value * scale) : value;
+}
+
+function expandPatternHorizontally(pattern, scale = PATTERN_INTERNAL_SCALE) {
+  return {
+    ...pattern,
+    width: scalePatternX(pattern.width, scale),
+    gapAnchor: pattern.gapAnchor
+      ? { ...pattern.gapAnchor, x: scalePatternX(pattern.gapAnchor.x, scale) }
+      : pattern.gapAnchor,
+    formationAnchor: pattern.formationAnchor
+      ? { ...pattern.formationAnchor, x: scalePatternX(pattern.formationAnchor.x, scale) }
+      : pattern.formationAnchor,
+    gaps: Array.isArray(pattern.gaps)
+      ? pattern.gaps.map((gap) => ({ ...gap, x: scalePatternX(gap.x, scale) }))
+      : pattern.gaps,
+    entities: (pattern.entities || []).map((entity) => ({
+      ...entity,
+      x: scalePatternX(entity.x, scale),
+    })),
+  };
+}
 
 function freezeEntity(entity) {
   return Object.freeze({ ...entity });
 }
 
 function freezePattern(pattern) {
+  const expanded = expandPatternHorizontally(pattern);
   return Object.freeze({
-    ...pattern,
-    gapAnchor: Object.freeze({ ...pattern.gapAnchor }),
+    ...expanded,
+    gapAnchor: Object.freeze({ ...expanded.gapAnchor }),
     formationAnchor: Object.freeze({
-      x: pattern.formationAnchor?.x ?? pattern.gapAnchor.x,
-      y: pattern.formationAnchor?.y ?? 470,
+      x: expanded.formationAnchor?.x ?? expanded.gapAnchor.x,
+      y: expanded.formationAnchor?.y ?? 470,
     }),
-    requiredActions: Object.freeze([...(pattern.requiredActions || [])]),
+    gaps: Array.isArray(expanded.gaps)
+      ? Object.freeze(expanded.gaps.map((gap) => Object.freeze({ ...gap })))
+      : expanded.gaps,
+    requiredActions: Object.freeze([...(expanded.requiredActions || [])]),
     actionCandidates: Object.freeze(
-      (pattern.actionCandidates || []).map((actions) => Object.freeze([...actions])),
+      (expanded.actionCandidates || []).map((actions) => Object.freeze([...actions])),
     ),
-    entities: Object.freeze(pattern.entities.map(freezeEntity)),
+    entities: Object.freeze(expanded.entities.map(freezeEntity)),
   });
 }
 
@@ -617,7 +646,9 @@ export {
   GUIDED_MOUSE_MAX_COUNT,
   addDenseMice,
   createGuidedMouseRoute,
+  expandPatternHorizontally,
   PATTERN_LIBRARY,
+  PATTERN_INTERNAL_SCALE,
   PATTERN_VERSION,
   ZONE_DEFINITIONS,
   createPatternStream,

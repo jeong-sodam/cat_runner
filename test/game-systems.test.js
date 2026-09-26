@@ -192,6 +192,46 @@ test("same seed yields stable patterns, grass rolls, and no adjacent repeat", as
   assert.deepEqual(first, second);
 });
 
+test("pattern geometry expands horizontally without mutating the source", async () => {
+  const modules = await loadSystems();
+  const source = {
+    width: 1000,
+    gapAnchor: { x: 600, y: 1 },
+    formationAnchor: { x: 700, y: 470 },
+    gaps: [{ id: "sample-gap", x: 800, width: 150 }],
+    entities: [
+      { type: "obstacle", x: 200, y: 620, width: 90, height: 80 },
+      { type: "mouse", x: 350, y: 610, width: 42, height: 42 },
+    ],
+  };
+  const expanded = modules.expandPatternHorizontally(source);
+
+  assert.equal(modules.PATTERN_INTERNAL_SCALE, 1.15);
+  assert.equal(expanded.width, 1150);
+  assert.equal(expanded.gapAnchor.x, 690);
+  assert.equal(expanded.formationAnchor.x, 805);
+  assert.equal(expanded.gaps[0].x, 920);
+  assert.deepEqual(expanded.entities.map((entity) => entity.x), [230, 402]);
+  assert.equal(source.width, 1000);
+  assert.equal(source.gapAnchor.x, 600);
+  assert.equal(source.entities[0].x, 200);
+
+  for (const definition of modules.PATTERN_LIBRARY) {
+    assert.equal(modules.isValidPattern(definition), true);
+    assert.ok(definition.gapAnchor.x >= modules.GAME_CONFIG.gapSafeMargin);
+    assert.ok(
+      definition.gapAnchor.x + modules.GAME_CONFIG.gapMaxWidth <=
+      definition.width - modules.GAME_CONFIG.gapSafeMargin,
+    );
+    const obstacles = definition.entities.filter((entity) => entity.type === "obstacle");
+    if (definition.advancedSafeMargin != null) {
+      assert.ok(obstacles.slice(1).every((entity, index) =>
+        entity.x - (obstacles[index].x + obstacles[index].width) >= definition.advancedSafeMargin,
+      ));
+    }
+  }
+});
+
 test("zone gates composite patterns and increases only outside obstacle density", async () => {
   const modules = await loadSystems();
   const collect = (zoneId, seed = "density-seed") => {
