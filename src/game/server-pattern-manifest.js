@@ -1,4 +1,6 @@
 const PATTERN_VERSION = "cat-runner-patterns-v7";
+const PATTERN_INTERNAL_SCALE = 1.15;
+const PATTERN_SPACING_FACTOR = 0.733;
 const CANVAS_WIDTH = 1600;
 const PLAYER_WIDTH = 90;
 const PLAYER_HEIGHT = 110;
@@ -297,19 +299,47 @@ function expandDexEntities(patternEntities, formation, patternId, patternIndex, 
   return baseEntities.map((entity) => ({ ...entity })).concat(sequenceEntities);
 }
 
-function pattern(definition) {
-  return Object.freeze({
+function scalePatternX(value, scale) {
+  return Number.isFinite(value) ? Math.round(value * scale) : value;
+}
+
+function expandPatternHorizontally(definition, scale = PATTERN_INTERNAL_SCALE) {
+  return {
     ...definition,
-    gapAnchor: Object.freeze({ ...definition.gapAnchor }),
+    width: scalePatternX(definition.width, scale),
+    gapAnchor: definition.gapAnchor
+      ? { ...definition.gapAnchor, x: scalePatternX(definition.gapAnchor.x, scale) }
+      : definition.gapAnchor,
+    formationAnchor: definition.formationAnchor
+      ? { ...definition.formationAnchor, x: scalePatternX(definition.formationAnchor.x, scale) }
+      : definition.formationAnchor,
+    gaps: Array.isArray(definition.gaps)
+      ? definition.gaps.map((gap) => ({ ...gap, x: scalePatternX(gap.x, scale) }))
+      : definition.gaps,
+    entities: (definition.entities || []).map((entity) => ({
+      ...entity,
+      x: scalePatternX(entity.x, scale),
+    })),
+  };
+}
+
+function pattern(definition) {
+  const expanded = expandPatternHorizontally(definition);
+  return Object.freeze({
+    ...expanded,
+    gapAnchor: Object.freeze({ ...expanded.gapAnchor }),
     formationAnchor: Object.freeze({
-      x: definition.formationAnchor?.x ?? definition.gapAnchor.x,
-      y: definition.formationAnchor?.y ?? 470,
+      x: expanded.formationAnchor?.x ?? expanded.gapAnchor.x,
+      y: expanded.formationAnchor?.y ?? 470,
     }),
-    requiredActions: Object.freeze([...(definition.requiredActions || [])]),
+    gaps: Array.isArray(expanded.gaps)
+      ? Object.freeze(expanded.gaps.map((gap) => Object.freeze({ ...gap })))
+      : expanded.gaps,
+    requiredActions: Object.freeze([...(expanded.requiredActions || [])]),
     actionCandidates: Object.freeze(
-      (definition.actionCandidates || []).map((actions) => Object.freeze([...actions])),
+      (expanded.actionCandidates || []).map((actions) => Object.freeze([...actions])),
     ),
-    entities: Object.freeze(definition.entities.map((entity) => Object.freeze({ ...entity }))),
+    entities: Object.freeze(expanded.entities.map((entity) => Object.freeze({ ...entity }))),
   });
 }
 
@@ -642,7 +672,7 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       gaps: generatedGaps,
     });
     nextPatternX = startX + adjusted.width +
-      Math.max(adjusted.minGap * 0.6375, PLAYER_WIDTH * 1.5);
+      Math.max(adjusted.minGap * PATTERN_SPACING_FACTOR, PLAYER_WIDTH * 1.5);
     previousId = adjusted.id;
   }
 
@@ -664,6 +694,8 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
 
 module.exports = {
   COMPOSITE_SAFE_MARGIN,
+  PATTERN_INTERNAL_SCALE,
+  PATTERN_SPACING_FACTOR,
   PATTERN_VERSION,
   PATTERNS,
   createServerManifest,

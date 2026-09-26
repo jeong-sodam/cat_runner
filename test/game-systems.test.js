@@ -974,8 +974,8 @@ test("zone thresholds advance background transitions without changing difficulty
 
 test("pattern spacing increases obstacle frequency while preserving the safe minimum", async () => {
   const modules = await loadSystems();
-  assert.equal(modules.PATTERN_SPACING_FACTOR, 0.6375);
-  assert.equal(modules.resolvePatternSpacing({ minGap: 240 }), 153);
+  assert.equal(modules.PATTERN_SPACING_FACTOR, 0.733);
+  assert.equal(modules.resolvePatternSpacing({ minGap: 240 }), 175.92);
   assert.equal(
     modules.resolvePatternSpacing({ minGap: 150 }),
     modules.GAME_CONFIG.playerWidth * 1.5,
@@ -995,7 +995,7 @@ test("pattern spacing increases obstacle frequency while preserving the safe min
       }),
     };
     modules.spawnNextPattern(state, patternStream);
-    assert.equal(state.nextPatternX, 1800 + 400 + 153);
+    assert.equal(state.nextPatternX, 1800 + 400 + 175.92);
   }
 
   const floorState = createState(modules);

@@ -1,6 +1,10 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-const { createServerManifest, PATTERN_VERSION } = require("../src/game/server-pattern-manifest");
+const {
+  createServerManifest,
+  PATTERN_SPACING_FACTOR,
+  PATTERN_VERSION,
+} = require("../src/game/server-pattern-manifest");
 const { calculateVerifiedResult } = require("../src/services/run-validation-service");
 
 const EFFECTS = ["magnet", "invincible", "double_score", "slow_miss"];
@@ -251,6 +255,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
 
 test("server v7 manifest mirrors client route entities, gap ids, widths, and actions", async () => {
   const client = await import("../public/js/game/patterns.js");
+  const world = await import("../public/js/game/world.js");
   const seed = "manifest-parity-seed";
   const server = createServerManifest(seed, { patternCount: 32 });
   const stream = client.createPatternStream(seed);
@@ -261,6 +266,7 @@ test("server v7 manifest mirrors client route entities, gap ids, widths, and act
   }
 
   assert.equal(server.version, client.PATTERN_VERSION);
+  assert.equal(PATTERN_SPACING_FACTOR, world.PATTERN_SPACING_FACTOR);
   assert.ok(server.patterns.some((pattern) => pattern.id.startsWith("combo-")));
   assert.deepEqual(
     server.patterns.map((pattern) => pattern.id),
@@ -315,6 +321,16 @@ test("server v7 manifest mirrors client route entities, gap ids, widths, and act
       assert.equal(serverGap.width, clientGap.width);
       assert.equal(serverGap.x - serverPattern.startX, clientGap.x);
     }
+  }
+
+  for (let index = 1; index < server.patterns.length; index += 1) {
+    const previous = server.patterns[index - 1];
+    const current = server.patterns[index];
+    assert.equal(
+      current.startX,
+      previous.startX + previous.width +
+        Math.max(previous.minGap * PATTERN_SPACING_FACTOR, 90 * 1.5),
+    );
   }
 
   const homeDay = createServerManifest(seed, { patternCount: 32, zoneId: "home_day" });
