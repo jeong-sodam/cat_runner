@@ -113,12 +113,24 @@ function drawHomeNight(ctx, state) {
 function drawGap(ctx, gap, state) {
   const x = gap.x - state.worldOffset;
   const y = GAME_CONFIG.groundY - 115;
+  const depth = GAME_CONFIG.canvasHeight - y;
   ctx.save();
   ctx.fillStyle = "#171522";
-  ctx.fillRect(x, y, gap.width, GAME_CONFIG.canvasHeight - y);
+  ctx.fillRect(x, y, gap.width, depth);
+  ctx.fillStyle = "rgba(72, 58, 84, 0.42)";
+  for (let band = 1; band <= 4; band += 1) {
+    const bandY = y + band * 22;
+    ctx.fillRect(x + 6, bandY, Math.max(0, gap.width - 12), 8);
+  }
   ctx.fillStyle = "#332b3b";
-  ctx.fillRect(x - 8, y, 8, GAME_CONFIG.canvasHeight - y);
-  ctx.fillRect(x + gap.width, y, 8, GAME_CONFIG.canvasHeight - y);
+  ctx.fillRect(x - 8, y, 8, depth);
+  ctx.fillRect(x + gap.width, y, 8, depth);
+  ctx.fillStyle = "#8f715d";
+  ctx.fillRect(x - 8, y - 8, 8, 8);
+  ctx.fillRect(x + gap.width, y - 8, 8, 8);
+  ctx.fillStyle = "rgba(13, 11, 20, 0.72)";
+  ctx.fillRect(x, y, 6, depth);
+  ctx.fillRect(x + gap.width - 6, y, 6, depth);
   ctx.strokeStyle = "#0d0b14";
   ctx.lineWidth = 5;
   ctx.beginPath();

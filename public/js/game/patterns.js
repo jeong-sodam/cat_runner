@@ -13,7 +13,7 @@ const ZONE_DEFINITIONS = Object.freeze({
   home_night: Object.freeze({ id: "home_night", minScore: 1800, background: "dark-home", difficulty: 1.5 }),
 });
 
-const PATTERN_VERSION = "cat-runner-patterns-v7";
+const PATTERN_VERSION = "cat-runner-patterns-v8";
 const COMPOSITE_SAFE_MARGIN = 120;
 const PATTERN_INTERNAL_SCALE = 1.15;
 
@@ -717,10 +717,9 @@ function createPatternStream(seed) {
         : GAME_CONFIG.gapWidthOutsideMax;
       const gapWidth = gapWidthMin +
         Math.floor(random() * (gapWidthMax - gapWidthMin + 1));
-      const routeSpacing = GAME_CONFIG.mouseRouteSpacingMin +
-        Math.floor(random() * (
-          GAME_CONFIG.mouseRouteSpacingMax - GAME_CONFIG.mouseRouteSpacingMin + 1
-        ));
+      const routeSpacing = Math.floor(
+        (GAME_CONFIG.mouseRouteSpacingMin + GAME_CONFIG.mouseRouteSpacingMax) / 2,
+      );
       const requiredActions = (sourcePattern.actionCandidates || []).map((actions) =>
         actions[Math.floor(random() * actions.length)],
       );

@@ -213,6 +213,24 @@ test("renderer draws active floor gaps behind world entities", async () => {
         call.args[2] === 180,
     ),
   );
+  assert.ok(context.calls.some((call) =>
+    call.name === "fillRect" &&
+    call.args[0] === 312 &&
+    call.args[1] === modules.GAME_CONFIG.groundY - 115 &&
+    call.args[2] === 8,
+  ));
+  assert.ok(context.calls.some((call) =>
+    call.name === "fillRect" &&
+    call.args[0] === 500 &&
+    call.args[1] === modules.GAME_CONFIG.groundY - 115 &&
+    call.args[2] === 8,
+  ));
+  assert.ok(context.calls.some((call) =>
+    call.name === "fillRect" &&
+    call.args[0] === 326 &&
+    call.args[1] === modules.GAME_CONFIG.groundY - 115 + 22 &&
+    call.args[2] === 168,
+  ));
 });
 
 test("renderer draws primary and bonus rhythm targets without mutating them", async () => {

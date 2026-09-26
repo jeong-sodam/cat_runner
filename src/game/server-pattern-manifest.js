@@ -1,7 +1,8 @@
-const PATTERN_VERSION = "cat-runner-patterns-v7";
+const PATTERN_VERSION = "cat-runner-patterns-v8";
 const PATTERN_INTERNAL_SCALE = 1.15;
 const PATTERN_SPACING_FACTOR = 0.733;
 const CANVAS_WIDTH = 1600;
+const INITIAL_PATTERN_X = 1420;
 const PLAYER_WIDTH = 90;
 const PLAYER_HEIGHT = 110;
 const GROUND_Y = 700;
@@ -56,11 +57,18 @@ const ALPHABET_MASK_ROWS = Object.freeze({
   Y: ["10001", "01010", "00100", "00100", "00100"],
   Z: ["11111", "00010", "00100", "01000", "11111"],
 });
-const GAP_CHANCE = Object.freeze({ home_day: 0, outside: 0.15, home_night: 0.3 });
+const GAP_CHANCE = Object.freeze({ home_day: 0, outside: 0.2, home_night: 0.3 });
+const GAP_WIDTHS = Object.freeze({
+  outside: Object.freeze({ min: 140, max: 180 }),
+  home_night: Object.freeze({ min: 160, max: 220 }),
+});
 const ZONE_ORDER = Object.freeze({ home_day: 0, outside: 1, home_night: 2 });
 const GROUND_ACTIONS = Object.freeze(["jump"]);
 const LOW_ACTIONS = Object.freeze(["jump", "slide"]);
 const DOUBLE_JUMP_ACTIONS = Object.freeze(["double_jump"]);
+const MOUSE_ROUTE_SPACING_MIN = 34;
+const MOUSE_ROUTE_SPACING_MAX = 42;
+const MOUSE_ROUTE_GAP_LEAD = 135;
 const GUIDED_MOUSE_MAX_COUNT = 7;
 const GUIDED_MOUSE_OFFSETS = Object.freeze([-102, -68, -34, 0, 34, 68, 102]);
 
@@ -137,10 +145,11 @@ function selectPatternCandidate(candidates, random) {
   )];
 }
 
-function isEntityClearOfGaps(entity, gaps) {
+function isEntityClearOfGaps(entity, gaps, { allowAirborne = false } = {}) {
   return gaps.every((gap) =>
     entity.x + entity.width <= gap.x - GAP_SAFE_MARGIN ||
-    entity.x >= gap.x + gap.width + GAP_SAFE_MARGIN,
+    entity.x >= gap.x + gap.width + GAP_SAFE_MARGIN ||
+    (allowAirborne && entity.y + entity.height <= GROUND_Y - 12),
   );
 }
 
@@ -179,6 +188,124 @@ function routeYForAction(action, obstacle, progress, mouseHeight) {
   return Math.round(groundY + (peakY - groundY) * arc);
 }
 
+function routeActionForPoint(pattern, x, obstacles, gaps) {
+  const gap = gaps.find((candidate) =>
+    x + 42 > candidate.x - MOUSE_ROUTE_GAP_LEAD &&
+    x < candidate.x + candidate.width + MOUSE_ROUTE_GAP_LEAD,
+  );
+  if (gap) {
+    return pattern.gapAction || "jump";
+  }
+  const obstacle = selectRouteObstacle({ x }, obstacles);
+  if (!obstacle) {
+    return "ground";
+  }
+  const distance = Math.abs(x - (obstacle.x + obstacle.width / 2));
+  return distance <= MOUSE_ROUTE_GAP_LEAD
+    ? resolveGuidedActions(pattern, pattern.requiredActions || [], obstacles)[obstacles.indexOf(obstacle)] || "jump"
+    : "ground";
+}
+
+function routeYForPoint(pattern, x, obstacles, gaps, mouseHeight) {
+  const gap = gaps.find((candidate) =>
+    x + mouseHeight > candidate.x - MOUSE_ROUTE_GAP_LEAD &&
+    x < candidate.x + candidate.width + MOUSE_ROUTE_GAP_LEAD,
+  );
+  if (gap) {
+    const routeStart = gap.x - MOUSE_ROUTE_GAP_LEAD;
+    const routeEnd = gap.x + gap.width + MOUSE_ROUTE_GAP_LEAD;
+    const progress = Math.max(0, Math.min(1, (x - routeStart) / (routeEnd - routeStart)));
+    return routeYForAction(pattern.gapAction || "jump", null, progress, mouseHeight);
+  }
+  const obstacle = selectRouteObstacle({ x }, obstacles);
+  if (!obstacle || Math.abs(x - (obstacle.x + obstacle.width / 2)) > MOUSE_ROUTE_GAP_LEAD) {
+    return GROUND_Y - 90;
+  }
+  const routeStart = obstacle.x - MOUSE_ROUTE_GAP_LEAD;
+  const routeEnd = obstacle.x + obstacle.width + MOUSE_ROUTE_GAP_LEAD;
+  const progress = Math.max(0, Math.min(1, (x - routeStart) / (routeEnd - routeStart)));
+  const action = routeActionForPoint(pattern, x, obstacles, gaps);
+  return routeYForAction(action === "ground" ? "jump" : action, obstacle, progress, mouseHeight);
+}
+
+function mouseIdentity(mouse) {
+  return `${Math.round(mouse.x)}:${Math.round(mouse.y)}:${mouse.width}:${mouse.height}`;
+}
+
+function mergeMouseEntities(entities, additions) {
+  const identities = new Set(
+    entities.filter((entity) => entity.type === "mouse").map(mouseIdentity),
+  );
+  return entities.concat(additions.filter((entity) => {
+    const identity = mouseIdentity(entity);
+    if (identities.has(identity)) {
+      return false;
+    }
+    identities.add(identity);
+    return true;
+  }));
+}
+
+function createContinuousMouseRoute(pattern, gaps = [], spacing = 38) {
+  const entities = Array.isArray(pattern?.entities) ? pattern.entities : [];
+  const obstacles = entities.filter((entity) => entity.type === "obstacle");
+  const formationCells = entities.filter((entity) => entity.type === "mouse" && entity.formationId);
+  const blockers = obstacles.concat(formationCells);
+  const additions = [];
+  const safeSpacing = Math.max(
+    MOUSE_ROUTE_SPACING_MIN,
+    Math.min(MOUSE_ROUTE_SPACING_MAX, Math.round(spacing)),
+  );
+  let routeIndex = 0;
+  for (let x = 0; x <= Math.max(0, pattern.width - 42); x += safeSpacing) {
+    const candidate = {
+      type: "mouse",
+      x,
+      y: routeYForPoint(pattern, x, obstacles, gaps, 42),
+      width: 42,
+      height: 42,
+      variant: "toy",
+      collectible: true,
+      routeKind: "continuous",
+      routeAction: routeActionForPoint(pattern, x, obstacles, gaps),
+      routeIndex,
+    };
+    routeIndex += 1;
+    if (isMouseClearOfObstacles(candidate, blockers) &&
+        isEntityClearOfGaps(candidate, gaps, { allowAirborne: true })) {
+      additions.push(candidate);
+    }
+  }
+  return additions;
+}
+
+function createBridgeMouseRoute(fromX, toX, { spacing = 38, patternIndex = 0 } = {}) {
+  const additions = [];
+  const safeSpacing = Math.max(
+    MOUSE_ROUTE_SPACING_MIN,
+    Math.min(MOUSE_ROUTE_SPACING_MAX, Math.round(spacing)),
+  );
+  let routeIndex = 0;
+  for (let x = fromX + safeSpacing; x + 42 < toX; x += safeSpacing) {
+    additions.push({
+      id: `bridge-${patternIndex}-${routeIndex}`,
+      type: "mouse",
+      x,
+      y: GROUND_Y - 90,
+      width: 42,
+      height: 42,
+      variant: "toy",
+      collectible: true,
+      routeKind: "connector",
+      routeAction: "ground",
+      routeIndex,
+      patternIndex,
+    });
+    routeIndex += 1;
+  }
+  return additions;
+}
+
 function resolveGuidedActions(pattern, requiredActions, obstacles) {
   if (requiredActions.length === obstacles.length) {
     return requiredActions;
@@ -199,7 +326,10 @@ function createGuidedMouseRoute(pattern, requiredActions = [], gaps = []) {
   const obstacles = entities.filter((entity) => entity.type === "obstacle");
   const mouseEntities = entities.filter((entity) => entity.type === "mouse");
   if (!obstacles.length) {
-    return entities.map((entity) => ({ ...entity }));
+    return mergeMouseEntities(
+      entities.map((entity) => ({ ...entity })),
+      createContinuousMouseRoute(pattern, gaps, pattern.routeSpacing),
+    );
   }
   const guidedActions = resolveGuidedActions(pattern, requiredActions, obstacles);
   const seeds = mouseEntities.length > 0
@@ -233,7 +363,11 @@ function createGuidedMouseRoute(pattern, requiredActions = [], gaps = []) {
         : null;
     }).filter(Boolean);
   });
-  return nonMice.concat(guidedMice);
+  const routedEntities = nonMice.concat(guidedMice);
+  return mergeMouseEntities(
+    routedEntities,
+    createContinuousMouseRoute({ ...pattern, entities: routedEntities }, gaps, pattern.routeSpacing),
+  );
 }
 
 function addDenseMice(entities, gaps, pattern = null, requiredActions = []) {
@@ -578,6 +712,8 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
   const random = createRandom(seed);
   let previousId = null;
   let nextPatternX = CANVAS_WIDTH + 300;
+  let previousPatternEndX = null;
+  let previousPatternHadGap = false;
   const entities = [];
   const gaps = [];
   const patterns = [];
@@ -589,9 +725,13 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       isZoneEnabled(candidate.minZone, zoneId),
     );
     const selected = selectPatternCandidate(candidates, random);
-    const startX = nextPatternX;
+    const startX = patternIndex === 0
+      ? INITIAL_PATTERN_X
+      : nextPatternX;
     const gapRoll = random();
-    const gapWidth = GAP_MIN_WIDTH + Math.floor(random() * (GAP_MAX_WIDTH - GAP_MIN_WIDTH + 1));
+    const gapRange = GAP_WIDTHS[zoneId] || GAP_WIDTHS.outside;
+    const gapWidth = gapRange.min + Math.floor(random() * (gapRange.max - gapRange.min + 1));
+    const routeSpacing = Math.floor((MOUSE_ROUTE_SPACING_MIN + MOUSE_ROUTE_SPACING_MAX) / 2);
     const requiredActions = (selected.actionCandidates || []).map((actions) =>
       actions[Math.floor(random() * actions.length)],
     );
@@ -603,7 +743,7 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       throw new Error("Adjusted pattern failed validation: " + adjusted.id);
     }
     const gapChance = GAP_CHANCE[zoneId] ?? GAP_CHANCE.home_day;
-    const relativeGaps = gapRoll < gapChance ? [{
+    const relativeGaps = gapRoll < gapChance && !previousPatternHadGap ? [{
       id: `${adjusted.id}-gap-${patternIndex}`,
       patternId: adjusted.id,
       patternIndex,
@@ -611,6 +751,10 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       width: gapWidth,
       minZone: "outside",
     }] : [];
+    previousPatternHadGap = relativeGaps.length > 0;
+    const gapAction = zoneId === "home_night" && adjusted.family === "double-jump"
+      ? "double_jump"
+      : "jump";
     const generatedGaps = relativeGaps.map((gap) => ({
       ...gap,
       x: startX + gap.x,
@@ -620,11 +764,22 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
     const formation = formationRoll < 0.3 && canUseFormation
       ? { ...createFormation(random), anchor: { ...adjusted.formationAnchor } }
       : null;
-    const sourceEntities = formation
+    const configuredPattern = { ...adjusted, gapAction, routeSpacing };
+    const baseEntities = formation
       ? adjusted.entities
           .filter((entity) => entity.type !== "mouse")
           .concat(createFormationEntities(formation, adjusted))
-      : addDenseMice(adjusted.entities, relativeGaps, adjusted, requiredActions);
+      : addDenseMice(configuredPattern.entities, relativeGaps, configuredPattern, requiredActions);
+    const sourceEntities = formation
+      ? mergeMouseEntities(
+          baseEntities,
+          createContinuousMouseRoute(
+            { ...configuredPattern, formation, entities: baseEntities },
+            relativeGaps,
+            routeSpacing,
+          ),
+        )
+      : baseEntities;
     const generated = sourceEntities.map((entity, entityIndex) => ({
       id: `${selected.id}-${patternIndex}-${entityIndex}`,
       patternId: selected.id,
@@ -638,6 +793,7 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       collectible: entity.collectible,
       minZone: entity.minZone,
       ...(entity.routeAction === undefined ? {} : { routeAction: entity.routeAction }),
+      ...(entity.routeKind === undefined ? {} : { routeKind: entity.routeKind }),
       ...(entity.routeIndex === undefined ? {} : { routeIndex: entity.routeIndex }),
       ...(entity.routeSeedIndex === undefined ? {} : { routeSeedIndex: entity.routeSeedIndex }),
       ...(entity.formationId === undefined ? {} : { formationId: entity.formationId }),
@@ -651,7 +807,18 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       ? expandDexEntities(generated, formation, adjusted.id, patternIndex, startX)
       : generated;
 
-    entities.push(...worldEntities);
+    const bridgeEntities = previousPatternEndX == null
+      ? []
+      : createBridgeMouseRoute(previousPatternEndX, startX, {
+          spacing: routeSpacing,
+          patternIndex,
+        }).map((entity) => ({
+          ...entity,
+          id: entity.id,
+          patternId: `bridge-${adjusted.id}`,
+          x: entity.x,
+        }));
+    entities.push(...bridgeEntities, ...worldEntities);
     gaps.push(...generatedGaps);
     patterns.push({
       id: adjusted.id,
@@ -661,6 +828,8 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       family: adjusted.family,
       minZone: adjusted.minZone,
       advancedSafeMargin: adjusted.advancedSafeMargin,
+      gapAction,
+      routeSpacing,
       actionCandidates: (adjusted.actionCandidates || []).map((actions) => [...actions]),
       requiredActions,
       formation,
@@ -670,9 +839,11 @@ function createServerManifest(seed, { patternCount = 128, zoneId = "outside" } =
       entities: generated,
       worldEntities,
       gaps: generatedGaps,
+      bridgeEntities,
     });
     nextPatternX = startX + adjusted.width +
       Math.max(adjusted.minGap * PATTERN_SPACING_FACTOR, PLAYER_WIDTH * 1.5);
+    previousPatternEndX = startX + adjusted.width;
     previousId = adjusted.id;
   }
 

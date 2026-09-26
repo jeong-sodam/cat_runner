@@ -321,6 +321,7 @@ test("server v7 manifest mirrors client route entities, gap ids, widths, and act
         entity.height,
         entity.minZone ?? null,
         entity.routeAction ?? null,
+        entity.routeKind ?? null,
         entity.routeIndex ?? null,
         entity.routeSeedIndex ?? null,
         entity.formationId ?? null,
@@ -338,6 +339,7 @@ test("server v7 manifest mirrors client route entities, gap ids, widths, and act
         entity.height,
         entity.minZone ?? null,
         entity.routeAction ?? null,
+        entity.routeKind ?? null,
         entity.routeIndex ?? null,
         entity.routeSeedIndex ?? null,
         entity.formationId ?? null,
@@ -350,6 +352,8 @@ test("server v7 manifest mirrors client route entities, gap ids, widths, and act
     assert.deepEqual(serverPattern.requiredActions, clientPattern.requiredActions);
     assert.deepEqual(serverPattern.actionCandidates, clientPattern.actionCandidates);
     assert.deepEqual(serverPattern.advancedSafeMargin, clientPattern.advancedSafeMargin);
+    assert.equal(serverPattern.gapAction, clientPattern.gapAction);
+    assert.equal(serverPattern.routeSpacing, clientPattern.routeSpacing);
     for (const clientGap of clientPattern.gaps) {
       const serverGap = server.getGap(clientGap.id);
       assert.ok(serverGap);
