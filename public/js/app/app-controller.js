@@ -71,6 +71,10 @@ function createAppController(options = {}) {
   function setScreen(screen) {
     state.screen = screen;
     screenRoot?.setAttribute?.("data-screen", screen);
+    if (gameShell) {
+      gameShell.dataset.screen = screen;
+      gameShell.setAttribute?.("data-screen", screen);
+    }
   }
 
   function showRoot() {

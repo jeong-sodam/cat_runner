@@ -143,6 +143,7 @@ test("bootstrap waits for font readiness before requesting the app screen", asyn
   resolveFonts();
   await bootstrapping;
   assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
+  assert.equal(documentRef.getElementById("game-shell").dataset.screen, SCREEN_NAMES.AUTH);
   assert.equal(fetchCalls, 1);
 });
 
@@ -788,6 +789,7 @@ test("authenticated local start does not expose a server failure modal", async (
 
   const screen = documentRef.getElementById("screen-root");
   assert.equal(controller.getState().screen, SCREEN_NAMES.GAME);
+  assert.equal(documentRef.getElementById("game-shell").dataset.screen, SCREEN_NAMES.GAME);
   assert.equal(controller.getState().runMode, "local");
   assert.equal(startCalls, 0);
   assert.equal(logs.length, 0);

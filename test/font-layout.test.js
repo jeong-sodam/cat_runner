@@ -26,6 +26,9 @@ test("responsive title and body rules avoid clipping contracts", () => {
   assert.match(styles, /\.flow-card p,[\s\S]*?overflow-wrap:\s*anywhere/);
   assert.match(styles, /@media\s*\(max-width:\s*360px\)/);
   assert.match(styles, /font-size:\s*clamp\(1\.25rem,\s*6vw,\s*2\.2rem\)/);
+  assert.match(styles, /#game-shell\[data-screen\]:not\(\[data-screen="game"\]\)/);
+  assert.match(styles, /height:\s*min\(calc\(100dvh - 48px\),\s*900px\)/);
+  assert.match(styles, /#game-shell\[data-screen\]:not\(\[data-screen="game"\]\) #screen-root[\s\S]*?overflow:\s*hidden/);
 });
 
 test("index provides the responsive viewport and stylesheet", () => {
