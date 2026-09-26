@@ -88,6 +88,60 @@ afterEach(async () => {
   }
 });
 
+test("server manifest keeps an immediate route and staged gap guidance", () => {
+  for (const zoneId of ["home_day", "outside", "home_night"]) {
+    const manifest = createServerManifest(`integration-route-${zoneId}`, {
+      patternCount: 64,
+      zoneId,
+    });
+    const first = manifest.patterns[0];
+    const firstRoute = first.entities.filter((entity) =>
+      entity.type === "mouse" && entity.routeKind === "continuous",
+    );
+    assert.equal(first.startX, 1420);
+    assert.ok(firstRoute.some((entity) => entity.x <= first.startX + 180));
+
+    for (let index = 0; index < manifest.patterns.length; index += 1) {
+      const pattern = manifest.patterns[index];
+      if (index > 0) {
+        const previous = manifest.patterns[index - 1];
+        const bridge = pattern.bridgeEntities;
+        assert.ok(bridge.every((entity, bridgeIndex) => {
+          if (bridgeIndex === 0) {
+            return true;
+          }
+          return entity.x - bridge[bridgeIndex - 1].x >= 34 &&
+            entity.x - bridge[bridgeIndex - 1].x <= 42;
+        }));
+        assert.equal(
+          pattern.startX,
+          previous.startX + previous.width + Math.max(previous.minGap * 0.733, 135),
+        );
+      }
+      assert.ok(pattern.gaps.length <= 1);
+      for (const gap of pattern.gaps) {
+        const route = pattern.entities.filter((entity) =>
+          entity.type === "mouse" &&
+          entity.routeKind === "continuous" &&
+          entity.x + entity.width > gap.x - 135 &&
+          entity.x < gap.x + gap.width + 135,
+        );
+        assert.ok(route.some((entity) => entity.routeAction === pattern.gapAction));
+      }
+    }
+
+    if (zoneId === "home_day") {
+      assert.ok(manifest.gaps.length === 0);
+    } else {
+      const widths = manifest.gaps.map((gap) => gap.width);
+      assert.ok(widths.length > 0);
+      const min = zoneId === "outside" ? 140 : 160;
+      const max = zoneId === "outside" ? 180 : 220;
+      assert.ok(widths.every((width) => width >= min && width <= max));
+    }
+  }
+});
+
 test("fake authenticated flow completes a run, keeps personal best, and expires resumable runs", async () => {
   const fixture = await startFixture({ now: Date.now() });
   const unauthenticated = await fetch(fixture.baseUrl + "/api/me");

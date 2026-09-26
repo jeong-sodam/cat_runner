@@ -197,7 +197,7 @@ test("server recalculates rhythm accuracy and rejects forged accuracy", () => {
   );
 });
 
-test("pattern v7 is validated when present and remains optional for legacy events", () => {
+test("pattern v8 is validated when present and remains optional for legacy events", () => {
   const run = makeRun("pattern-version-seed");
   const mismatched = makeGameoverEvents(run);
   mismatched[0].payload.patternVersion = "cat-runner-patterns-v2";
@@ -288,7 +288,7 @@ test("double score and invincibility are recalculated from grass rolls", () => {
   assert.equal(calculateVerifiedResult(invincibleRun, events, { clientFinishedAt: 10000 }).health, 0);
 });
 
-test("server v7 manifest mirrors client route entities, gap ids, widths, and actions", async () => {
+test("server v8 manifest mirrors client route entities, gap ids, widths, and actions", async () => {
   const client = await import("../public/js/game/patterns.js");
   const world = await import("../public/js/game/world.js");
   const seed = "manifest-parity-seed";

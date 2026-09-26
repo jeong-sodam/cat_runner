@@ -432,6 +432,62 @@ test("gaps are deterministic, zone-gated, bounded, and safely separated", async 
   }
 });
 
+test("continuous routes reach the first viewport and guide each staged gap", async () => {
+  const modules = await loadSystems();
+  for (const zoneId of ["home_day", "outside", "home_night"]) {
+    const stream = modules.createPatternStream(`route-invariants-${zoneId}`);
+    const patterns = Array.from({ length: 96 }, () => stream.next(zoneId));
+    const first = patterns[0];
+    const firstVisibleRoute = first.entities.filter((entity) =>
+      entity.type === "mouse" && !entity.formationId,
+    );
+    assert.ok(firstVisibleRoute.length > 0);
+    assert.ok(firstVisibleRoute.some((entity) =>
+      entity.x <= modules.GAME_CONFIG.canvasWidth - modules.GAME_CONFIG.initialPatternX,
+    ));
+
+    for (const pattern of patterns) {
+      assert.equal(pattern.routeSpacing, 38);
+      const continuousRoute = pattern.entities
+        .filter((entity) => entity.type === "mouse" && entity.routeKind === "continuous")
+        .sort((left, right) => left.x - right.x)
+        .filter((entity, index, entities) => index === 0 || entity.x !== entities[index - 1].x);
+      for (let index = 1; index < continuousRoute.length; index += 1) {
+        const previous = continuousRoute[index - 1];
+        const current = continuousRoute[index];
+        const intentionalBreak = pattern.entities.some((entity) =>
+          (entity.formationId || entity.type === "obstacle" ||
+            (entity.type === "mouse" && entity.routeKind !== "continuous")) &&
+          entity.x < current.x && entity.x + entity.width > previous.x,
+        );
+        if (!intentionalBreak) {
+          assert.ok(current.x - previous.x >= modules.GAME_CONFIG.mouseRouteSpacingMin);
+          assert.ok(
+            current.x - previous.x <=
+            modules.GAME_CONFIG.mouseRouteGapLead + modules.GAME_CONFIG.mouseRouteSpacingMax,
+          );
+        }
+      }
+
+      const route = pattern.entities
+        .filter((entity) => entity.type === "mouse" && !entity.formationId)
+        .sort((left, right) => left.x - right.x);
+      for (const gap of pattern.gaps) {
+        const gapRoute = route.filter((entity) =>
+          entity.x + entity.width > gap.x - modules.GAME_CONFIG.mouseRouteGapLead &&
+          entity.x < gap.x + gap.width + modules.GAME_CONFIG.mouseRouteGapLead,
+        );
+        assert.ok(gapRoute.length > 0);
+        assert.ok(gapRoute.some((entity) => entity.routeAction === pattern.gapAction));
+        assert.ok(gapRoute.some((entity) => entity.x <= gap.x - modules.GAME_CONFIG.playerWidth));
+        assert.ok(gapRoute.some((entity) =>
+          entity.x + entity.width >= gap.x + gap.width + modules.GAME_CONFIG.playerWidth,
+        ));
+      }
+    }
+  }
+});
+
 test("world spawns safe logical entities and removes entities behind the player", async () => {
   const modules = await loadSystems();
   const state = createState(modules);
@@ -492,7 +548,17 @@ test("world connects consecutive patterns with continuous ground mice", async ()
   const stream = { next: () => patterns[index++] };
   modules.spawnNextPattern(state, stream);
   modules.spawnNextPattern(state, stream);
-  assert.ok(state.worldEntities.some((entity) => entity.routeKind === "connector"));
+  const connectors = state.worldEntities
+    .filter((entity) => entity.routeKind === "connector")
+    .sort((left, right) => left.x - right.x);
+  assert.ok(connectors.length > 0);
+  assert.ok(connectors.every((entity, index) => {
+    if (index === 0) {
+      return true;
+    }
+    return entity.x - connectors[index - 1].x >= modules.GAME_CONFIG.mouseRouteSpacingMin &&
+      entity.x - connectors[index - 1].x <= modules.GAME_CONFIG.mouseRouteSpacingMax;
+  }));
   assert.ok(state.worldEntities.every((entity) => entity.x > state.worldOffset));
 });
 
