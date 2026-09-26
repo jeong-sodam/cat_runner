@@ -17,7 +17,7 @@
 | P01 | `done` | 공중 S와 현재 위치를 보존하는 2단 점프 구현 | [P01](../phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P01-air-input-and-double-jump/phase.md) |
 | P02 | `done` | jump-slide 패턴 간격과 장애물 전용 피격범위 조정 | [P02](../phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P02-pattern-hitbox-calibration/phase.md) |
 | P03 | `done` | UI 화면 높이와 카드·표·타이포그래피를 무스크롤로 조정 | [P03](../phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P03-responsive-ui-no-scroll/phase.md) |
-| P04 | `in_progress` | 입력·물리·패턴·충돌·반응형 회귀 검증 | [P04](../phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P04-regression-verification/phase.md) |
+| P04 | `done` | 입력·물리·패턴·충돌·반응형 회귀 검증 | [P04](../phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P04-regression-verification/phase.md) |
 
 ## Dependency Order
 

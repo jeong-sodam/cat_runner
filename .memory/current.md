@@ -6,17 +6,19 @@
 
 ## Active Phase
 
-[P04 통합 회귀 검증](./phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P04-regression-verification/phase.md)
+없음 — 모든 Phase 완료
 
 ## Active Task
 
-[T01 기능 통합 회귀 검증](./phases/2026-09-26-air-jump-slide-hitbox-ui-fit/P04-regression-verification/T01-feature-regression-verification.md)
+없음 — 모든 Task 완료
 
 ## Status
 
-- P03 T01·T02 구현·검증 완료
-- P04 T01 진행 준비 완료
+- 전체 계획 구현·검증 완료
+- focused 자동 테스트와 서버 HTTP smoke 통과
+- 기본 Node 테스트 러너의 `spawn EPERM` 및 native cleanup 환경 문제 기록
+- 실제 브라우저 viewport 수동 측정은 Chromium 미설치로 보류
 
 ## Next Step (IMPORTANT)
 
-P04 T01 청사진을 읽고 전체 자동 테스트와 320px/16:9 브라우저 스모크를 수행한다.
+계획 완료. 실제 브라우저에서 1280×720, 768×1024, 320×640 viewport를 열어 최종 시각 확인한다.
