@@ -7,11 +7,11 @@
 [P01 Viewport Shell](./phases/2026-09-27-fullscreen-container/P01-viewport-shell/phase.md)
 
 ## Active Task
-[T02 Fullscreen Regression Tests](./phases/2026-09-27-fullscreen-container/P01-viewport-shell/T02-fullscreen-regression-tests.md)
+None (P01 is complete)
 
 ## Status
 - Fullscreen container plan created from confirmed decisions
-- P01-T01 completed and validated for the related layout, rendering, and app-flow tests
+- P01-T01 and P01-T02 completed and validated
 
 ## Next Step (IMPORTANT)
-Read T02-fullscreen-regression-tests.md completely, then add the fullscreen CSS contract tests and run the complete regression suite.
+The fullscreen container plan is complete. The related layout tests pass; the full suite still reports three pre-existing Node 24/Windows SQLite native cleanup failures.
