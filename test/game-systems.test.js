@@ -1178,6 +1178,26 @@ test("zone thresholds advance background transitions without changing difficulty
   assert.equal(modules.selectZoneForScore(800), "outside");
   assert.equal(modules.selectZoneForScore(3599), "outside");
   assert.equal(modules.selectZoneForScore(3600), "home_night");
+  assert.equal(modules.selectZoneForScore(799, "outside"), "outside");
+  assert.equal(modules.selectZoneForScore(3599, "home_night"), "home_night");
+  assert.equal(modules.selectZoneForScore(3600, "outside"), "home_night");
+
+  const monotonicState = createState(modules);
+  monotonicState.distanceM = 1600;
+  modules.updateScore(monotonicState);
+  assert.equal(monotonicState.zoneId, "outside");
+  monotonicState.distanceM = 1598;
+  modules.updateScore(monotonicState);
+  assert.equal(monotonicState.score, 799);
+  assert.equal(monotonicState.zoneId, "outside");
+  monotonicState.distanceM = 7200;
+  modules.updateScore(monotonicState);
+  assert.equal(monotonicState.zoneId, "home_night");
+  monotonicState.distanceM = 7198;
+  modules.updateScore(monotonicState);
+  assert.equal(monotonicState.score, 3599);
+  assert.equal(monotonicState.zoneId, "home_night");
+
   assert.deepEqual(
     Object.fromEntries(Object.entries(modules.ZONE_DEFINITIONS).map(([id, zone]) => [id, zone.difficulty])),
     { home_day: 1, outside: 1.2, home_night: 1.5 },

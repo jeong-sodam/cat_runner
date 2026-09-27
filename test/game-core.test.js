@@ -140,6 +140,23 @@ test("game state contains the six cats and valid lifecycle transitions", async (
   );
 });
 
+test("new runs reset their zone while restored snapshots preserve it", async () => {
+  const modules = await loadGameModules();
+  const state = modules.createGameState({ catId: "black", seed: "initial-seed" });
+  state.zoneId = "home_night";
+  const snapshot = JSON.parse(JSON.stringify(state));
+  const restored = modules.createGameState({ catId: "black", seed: "restored-seed" });
+  Object.assign(restored, snapshot, {
+    catId: "black",
+    seed: "restored-seed",
+  });
+
+  assert.equal(restored.zoneId, "home_night");
+  modules.resetRunState(restored, { catId: "black", seed: "new-seed" });
+  assert.equal(restored.seed, "new-seed");
+  assert.equal(restored.zoneId, "home_day");
+});
+
 test("rating one jump reaches above every basic obstacle", async () => {
   const modules = await loadGameModules();
   const harness = createHarness(modules, "cheese");
@@ -346,6 +363,7 @@ test("pointer input converts letterboxed coordinates and maps right click to sec
 test("P pauses and resumes without advancing the simulation while paused", async () => {
   const modules = await loadGameModules();
   const harness = createHarness(modules);
+  harness.state.zoneId = "home_night";
   harness.loop.advance(modules.GAME_CONFIG.fixedStepMs * 3);
   const elapsedBeforePause = harness.state.elapsedMs;
   const distanceBeforePause = harness.state.distanceM;
@@ -359,6 +377,7 @@ test("P pauses and resumes without advancing the simulation while paused", async
 
   harness.target.dispatch("keydown", "p");
   assert.equal(harness.state.status, modules.GAME_STATUSES.RUNNING);
+  assert.equal(harness.state.zoneId, "home_night");
   harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
   assert.ok(harness.state.elapsedMs > elapsedBeforePause);
   harness.destroy();
