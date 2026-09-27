@@ -26,8 +26,11 @@ test("responsive title and body rules avoid clipping contracts", () => {
   assert.match(styles, /\.flow-card p,[\s\S]*?overflow-wrap:\s*anywhere/);
   assert.match(styles, /@media\s*\(max-width:\s*360px\)/);
   assert.match(styles, /font-size:\s*clamp\(1\.25rem,\s*6vw,\s*2\.2rem\)/);
+  assert.match(styles, /#game-shell\s*\{[\s\S]*?width:\s*100vw[\s\S]*?height:\s*100vh/);
+  assert.match(styles, /#game-shell\s*\{[\s\S]*?max-width:\s*none[\s\S]*?max-height:\s*none/);
+  assert.match(styles, /html,[\s\n]*body\s*\{[\s\S]*?overflow:\s*hidden/);
+  assert.match(styles, /@supports\s*\(height:\s*100dvh\)[\s\S]*?#game-shell\s*\{[\s\S]*?height:\s*100dvh/);
   assert.match(styles, /#game-shell\[data-screen\]:not\(\[data-screen="game"\]\)/);
-  assert.match(styles, /height:\s*min\(calc\(100dvh - 48px\),\s*900px\)/);
   assert.match(styles, /#game-shell\[data-screen\]:not\(\[data-screen="game"\]\) #screen-root[\s\S]*?overflow:\s*hidden/);
 });
 

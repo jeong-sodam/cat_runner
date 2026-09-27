@@ -1,19 +1,17 @@
 # Current Context
 
 ## Active Plan
-[Mouse Cleanup and Stage Score Thresholds](./plans/2026-09-26-mouse-cleanup-stage-score.md)
+[Fullscreen Container](./plans/2026-09-27-fullscreen-container.md)
 
 ## Active Phase
-[P01 Mouse Cleanup and Stage Score Thresholds](./phases/2026-09-26-mouse-cleanup-stage-score/P01-mouse-cleanup-stage-score/phase.md)
+[P01 Viewport Shell](./phases/2026-09-27-fullscreen-container/P01-viewport-shell/phase.md)
 
 ## Active Task
-None (P01 is complete)
+[T02 Fullscreen Regression Tests](./phases/2026-09-27-fullscreen-container/P01-viewport-shell/T02-fullscreen-regression-tests.md)
 
 ## Status
-- Mouse cleanup and stage score plan created from confirmed decisions
-- P01-T01 completed and validated
-- P01-T02 completed and validated
-- P01-T01, P01-T02, and P01-T03 completed and validated
+- Fullscreen container plan created from confirmed decisions
+- P01-T01 completed and validated for the related layout, rendering, and app-flow tests
 
 ## Next Step (IMPORTANT)
-The current plan has no remaining implementation tasks. Start the next feature with `/grill-me` before creating a new plan.
+Read T02-fullscreen-regression-tests.md completely, then add the fullscreen CSS contract tests and run the complete regression suite.
