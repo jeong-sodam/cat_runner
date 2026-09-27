@@ -1,17 +1,17 @@
 # Current Context
 
 ## Active Plan
-[Fullscreen Container](./plans/2026-09-27-fullscreen-container.md)
+[Flow Card Sizing and Canvas Pause Button](./plans/2026-09-27-flow-card-pause-button.md)
 
 ## Active Phase
-[P01 Viewport Shell](./phases/2026-09-27-fullscreen-container/P01-viewport-shell/phase.md)
+[P01 Card Pause](./phases/2026-09-27-flow-card-pause-button/P01-card-pause/phase.md)
 
 ## Active Task
-None (P01 is complete)
+[T02 Canvas Pause Input](./phases/2026-09-27-flow-card-pause-button/P01-card-pause/T02-canvas-pause-input.md)
 
 ## Status
-- Fullscreen container plan created from confirmed decisions
-- P01-T01 and P01-T02 completed and validated
+- Flow-card sizing and canvas pause-button plan created from confirmed decisions
+- P01-T01 completed and validated
 
 ## Next Step (IMPORTANT)
-The fullscreen container plan is complete. The related layout tests pass; the full suite still reports three pre-existing Node 24/Windows SQLite native cleanup failures.
+Read T02-canvas-pause-input.md completely, then remove the duplicate DOM pause button and connect the existing canvas pause hit area before advancing the pointer.
