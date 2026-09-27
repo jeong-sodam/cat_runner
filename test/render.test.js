@@ -158,6 +158,7 @@ test("renderer draws every entity variant and returns a pause hit area", async (
   const result = renderer.render(state);
 
   assert.deepEqual(Object.keys(result.pauseButton), ["x", "y", "width", "height"]);
+  assert.deepEqual(result.pauseButton, { x: 1480, y: 24, width: 86, height: 52 });
   assert.ok(
     context.calls.some((call) => call.name === "fillText" && call.args[0] === "자석"),
   );

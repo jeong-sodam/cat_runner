@@ -48,6 +48,23 @@ test("long content scrolls inside panels instead of the document", () => {
   assert.match(rule("#game-shell"), /overflow:\s*hidden/);
 });
 
+test("flow cards grow vertically without changing wide-card panels", () => {
+  const flowCardRule = rule(".flow-card");
+  const wideCardRule = rule(".wide-card");
+
+  assert.match(flowCardRule, /width:\s*min\(516px,\s*calc\(100%\s*-\s*8px\)\)/);
+  assert.match(
+    flowCardRule,
+    /padding:\s*clamp\(15px,\s*4\.5vw,\s*48px\)\s+clamp\(10px,\s*3vw,\s*32px\)/,
+  );
+  assert.match(flowCardRule, /max-width:\s*100%/);
+  assert.match(wideCardRule, /width:\s*min\(1050px,\s*100%\)/);
+  assert.match(
+    styles,
+    /@media\s*\(max-width:\s*500px\)[\s\S]*?\.flow-card\s*\{[\s\S]*?width:\s*min\(100%,\s*516px\)[\s\S]*?padding:\s*clamp\(15px,\s*7\.5vw,\s*33px\)\s+clamp\(10px,\s*5vw,\s*22px\)/,
+  );
+});
+
 test("index keeps the responsive viewport and fullscreen layout anchors", () => {
   assert.match(index, /<meta\s+name="viewport"\s+content="width=device-width,\s*initial-scale=1">/);
   assert.match(index, /id="game-shell"/);
