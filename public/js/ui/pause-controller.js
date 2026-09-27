@@ -15,7 +15,6 @@ function createPauseController(gameLoop, audioManager, options = {}) {
   const documentRef = options.documentRef || globalThis.document;
   let root = null;
   let overlay = null;
-  let pauseButton = null;
 
   function isPaused() {
     return gameLoop?.getState?.()?.status === "paused";
@@ -28,11 +27,6 @@ function createPauseController(gameLoop, audioManager, options = {}) {
     const paused = isPaused();
     overlay.hidden = !paused;
     overlay.setAttribute?.("aria-hidden", String(!paused));
-    if (pauseButton) {
-      const copy = paused ? PAUSE_COPY.paused : PAUSE_COPY.running;
-      pauseButton.textContent = copy.button;
-      pauseButton.setAttribute?.("aria-label", copy.label);
-    }
   }
 
   function togglePause() {
@@ -88,11 +82,6 @@ function createPauseController(gameLoop, audioManager, options = {}) {
     overlay.append(card);
     root.append(overlay);
 
-    pauseButton = documentRef.createElement("button");
-    pauseButton.type = "button";
-    pauseButton.className = "pause-button game-button";
-    pauseButton.addEventListener("click", togglePause);
-    root.append(pauseButton);
     fitSingleLineText(heading, { container: card, minPx: 18, maxPx: 32 });
     sync();
     options.settingsPanel?.mount?.(settingsRoot);
@@ -101,10 +90,8 @@ function createPauseController(gameLoop, audioManager, options = {}) {
 
   function destroy() {
     overlay?.remove?.();
-    pauseButton?.remove?.();
     root = null;
     overlay = null;
-    pauseButton = null;
   }
 
   return { mount, togglePause, sync, destroy };

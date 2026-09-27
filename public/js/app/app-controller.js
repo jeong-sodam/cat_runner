@@ -11,6 +11,7 @@ import { createCanvasViewport } from "../render/canvas-viewport.js";
 import { createAssetLoader } from "../render/asset-loader.js";
 import { createSceneRenderer } from "../render/scene-renderer.js";
 import { createPauseController } from "../ui/pause-controller.js";
+import { isPointInsideRect } from "../ui/pause-hitbox.js";
 import { createSettingsPanel } from "../ui/settings-panel.js";
 import { renderAuthConfigError, renderAuthScreen, renderLoadingScreen } from "../ui/auth-screen.js";
 import { createNicknameScreen } from "../ui/nickname-screen.js";
@@ -574,9 +575,17 @@ function createAppController(options = {}) {
     const settingsPanel = options.settingsPanelFactory
       ? options.settingsPanelFactory(audioManager)
       : createSettingsPanel(audioManager, { documentRef });
+    let pauseHitArea = null;
     let loop = null;
     input = createInputController(canvas, () => pauseController?.togglePause(), {
       onPointerDown: ({ x, y, button }) => {
+        if (
+          button === "primary" &&
+          isPointInsideRect({ x, y }, pauseHitArea)
+        ) {
+          pauseController?.togglePause?.();
+          return;
+        }
         if (gameState.status !== "running") {
           return;
         }
@@ -597,7 +606,10 @@ function createAppController(options = {}) {
       clock: options.gameClock,
       onEvent: playEventSound,
       onStateChange: (nextState) => {
-        renderer?.render(nextState);
+        const renderResult = renderer?.render(nextState);
+        if (renderResult?.pauseButton) {
+          pauseHitArea = renderResult.pauseButton;
+        }
         if (state.runMode === "server" && nextState.elapsedMs - lastSnapshotAt >= 500) {
           lastSnapshotAt = nextState.elapsedMs;
           runSync?.saveSnapshot(snapshotGameState());
@@ -617,6 +629,10 @@ function createAppController(options = {}) {
       onRestart: () => startGame(state.catId || "black", { runMode: state.runMode || "local" }),
     });
     pauseController.mount(gameShell);
+    const initialRender = renderer?.render(gameState);
+    if (initialRender?.pauseButton) {
+      pauseHitArea = initialRender.pauseButton;
+    }
     resizeHandler = () => viewport?.resize();
     windowRef.addEventListener?.("resize", resizeHandler);
     viewport?.resize();

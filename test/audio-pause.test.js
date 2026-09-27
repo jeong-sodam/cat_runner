@@ -149,6 +149,17 @@ test("pause controller uses one toggle for resume and pause button", async () =>
 
   assert.equal(overlay.hidden, true);
   assert.equal(overlay.getAttribute("aria-hidden"), "true");
+  assert.equal(root.children.find((element) => element.className === "pause-button game-button"), undefined);
+  controller.togglePause();
+  assert.equal(state.status, "paused");
+  assert.equal(overlay.hidden, false);
+  assert.equal(overlay.getAttribute("aria-hidden"), "false");
+  controller.togglePause();
+  assert.equal(state.status, "running");
+  assert.equal(overlay.hidden, true);
+  assert.equal(overlay.getAttribute("aria-hidden"), "true");
+  assert.deepEqual(events, ["pause", "music-stop", "resume", "music-start"]);
+  return;
   const pauseButton = root.children.find((element) => element.className === "pause-button game-button");
   assert.equal(pauseButton.textContent, "Ⅱ 일시정지");
   assert.equal(pauseButton.getAttribute("aria-label"), "게임 일시정지");
