@@ -141,14 +141,21 @@ function updateWorldEntities(state, patternStream) {
   return state.worldEntities;
 }
 
-function selectZoneForScore(score) {
+function selectZoneForScore(score, currentZoneId = "home_day") {
+  const normalizedCurrentZone = ZONE_DEFINITIONS[currentZoneId]
+    ? currentZoneId
+    : "home_day";
+  let nextZoneId = "home_day";
   if (score >= ZONE_DEFINITIONS.home_night.minScore) {
-    return "home_night";
+    nextZoneId = "home_night";
+  } else if (score >= ZONE_DEFINITIONS.outside.minScore) {
+    nextZoneId = "outside";
   }
-  if (score >= ZONE_DEFINITIONS.outside.minScore) {
-    return "outside";
-  }
-  return "home_day";
+
+  return ZONE_DEFINITIONS[nextZoneId].minScore >=
+    ZONE_DEFINITIONS[normalizedCurrentZone].minScore
+    ? nextZoneId
+    : normalizedCurrentZone;
 }
 
 export {

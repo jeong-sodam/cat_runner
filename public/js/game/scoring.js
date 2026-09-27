@@ -27,7 +27,7 @@ function updateScore(state) {
     rhythmBonusPoints: rhythm.bonusPoints,
     rhythmScoreMultiplier: rhythm.scoreMultiplier,
   });
-  state.zoneId = selectZoneForScore(state.score);
+  state.zoneId = selectZoneForScore(state.score, state.zoneId);
   return state.score;
 }
 
