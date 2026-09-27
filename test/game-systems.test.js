@@ -1162,6 +1162,18 @@ test("score doubles mouse points but never distance and zones switch at threshol
 
 test("zone thresholds advance background transitions without changing difficulty multipliers", async () => {
   const modules = await loadSystems();
+  const scoreInputs = {
+    mouseCount: 2,
+    distanceM: 25.8,
+    activeEffect: null,
+    rhythmBonusPoints: 0,
+    rhythmScoreMultiplier: 1,
+  };
+  assert.equal(modules.calculateScore(scoreInputs), 45);
+  assert.equal(modules.calculateScore({
+    ...scoreInputs,
+    activeEffect: { type: modules.EFFECT_TYPES.DOUBLE_SCORE },
+  }), 65);
   assert.equal(modules.selectZoneForScore(799), "home_day");
   assert.equal(modules.selectZoneForScore(800), "outside");
   assert.equal(modules.selectZoneForScore(3599), "outside");
