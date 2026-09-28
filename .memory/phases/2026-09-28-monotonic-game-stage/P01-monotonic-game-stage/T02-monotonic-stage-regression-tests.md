@@ -87,7 +87,7 @@ Task: T02-monotonic-stage-regression-tests
 
 - [x] Implementation complete
 - [x] Validation passed
-- commit: pending
+- commit: 4a0bc21
 
 ## Validation Results
 
