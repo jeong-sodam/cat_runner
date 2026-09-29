@@ -41,7 +41,7 @@ const SCREEN_NAMES = Object.freeze({
 function createAppController(options = {}) {
   const documentRef = options.documentRef || globalThis.document;
   const windowRef = options.windowRef || documentRef?.defaultView || globalThis;
-  const fetchFn = options.fetchFn || globalThis.fetch;
+  const fetchFn = options.fetchFn === undefined ? globalThis.fetch : options.fetchFn;
   const screenRoot = options.screenRoot || documentRef?.getElementById?.("screen-root");
   const canvas = options.canvas || documentRef?.getElementById?.("game-canvas");
   const gameShell = options.gameShell || documentRef?.getElementById?.("game-shell");
@@ -307,8 +307,31 @@ function createAppController(options = {}) {
     setScreen(SCREEN_NAMES.AUTH);
     renderAuthScreen(screenRoot, {
       documentRef,
-      guestMode: options.guestMode === true,
+      onLocalPlay: () => showCharacterSelect({ allowResume: true }),
+      onLoginNotice: () => showLoginDevelopmentNotice(),
     });
+  }
+
+  function showLoginDevelopmentNotice() {
+    if (!screenRoot || !documentRef?.createElement) {
+      return;
+    }
+    screenRoot.querySelector?.(".login-development-notice")?.remove?.();
+    const notice = documentRef.createElement("section");
+    notice.className = "login-development-notice flow-card";
+    const heading = documentRef.createElement("h2");
+    heading.className = "fit-title";
+    heading.textContent = "로그인 기능은 개발 예정입니다";
+    const message = documentRef.createElement("p");
+    message.textContent = "지금은 로컬로 플레이할 수 있습니다.";
+    const closeButton = documentRef.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "game-button primary";
+    closeButton.textContent = "확인";
+    closeButton.addEventListener("click", () => notice.remove?.());
+    notice.append(heading, message, closeButton);
+    screenRoot.append(notice);
+    fitSingleLineText(heading, { container: notice, minPx: 18, maxPx: 32 });
   }
 
   function showAuthConfigError() {
@@ -661,24 +684,18 @@ function createAppController(options = {}) {
       // Preloading is optional: the renderer falls back to code-drawn scenes.
     }
     if (typeof fetchFn !== "function") {
-      showAuthConfigError();
+      showAuth();
       return state;
     }
     try {
       const response = await fetchFn("/api/me", { credentials: "same-origin" });
       const payload = await response.json();
       if (!response.ok) {
-        if (payload.error?.code === "AUTH_CONFIG_MISSING" && !payload.guestMode) {
-          showAuthConfigError();
-        } else if (payload.error?.code === "AUTH_CONFIG_MISSING") {
-          showAuth({ guestMode: payload.guestMode });
-        } else {
-          showAuth({ guestMode: payload.guestMode });
-        }
+        showAuth();
         return state;
       }
       if (!payload.authenticated || !payload.user) {
-        showAuth({ guestMode: payload.guestMode });
+        showAuth();
         return state;
       }
       state.user = payload.user;

@@ -147,7 +147,7 @@ test("bootstrap waits for font readiness before requesting the app screen", asyn
   assert.equal(fetchCalls, 1);
 });
 
-test("unauthenticated bootstrap shows sign-in and never enters character selection", async () => {
+test("unauthenticated bootstrap shows local and deferred-login choices", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
   const controller = createAppController({
@@ -159,11 +159,13 @@ test("unauthenticated bootstrap shows sign-in and never enters character selecti
 
   assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
   assert.equal(documentRef.getElementById("screen-root").children[0].className, "auth-screen flow-card");
-  assert.equal(findAll(documentRef.getElementById("screen-root"), (element) => element.tagName === "A").length, 1);
-  assert.match(textOf(documentRef.getElementById("screen-root")), /Microsoft Entra ID로 로그인/);
+  const buttons = findAll(documentRef.getElementById("screen-root"), (element) => element.tagName === "BUTTON");
+  assert.equal(buttons.length, 2);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /로컬로 플레이/);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /로그인 \(개발 예정\)/);
 });
 
-test("missing auth configuration renders setup guidance without a secret", async () => {
+test("missing auth configuration still allows local play", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
   const controller = createAppController({
@@ -174,27 +176,96 @@ test("missing auth configuration renders setup guidance without a secret", async
   await controller.bootstrap();
 
   const screen = documentRef.getElementById("screen-root");
-  assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH_CONFIG_ERROR);
-  assert.equal(screen.children[0].dataset.state, "auth-config-error");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
+  assert.match(textOf(screen), /로컬로 플레이/);
   assert.doesNotMatch(textOf(screen), /client-secret-value/);
 });
 
-test("guest mode adds a local play button to the auth screen", async () => {
+test("missing fetch still renders the local choice screen", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  const controller = createAppController({ documentRef, fetchFn: null });
+
+  await controller.bootstrap();
+
+  assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /로컬로 플레이/);
+  controller.destroy();
+});
+
+test("generic auth response failures still render the local choice screen", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
   const controller = createAppController({
     documentRef,
-    fetchFn: async () => jsonResponse({ authenticated: false, guestMode: true }),
+    fetchFn: async () => jsonResponse({ error: { code: "TEMPORARY_FAILURE" } }, 500),
+  });
+
+  await controller.bootstrap();
+
+  assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /로컬로 플레이/);
+  controller.destroy();
+});
+
+test("auth request failures still render the local choice screen", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  const controller = createAppController({
+    documentRef,
+    fetchFn: async () => {
+      throw new Error("network unavailable");
+    },
+  });
+
+  await controller.bootstrap();
+
+  assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /로컬로 플레이/);
+  controller.destroy();
+});
+
+test("local play choice enters character selection without guest navigation", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  let fetchCalls = 0;
+  const controller = createAppController({
+    documentRef,
+    fetchFn: async () => {
+      fetchCalls += 1;
+      return jsonResponse({ authenticated: false });
+    },
   });
 
   await controller.bootstrap();
 
   const screen = documentRef.getElementById("screen-root");
   assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
-  const links = findAll(screen, (element) => element.tagName === "A");
-  assert.equal(links.length, 2);
-  assert.equal(links[1].href, "/auth/guest");
-  assert.match(textOf(screen), /게스트로 플레이/);
+  const localButton = findAll(screen, (element) => element.textContent === "로컬로 플레이")[0];
+  localButton.dispatch("click");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.CHARACTER_SELECT);
+  assert.equal(fetchCalls, 1);
+  assert.doesNotMatch(textOf(screen), /\/auth\/guest/);
+  controller.destroy();
+});
+
+test("login choice displays development notice without navigation", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  const controller = createAppController({
+    documentRef,
+    fetchFn: async () => jsonResponse({ authenticated: false }),
+  });
+
+  await controller.bootstrap();
+
+  const screen = documentRef.getElementById("screen-root");
+  const loginButton = findAll(screen, (element) => element.textContent === "로그인 (개발 예정)")[0];
+  loginButton.dispatch("click");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.AUTH);
+  assert.match(textOf(screen), /로그인 기능은 개발 예정입니다/);
+  assert.doesNotMatch(textOf(screen), /\/auth\/signin/);
+  controller.destroy();
 });
 
 test("bootstrap continues to the sign-in screen when asset preloading fails", async () => {

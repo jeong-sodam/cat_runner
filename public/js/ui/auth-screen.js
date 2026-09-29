@@ -33,19 +33,24 @@ function renderAuthScreen(root, options = {}) {
     "p",
     "쥐 인형을 모으고 장애물을 피해 가장 멀리 달려보세요.",
   );
-  const signIn = documentRef.createElement("a");
-  signIn.className = "game-button primary auth-link";
-  signIn.href = "/auth/signin";
-  signIn.textContent = "Microsoft Entra ID로 로그인";
+  const localPlay = documentRef.createElement("button");
+  localPlay.type = "button";
+  localPlay.className = "game-button primary auth-link";
+  localPlay.textContent = "로컬로 플레이";
+  localPlay.addEventListener("click", () => options.onLocalPlay?.());
+  section.append(localPlay);
+  const signIn = documentRef.createElement("button");
+  signIn.type = "button";
+  signIn.className = "game-button auth-link";
+  signIn.textContent = "로그인 (개발 예정)";
+  signIn.addEventListener("click", () => options.onLoginNotice?.());
   section.append(signIn);
-  if (options.guestMode) {
-    const guest = documentRef.createElement("a");
-    guest.className = "game-button auth-link";
-    guest.href = "/auth/guest";
-    guest.textContent = "게스트로 플레이";
-    section.append(guest);
-  }
-  appendText(documentRef, section, "small", "게임을 시작하려면 조직 계정 로그인이 필요합니다.");
+  appendText(
+    documentRef,
+    section,
+    "small",
+    "로컬 플레이는 로그인 없이 브라우저에 기록을 저장합니다.",
+  );
   root.append(section);
   fitSingleLineText(heading, { container: section });
   return section;

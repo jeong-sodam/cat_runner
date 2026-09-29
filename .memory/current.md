@@ -1,17 +1,16 @@
 # Current Context
 
 ## Active Plan
-[Monotonic Game Stage](./plans/2026-09-28-monotonic-game-stage.md)
+[Optional Login and Browser Local Play](./plans/2026-09-29-optional-login-local-play.md)
 
 ## Active Phase
-[P01 Monotonic Game Stage](./phases/2026-09-28-monotonic-game-stage/P01-monotonic-game-stage/phase.md)
+[P01 Optional Login and Local Play](./phases/2026-09-29-optional-login-local-play/P01-optional-login-local-play/phase.md)
 
 ## Active Task
-None (P01 is complete)
+[T02 Local Active-Run Store](./phases/2026-09-29-optional-login-local-play/P01-optional-login-local-play/T02-local-active-run-store.md)
 
 ## Status
-- T01 monotonic zone selection implemented, validated, and committed as `d3f646e`
-- T02 regression coverage implemented, validated, and committed as `4a0bc21`
+- T01 auth-choice and local fallback implemented, validated, and ready to commit
 
 ## Next Step (IMPORTANT)
-The monotonic game-stage plan is complete. Focused tests pass; the full suite has four known Windows/Node `better-sqlite3` native cleanup-hook file-level failures after assertions pass.
+Read T02's blueprint, then implement the versioned browser-local active-run storage API in public/js/sync/local-run-store.js and its run-resume tests without breaking authenticated run-sync storage.
