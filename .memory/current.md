@@ -11,7 +11,7 @@
 
 ## Status
 - T01 auth-choice and local fallback implemented, validated, and committed as d65a3a6
-- T02 local active-run store implemented and validated; commit pending
+- T02 local active-run store implemented, validated, and committed as 1d271e3
 
 ## Next Step (IMPORTANT)
 Read T03's blueprint, then connect local active-run storage to autosave, pagehide persistence, explicit resume/discard, and completion cleanup in public/js/app/app-controller.js with app-flow coverage.
