@@ -7,10 +7,11 @@
 [P01 Optional Login and Local Play](./phases/2026-09-29-optional-login-local-play/P01-optional-login-local-play/phase.md)
 
 ## Active Task
-[T02 Local Active-Run Store](./phases/2026-09-29-optional-login-local-play/P01-optional-login-local-play/T02-local-active-run-store.md)
+[T03 Local Run Lifecycle](./phases/2026-09-29-optional-login-local-play/P01-optional-login-local-play/T03-local-run-lifecycle.md)
 
 ## Status
 - T01 auth-choice and local fallback implemented, validated, and committed as d65a3a6
+- T02 local active-run store implemented and validated; commit pending
 
 ## Next Step (IMPORTANT)
-Read T02's blueprint, then implement the versioned browser-local active-run storage API in public/js/sync/local-run-store.js and its run-resume tests without breaking authenticated run-sync storage.
+Read T03's blueprint, then connect local active-run storage to autosave, pagehide persistence, explicit resume/discard, and completion cleanup in public/js/app/app-controller.js with app-flow coverage.

@@ -1,6 +1,6 @@
 # Task: T02 Local Active-Run Store
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -62,6 +62,6 @@ Add validated browser-local in-progress storage without userId while preserving 
 
 ## Progress
 
-- [ ] Implementation complete
-- [ ] Validation passed
+- [x] Implementation complete
+- [x] Validation passed
 - commit: pending

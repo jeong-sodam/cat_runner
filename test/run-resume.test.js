@@ -227,6 +227,111 @@ test("run sync preserves event order and flushes events before snapshots", async
   assert.deepEqual(store.load().pendingEvents, []);
 });
 
+test("local active runs persist without a user id", async () => {
+  const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+  const storage = new Map();
+  const store = createLocalRunStore({
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key),
+  });
+
+  assert.equal(store.saveLocalRun({
+    runId: "local-run",
+    catId: "chaos",
+    seed: "local-seed",
+    snapshotVersion: 1,
+    snapshot: { score: 42, zoneId: "outside" },
+    savedAt: 123,
+  }), true);
+  assert.deepEqual(store.loadLocalRun(), {
+    mode: "local",
+    runId: "local-run",
+    catId: "chaos",
+    seed: "local-seed",
+    snapshotVersion: 1,
+    snapshot: { score: 42, zoneId: "outside" },
+    savedAt: 123,
+  });
+  assert.equal("userId" in store.loadLocalRun(), false);
+  assert.equal("expiresAt" in store.loadLocalRun(), false);
+});
+
+test("local active runs generate an internal run id when omitted", async () => {
+  const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+  const storage = new Map();
+  const store = createLocalRunStore({
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key),
+  });
+
+  assert.equal(store.saveLocalRun({
+    catId: "white",
+    seed: "generated-seed",
+    snapshotVersion: 1,
+    snapshot: { score: 0 },
+    savedAt: 456,
+  }), true);
+  assert.match(store.loadLocalRun().runId, /^local-\d+-white$/);
+});
+
+test("invalid local active runs are cleared safely", async () => {
+  const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+  const invalidRecords = [
+    "not-json",
+    { mode: "server", runId: "server-run" },
+    { mode: "local", catId: "black", seed: "seed", snapshotVersion: 1, snapshot: {} },
+    { mode: "local", runId: "local-run", seed: "seed", snapshotVersion: 1, snapshot: {} },
+    { mode: "local", runId: "local-run", catId: "black", snapshotVersion: 1, snapshot: {} },
+    { mode: "local", runId: "local-run", catId: "black", seed: "seed", snapshotVersion: 2, snapshot: {} },
+    { mode: "local", runId: "local-run", catId: "black", seed: "seed", snapshotVersion: 1, snapshot: [] },
+  ];
+
+  for (const invalidRecord of invalidRecords) {
+    const storage = new Map([[
+      "cat-runner:active-run",
+      typeof invalidRecord === "string"
+        ? invalidRecord
+        : JSON.stringify(invalidRecord),
+    ]]);
+    const store = createLocalRunStore({
+      getItem: (key) => storage.get(key) || null,
+      setItem: (key, value) => storage.set(key, value),
+      removeItem: (key) => storage.delete(key),
+    });
+
+    assert.equal(store.loadLocalRun(), null);
+    assert.equal(storage.has("cat-runner:active-run"), false);
+  }
+});
+
+test("clearing a local active run preserves completed score history", async () => {
+  const { LOCAL_HISTORY_KEY, createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
+  const storage = new Map([
+    ["cat-runner:active-run", JSON.stringify({
+      mode: "local",
+      runId: "local-run",
+      catId: "black",
+      seed: "seed",
+      snapshotVersion: 1,
+      snapshot: { score: 1 },
+      savedAt: 1,
+    })],
+    [LOCAL_HISTORY_KEY, JSON.stringify([{ score: 10 }])],
+  ]);
+  const store = createLocalRunStore({
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key),
+  });
+
+  store.clearLocalRun();
+
+  assert.equal(storage.has("cat-runner:active-run"), false);
+  assert.equal(storage.has(LOCAL_HISTORY_KEY), true);
+});
+
 test("offline sync pauses persistence and resumes after a successful reconnect", async () => {
   const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
   const { createRunSync } = await import("../public/js/sync/run-sync.js");

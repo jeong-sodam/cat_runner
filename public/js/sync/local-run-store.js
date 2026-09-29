@@ -106,6 +106,89 @@ function createLocalRunStore(storage) {
     }
   }
 
+  function isLocalSnapshot(value) {
+    return Boolean(
+      value &&
+      typeof value === "object" &&
+      !Array.isArray(value),
+    );
+  }
+
+  function normalizeLocalRun(run) {
+    const savedAt = Number(run.savedAt);
+    return {
+      mode: "local",
+      runId: run.runId,
+      catId: run.catId,
+      seed: run.seed,
+      snapshotVersion: 1,
+      snapshot: run.snapshot,
+      savedAt: Number.isFinite(savedAt) ? savedAt : Date.now(),
+    };
+  }
+
+  function isValidLocalRun(run) {
+    return Boolean(
+      run &&
+      typeof run === "object" &&
+      run.mode === "local" &&
+      typeof run.runId === "string" &&
+      run.runId.length > 0 &&
+      typeof run.catId === "string" &&
+      run.catId.length > 0 &&
+      typeof run.seed === "string" &&
+      run.seed.length > 0 &&
+      run.snapshotVersion === 1 &&
+      isLocalSnapshot(run.snapshot),
+    );
+  }
+
+  function saveLocalRun(run) {
+    if (
+      !run ||
+      typeof run !== "object" ||
+      typeof run.catId !== "string" ||
+      run.catId.length === 0 ||
+      typeof run.seed !== "string" ||
+      run.seed.length === 0 ||
+      run.snapshotVersion !== 1 ||
+      !isLocalSnapshot(run.snapshot)
+    ) {
+      return false;
+    }
+    const localRun = normalizeLocalRun({
+      ...run,
+      mode: "local",
+      runId: typeof run.runId === "string" && run.runId.length > 0
+        ? run.runId
+        : "local-" + Date.now() + "-" + run.catId,
+    });
+    return writeJson(LOCAL_RUN_KEY, localRun);
+  }
+
+  function loadLocalRun() {
+    const run = readJson(LOCAL_RUN_KEY);
+    if (run === null) {
+      if (hasStoredValue(LOCAL_RUN_KEY)) {
+        clearLocalRun();
+      }
+      return null;
+    }
+    if (!isValidLocalRun(run)) {
+      clearLocalRun();
+      return null;
+    }
+    return normalizeLocalRun(run);
+  }
+
+  function clearLocalRun() {
+    try {
+      safeStorage.removeItem(LOCAL_RUN_KEY);
+    } catch {
+      // Storage is optional when private browsing blocks writes.
+    }
+  }
+
   function normalizeScoreRecord(record) {
     const numberOrZero = (value) => {
       const number = Number(value);
@@ -341,6 +424,9 @@ function createLocalRunStore(storage) {
     save,
     load,
     clear,
+    saveLocalRun,
+    loadLocalRun,
+    clearLocalRun,
     getLocalHistory,
     getLocalScores,
     getLocalRank,
