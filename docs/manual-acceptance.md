@@ -1,6 +1,6 @@
 # Cat Runner manual acceptance checklist
 
-Run the app locally with `npm.cmd install` and `npm.cmd start`, open `http://localhost:3000`, and use a fresh browser session when a case says “fresh session”. Record the result of each case before moving to the next one.
+Run `npm.cmd install` and `npm.cmd start` without creating or editing `.env`, then open `http://localhost:3000`. Use a fresh browser session when a case says “fresh session”. Record the result of each case before moving to the next one.
 
 ## Visual refresh smoke test
 
@@ -16,11 +16,11 @@ Run the app locally with `npm.cmd install` and `npm.cmd start`, open `http://loc
 
 ## Authentication and onboarding
 
-- [ ] With valid local Entra configuration, select Sign in and confirm the callback returns to the game shell.
-- [ ] Select sign out, then confirm `/api/me` reports an unauthenticated session and the shell shows Sign in again.
-- [ ] With Entra variables absent, start the server and confirm the setup guidance appears without a client secret, token, or stack trace.
-- [ ] On first sign-in, enter a nickname and confirm the character-selection screen opens.
-- [ ] Sign in as a second user and enter the same nickname; confirm duplicate nicknames are accepted and accounts remain distinguishable by email.
+- [ ] With no `.env` and no Entra variables configured, start the server and confirm the game shell loads without an ID/configuration error.
+- [ ] Choose **로컬로 플레이** and confirm cat selection opens without signing in or creating an account.
+- [ ] Choose **로그인** and confirm a development notice says login is planned and local play is available; it must not navigate to a broken login flow.
+- [ ] Confirm browser-local play does not call `/auth/guest` or require `ENABLE_GUEST_MODE`.
+- [ ] Optional backend-only check: with valid local Entra configuration, exercise the auth endpoints and confirm the callback returns to the game shell.
 
 ## Character selection and movement
 
@@ -45,19 +45,24 @@ Run the app locally with `npm.cmd install` and `npm.cmd start`, open `http://loc
 
 ## Offline and resume behavior
 
-- [ ] Start a run, disable network access, and verify the game pauses with a reconnect message while local events/snapshot state are retained.
-- [ ] Restore network access and verify synchronization completes and the game resumes.
-- [ ] Reload during an active run within 24 hours, sign in as the same user, and verify a resume prompt restores the saved cat, seed, snapshot, and event position.
-- [ ] Choose a new run from the resume prompt and verify the previous active run is abandoned.
-- [ ] Advance the test clock or wait until the 24-hour expiry, reload, and verify an expired run is not offered for resume.
+- [ ] Start a browser-local run and confirm a saved snapshot is refreshed during play (about once per second) and on page exit.
+- [ ] Reload or reopen the app during an active local run and confirm **이어하기** restores the cat and game state.
+- [ ] Choose **새 게임** from the resume prompt and confirm the previous local run is discarded.
+- [ ] Confirm a local run remains available without a 24-hour expiry, then finish a run and confirm its active snapshot is cleared.
+- [ ] Clear/replace the browser's local storage and confirm browser-local active progress and records are not shared or recoverable from another browser.
+- [ ] Optional authenticated-backend check: verify its network/reconnect and server resume behavior independently of browser-local mode.
 
 ## Results and leaderboard
 
-- [ ] Finish a valid run and verify the result screen shows score, distance, mouse count, personal-best status, and rank.
-- [ ] Finish a better run and verify the personal best is replaced; finish a lower run and verify it does not replace the best.
-- [ ] Add at least 12 users with best scores and verify the dashboard shows no more than 10 entries.
-- [ ] Create equal-score entries and verify ordering is score descending, distance descending, then earliest achievement time.
-- [ ] Confirm duplicate nicknames remain separate because the full email is visible.
+- [ ] Finish a browser-local run and confirm its result and personal records appear in that browser without claiming a server rank or shared leaderboard entry.
+- [ ] Finish another local run and confirm personal scores persist after reload in the same browser.
+- [ ] Confirm the local leaderboard displays only local personal records and does not expose another browser's scores.
+- [ ] Optional authenticated-backend check: finish valid server runs and verify server leaderboard behavior below.
+- [ ] (Authenticated backend only) Finish a valid server run and verify the result screen shows score, distance, mouse count, personal-best status, and rank.
+- [ ] (Authenticated backend only) Finish a better run and verify the personal best is replaced; finish a lower run and verify it does not replace the best.
+- [ ] (Authenticated backend only) Add at least 12 users with best scores and verify the dashboard shows no more than 10 entries.
+- [ ] (Authenticated backend only) Create equal-score entries and verify ordering is score descending, distance descending, then earliest achievement time.
+- [ ] (Authenticated backend only) Confirm duplicate nicknames remain separate because the full email is visible.
 - [ ] Enter nickname/email-like strings such as `<img src=x onerror=alert(1)>` and verify they appear as text, never executable HTML.
 - [ ] Force a completion failure and verify the local result shows a retry action without claiming a saved rank.
 - [ ] Choose Restart from the result screen and verify character selection opens so a new cat can be chosen.

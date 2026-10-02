@@ -1,26 +1,23 @@
 # Cat Runner
 
-Cat Runner is a browser endless runner. Choose one of six cats, jump over indoor obstacles, slide under hazards, collect mouse toys, and compare personal-best scores on the authenticated leaderboard.
+Cat Runner is a browser endless runner. Choose one of six cats, jump over indoor obstacles, slide under hazards, and collect mouse toys. You can play immediately in browser-local mode; Entra sign-in is not yet available in the UI.
 
 ## Prerequisites
 
 - Node.js LTS (20 or newer)
 - npm
-- A Microsoft Entra ID app registration for sign-in during local development
 
 ## Local setup
 
 ```powershell
 npm.cmd install
-Copy-Item .env.example .env
 ```
 
-Open `.env` and fill in the Entra values described below. Never commit `.env`, client secrets, access tokens, or personal email addresses.
+No `.env` file or identity configuration is needed to run local play. Start the app and open <http://localhost:3000>. Choose **로컬로 플레이** to continue to cat selection. **로그인** currently shows a development notice; authentication is planned, not available through the UI yet.
 
-Run the checks and start the server:
+Start the server:
 
 ```powershell
-npm.cmd test
 npm.cmd start
 # or, during development:
 npm.cmd run dev   # development mode with Node watch
@@ -32,9 +29,9 @@ Open <http://localhost:3000>. The default database is `data/cat-runner.sqlite`. 
 Remove-Item data/cat-runner.sqlite, data/cat-runner.sqlite-shm, data/cat-runner.sqlite-wal -ErrorAction SilentlyContinue
 ```
 
-The database is recreated automatically on the next start. This deletes local runs, sessions, and leaderboard data only.
+The database is recreated automatically on the next start. This deletes server-side runs, sessions, and leaderboard data only. Browser-local play stores active runs and personal results in that browser's local storage; it does not create a server identity or share records with other users. Clearing browser data removes those local records.
 
-When a local `.env` enables guest mode or contains Entra values, run the suite in a clean authentication process so configuration-specific tests keep their expected setup:
+If you have a local `.env` with auth settings, run tests with auth-related environment values cleared so configuration-specific tests keep their expected setup:
 
 ```powershell
 $env:ENABLE_GUEST_MODE = "false"
@@ -45,7 +42,9 @@ $env:ENTRA_REDIRECT_URI = ""
 npm.cmd test
 ```
 
-## Microsoft Entra ID
+## Optional Microsoft Entra ID backend
+
+The legacy authenticated backend remains available for development, but the current game UI does not offer working sign-in. Entra configuration is optional and can be prepared for future authenticated use. Never commit `.env`, client secrets, access tokens, or personal email addresses.
 
 Create an app registration in the Azure portal with these settings:
 
@@ -66,17 +65,17 @@ ENTRA_TENANT_AUTHORITY=https://login.microsoftonline.com/organizations
 ENTRA_REDIRECT_URI=http://localhost:3000/auth/callback
 ```
 
-### Guest play mode
+### Legacy guest API mode
 
-For local gameplay without Entra credentials, set this development-only flag in `.env`:
+`ENABLE_GUEST_MODE` only enables the legacy guest-auth API. It is not needed for browser-local play and does not add a guest-login entry to the UI. To test that API, set this development-only flag in `.env`:
 
 ```dotenv
 ENABLE_GUEST_MODE=true
 ```
 
-Restart the server, open the game, and choose **게스트로 플레이**. A temporary local account is created with a `.local.invalid` email and follows the same run, score, resume, and leaderboard flow. Guest mode is automatically disabled when `NODE_ENV=production`; never enable it on a public deployment.
+The API can create a temporary account with a `.local.invalid` email. Guest mode is automatically disabled when `NODE_ENV=production`; never enable it on a public deployment.
 
-If the Entra values are missing, the server still starts and serves the game shell. Sign-in and protected API calls show a configuration/authentication error instead of exposing a secret or stack trace.
+Without Entra values, the server still starts and serves the game shell. The UI's login action shows a development notice, while protected API calls still require valid authentication/configuration.
 
 ## Game rules
 
@@ -93,9 +92,9 @@ If the Entra values are missing, the server still starts and serves the game she
 
 Each run starts with a fresh cat choice. The six available cats are black, white, calico, cheese, mackerel, and chaos. Their visible modifiers trade off speed, jump, slide, item duration, and health; the character-selection screen is the source of the current values.
 
-### Scores and leaderboard
+### Local scores and server leaderboard
 
-The server replays the event stream and calculates the authoritative result. Only each user’s best score is stored. Leaderboard ties are ordered by score descending, distance descending, and earliest achievement time. The dashboard shows the top ten and intentionally displays the full email address, which is a confirmed product decision.
+In browser-local mode, completed scores are stored only in that browser and shown as personal records; they are not uploaded or shared. The server leaderboard belongs to the optional authenticated backend. When a local run is active, its snapshot is saved about once per second and on page exit. Reopening the game offers **이어하기** or **새 게임**; local progress has no time-based expiry and is cleared when completed or discarded.
 
 ## Manual acceptance
 

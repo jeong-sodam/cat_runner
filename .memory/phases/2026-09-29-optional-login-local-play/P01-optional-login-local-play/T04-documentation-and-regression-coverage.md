@@ -1,6 +1,6 @@
 # Task: T04 Documentation and Regression Coverage
 
-## Status: pending
+## Status: done (documented; platform-limited regression validation)
 
 ## Goal
 
@@ -44,10 +44,10 @@ Make clone-and-run instructions accurate for configuration-independent local mod
 
 ## Acceptance Criteria
 
-- [ ] README/manual acceptance no longer require .env edits for local play.
-- [ ] Future/legacy Entra setup remains documented.
-- [ ] Local resume/discard/persistence/deferred-login behavior is documented.
-- [ ] Focused and full test commands are run and results recorded.
+- [x] README/manual acceptance no longer require .env edits for local play.
+- [x] Future/legacy Entra setup remains documented.
+- [x] Local resume/discard/persistence/deferred-login behavior is documented.
+- [x] Focused and full test commands are run and results recorded below; Windows Node runner/native cleanup failures are environmental.
 
 ## Validation
 
@@ -67,6 +67,15 @@ Make clone-and-run instructions accurate for configuration-independent local mod
 
 ## Progress
 
-- [ ] Implementation complete
-- [ ] Validation passed
+- [x] Implementation complete
+- [ ] Validation passed cleanly (blocked by Windows Node `spawn EPERM` and `better-sqlite3` cleanup-hook assertion; individual runnable suites and no-.env server check passed)
 - commit: pending
+
+### Validation Record
+
+- The specified focused command and `npm.cmd test` were both run. Both could not start test files because the Node test runner failed to spawn worker processes (`spawn EPERM`).
+- The focused files were retried individually with `node --test --test-isolation=none`: `app-flow` passed 26/26, `auth` 5/5, and `server` 4/4. `run-resume` passed its first 3 assertions before a Windows Node `better-sqlite3` cleanup-hook assertion aborted the process. `integration` passed its first 2 assertions before the same native cleanup abort.
+- Remaining independent files were run individually: audio-pause 5/5, font-loader 2/2, text-fitting 3/3, game-core 15/15, font-layout 4/4, fullscreen-layout 5/5, db 6/6, game-systems 31/31, score-validation 12/12, render 18/18, and pause-hitbox 1/1 passed. `security-regression` and `leaderboard` also aborted at native cleanup.
+- Ran `server.test.js` from the OS temp directory, which has no `.env`: all 4 tests passed, including serving the public game shell and missing-auth configuration response.
+- Confirmed there are no `/auth/guest` references in `public/js`; browser-local entry does not use the guest endpoint.
+- `git diff --check` passed.
