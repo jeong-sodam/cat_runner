@@ -69,7 +69,7 @@ Make clone-and-run instructions accurate for configuration-independent local mod
 
 - [x] Implementation complete
 - [ ] Validation passed cleanly (blocked by Windows Node `spawn EPERM` and `better-sqlite3` cleanup-hook assertion; individual runnable suites and no-.env server check passed)
-- commit: pending
+- commit: bc84507
 
 ### Validation Record
 

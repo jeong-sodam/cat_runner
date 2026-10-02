@@ -8,7 +8,7 @@ Allow a cloned Cat Runner repository to start browser-local play without editing
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | in_progress | Add configuration-independent local entry, local run persistence/resume, and regression/documentation coverage | [P01](../phases/2026-09-29-optional-login-local-play/P01-optional-login-local-play/phase.md) |
+| P01 | done ✅ | Add configuration-independent local entry, local run persistence/resume, and regression/documentation coverage | [P01](../phases/2026-09-29-optional-login-local-play/P01-optional-login-local-play/phase.md) |
 
 ## Decision Source
 
