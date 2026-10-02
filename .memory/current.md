@@ -7,11 +7,12 @@
 [P01 Optional Login and Local Play](./phases/2026-09-29-optional-login-local-play/P01-optional-login-local-play/phase.md)
 
 ## Active Task
-[T03 Local Run Lifecycle](./phases/2026-09-29-optional-login-local-play/P01-optional-login-local-play/T03-local-run-lifecycle.md)
+[T04 Documentation and Regression Coverage](./phases/2026-09-29-optional-login-local-play/P01-optional-login-local-play/T04-documentation-and-regression-coverage.md)
 
 ## Status
 - T01 auth-choice and local fallback implemented, validated, and committed as d65a3a6
 - T02 local active-run store implemented, validated, and committed as 1d271e3
+- T03 local run persistence, resume, and cleanup implemented and validated; commit pending
 
 ## Next Step (IMPORTANT)
-Read T03's blueprint, then connect local active-run storage to autosave, pagehide persistence, explicit resume/discard, and completion cleanup in public/js/app/app-controller.js with app-flow coverage.
+Read T04's blueprint, then update README.md and docs/manual-acceptance.md for configuration-free local play and run the specified regression suite.

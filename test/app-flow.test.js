@@ -32,6 +32,17 @@ class FakeElement {
     this.append(...children);
   }
 
+  remove() {
+    const siblings = this.parentNode?.children;
+    if (siblings) {
+      const index = siblings.indexOf(this);
+      if (index !== -1) {
+        siblings.splice(index, 1);
+      }
+    }
+    this.parentNode = null;
+  }
+
   addEventListener(type, listener) {
     const listeners = this.listeners.get(type) || [];
     listeners.push(listener);
@@ -65,9 +76,21 @@ class FakeElement {
 
 class FakeDocument {
   constructor() {
+    const listeners = new Map();
     this.defaultView = {
-      addEventListener() {},
-      removeEventListener() {},
+      addEventListener(type, listener) {
+        const current = listeners.get(type) || new Set();
+        current.add(listener);
+        listeners.set(type, current);
+      },
+      removeEventListener(type, listener) {
+        listeners.get(type)?.delete(listener);
+      },
+      dispatch(type) {
+        for (const listener of listeners.get(type) || []) {
+          listener({ type });
+        }
+      },
     };
     this.elements = new Map();
   }
@@ -353,6 +376,127 @@ test("character selection never checks for a server resume in local mode", async
   controller.destroy();
 });
 
+test("local character selection offers resume and new-game actions", async () => {
+  const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  const candidate = {
+    mode: "local",
+    runId: "local-saved-run",
+    catId: "white",
+    seed: "saved-seed",
+    snapshotVersion: 1,
+    snapshot: { status: "paused", score: 77, elapsedMs: 450, zoneId: "outside" },
+    savedAt: 100,
+  };
+  let activeRun = candidate;
+  let clearCalls = 0;
+  let frameCallback = null;
+  const runApiCalls = [];
+  const localRunStore = {
+    loadLocalRun: () => activeRun,
+    saveLocalRun: (run) => { activeRun = run; return true; },
+    clearLocalRun: () => { clearCalls += 1; activeRun = null; },
+  };
+  const controller = createAppController({
+    documentRef,
+    localRunStore,
+    runApiClient: {
+      startRun: async (...args) => { runApiCalls.push(args); throw new Error("must remain local"); },
+    },
+    audioManagerFactory: () => ({
+      unlock: async () => {},
+      startMusic() {},
+      stopMusic() {},
+      playSfx() {},
+      destroy() {},
+    }),
+    settingsPanelFactory: () => ({ mount() {} }),
+    gameClock: {
+      now: () => 0,
+      requestFrame: (callback) => { frameCallback = callback; return 1; },
+      cancelFrame() {},
+    },
+  });
+
+  controller.showCharacterSelect();
+  const screen = documentRef.getElementById("screen-root");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.CHARACTER_SELECT);
+  assert.equal(findAll(screen, (element) => element.className.includes("local-resume-modal")).length, 1);
+  const continueButton = findAll(screen, (element) => element.textContent === "이어하기")[0];
+  continueButton.dispatch("click");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.GAME);
+  assert.equal(controller.getState().gameState.seed, "saved-seed");
+  assert.equal(controller.getState().gameState.score, 77);
+  assert.equal(controller.getState().gameState.zoneId, "outside");
+  assert.equal(controller.getState().gameState.elapsedMs, 450);
+  assert.equal(controller.getState().gameState.status, "running");
+  assert.equal(activeRun.runId, "local-saved-run");
+  assert.deepEqual(runApiCalls, []);
+  controller.destroy();
+
+  activeRun = candidate;
+  controller.showCharacterSelect();
+  const newButton = findAll(screen, (element) => element.textContent === "새 게임")[0];
+  newButton.dispatch("click");
+  assert.equal(clearCalls, 1);
+  assert.equal(activeRun, null);
+  assert.equal(controller.getState().screen, SCREEN_NAMES.CHARACTER_SELECT);
+  assert.equal(findAll(screen, (element) => element.className.includes("local-resume-modal")).length, 0);
+  controller.destroy();
+});
+
+test("local runs save initial, one-second, and pagehide snapshots", async () => {
+  const { createAppController } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  const savedRuns = [];
+  let frameCallback = null;
+  const controller = createAppController({
+    documentRef,
+    localRunStore: {
+      saveLocalRun: (run) => { savedRuns.push(structuredClone(run)); return true; },
+      loadLocalRun: () => null,
+      clearLocalRun() {},
+    },
+    runApiClient: {
+      startRun: async () => assert.fail("local play must not start a server run"),
+    },
+    audioManagerFactory: () => ({
+      unlock: async () => {},
+      startMusic() {},
+      stopMusic() {},
+      playSfx() {},
+      destroy() {},
+    }),
+    settingsPanelFactory: () => ({ mount() {} }),
+    gameClock: {
+      now: () => 0,
+      requestFrame: (callback) => { frameCallback = callback; return 1; },
+      cancelFrame() {},
+    },
+  });
+
+  await controller.startGame("calico");
+  assert.equal(savedRuns.length, 1);
+  assert.equal(savedRuns[0].mode, "local");
+  assert.equal(typeof savedRuns[0].runId, "string");
+  assert.equal("userId" in savedRuns[0], false);
+  assert.equal("expiresAt" in savedRuns[0], false);
+  frameCallback(0);
+  controller.getState().gameState.elapsedMs = 999;
+  frameCallback(1);
+  assert.equal(savedRuns.length, 1);
+  controller.getState().gameState.elapsedMs = 1000;
+  frameCallback(2);
+  assert.equal(savedRuns.length, 2);
+  controller.getState().gameState.elapsedMs = 1500;
+  frameCallback(3);
+  assert.equal(savedRuns.length, 2);
+  documentRef.defaultView.dispatch("pagehide");
+  assert.equal(savedRuns.length, 3);
+  assert.equal(savedRuns[2].snapshot.elapsedMs, 1500);
+  controller.destroy();
+});
+
 test("character selection renders six cats and defaults each new run to black", async () => {
   const { createCharacterSelect } = await import("../public/js/ui/character-select.js");
   const documentRef = createAppDocument();
@@ -603,6 +747,7 @@ test("local gameover saves the latest result and opens personal records offline"
   let latest = null;
   let saveCalls = 0;
   let lastResultCalls = 0;
+  let activeRunClearCalls = 0;
   let serverCalls = 0;
   let frameCallback = null;
   let frameTime = 0;
@@ -619,6 +764,7 @@ test("local gameover saves the latest result and opens personal records offline"
       latest = record;
       return true;
     },
+    clearLocalRun: () => { activeRunClearCalls += 1; },
   };
   const controller = createAppController({
     documentRef,
@@ -657,6 +803,7 @@ test("local gameover saves the latest result and opens personal records offline"
 
   assert.equal(saveCalls, 1);
   assert.equal(lastResultCalls, 1);
+  assert.equal(activeRunClearCalls, 1);
   assert.equal(controller.getState().screen, SCREEN_NAMES.RESULT);
   assert.match(textOf(documentRef.getElementById("screen-root")), /개인기록표에 저장되었습니다/);
   assert.match(textOf(documentRef.getElementById("screen-root")), /개인 순위: 1위/);

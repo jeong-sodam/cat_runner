@@ -1,6 +1,6 @@
 # Task: T03 Local Run Lifecycle
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -91,6 +91,6 @@ Wire local active-run storage into the game lifecycle: save every second and on 
 
 ## Progress
 
-- [ ] Implementation complete
-- [ ] Validation passed
+- [x] Implementation complete
+- [x] Validation passed
 - commit: pending

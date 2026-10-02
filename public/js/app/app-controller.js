@@ -63,6 +63,9 @@ function createAppController(options = {}) {
   let runSync = null;
   let networkMonitor = null;
   let localRunStore = null;
+  let localRunMetadata = null;
+  let lastLocalSnapshotAt = -Infinity;
+  let pageHideHandler = null;
   let reconnectBanner = null;
   let pausedForNetwork = false;
   let lastSnapshotAt = -Infinity;
@@ -92,6 +95,10 @@ function createAppController(options = {}) {
   }
 
   function destroyGame() {
+    if (pageHideHandler) {
+      windowRef.removeEventListener?.("pagehide", pageHideHandler);
+      pageHideHandler = null;
+    }
     if (resizeHandler) {
       windowRef.removeEventListener?.("resize", resizeHandler);
       resizeHandler = null;
@@ -218,6 +225,44 @@ function createAppController(options = {}) {
         modal.remove?.();
         showCharacterSelect();
       });
+    });
+    modal.append(heading, description, continueButton, newButton);
+    screenRoot.append(modal);
+    fitSingleLineText(heading, { container: modal, minPx: 18, maxPx: 32 });
+  }
+
+  function showLocalResumePrompt(candidate) {
+    if (!screenRoot || !documentRef?.createElement) {
+      return;
+    }
+    const modal = documentRef.createElement("section");
+    modal.className = "resume-modal flow-card local-resume-modal";
+    const heading = documentRef.createElement("h2");
+    heading.className = "fit-title";
+    heading.textContent = "이어서 달릴까요?";
+    const description = documentRef.createElement("p");
+    description.textContent = "저장된 달리기가 있습니다. 이어서 하거나 새 게임을 시작할 수 있어요.";
+    const continueButton = documentRef.createElement("button");
+    continueButton.type = "button";
+    continueButton.className = "game-button primary";
+    continueButton.textContent = "이어하기";
+    continueButton.addEventListener("click", () => {
+      modal.remove?.();
+      startGame(candidate.catId, {
+        runId: candidate.runId,
+        seed: candidate.seed,
+        snapshot: candidate.snapshot,
+        resumed: true,
+      });
+    });
+    const newButton = documentRef.createElement("button");
+    newButton.type = "button";
+    newButton.className = "game-button";
+    newButton.textContent = "새 게임";
+    newButton.addEventListener("click", () => {
+      getLocalRunStore().clearLocalRun?.();
+      modal.remove?.();
+      showCharacterSelect({ allowResume: false });
     });
     modal.append(heading, description, continueButton, newButton);
     screenRoot.append(modal);
@@ -361,6 +406,12 @@ function createAppController(options = {}) {
       { documentRef },
     );
     characterSelect.mount(screenRoot);
+    if (allowResume) {
+      const candidate = getLocalRunStore().loadLocalRun?.();
+      if (candidate) {
+        showLocalResumePrompt(candidate);
+      }
+    }
   }
 
   function showResult(result) {
@@ -491,6 +542,11 @@ function createAppController(options = {}) {
       } catch {
         lastResultSaved = false;
       }
+      try {
+        localStore.clearLocalRun?.();
+      } catch {
+        // A stale active snapshot must not prevent displaying the completed result.
+      }
       const saved = savedResult.saved === true && lastResultSaved;
       const storageStatus = localStore.getStorageStatus?.() || {
         persistent: savedResult.persisted !== false,
@@ -583,9 +639,40 @@ function createAppController(options = {}) {
       Object.assign(gameState, runOptions.snapshot, {
         catId,
         seed,
+        status: runOptions.resumed ? "ready" : gameState.status,
       });
     }
     state.gameState = gameState;
+    if (state.runMode === "local") {
+      const localStore = getLocalRunStore();
+      localRunMetadata = {
+        runId: runOptions.runId || "local-" + Date.now() + "-" + catId,
+        catId,
+        seed,
+      };
+      lastLocalSnapshotAt = gameState.elapsedMs;
+      localStore.saveLocalRun?.({
+        ...localRunMetadata,
+        mode: "local",
+        snapshotVersion: 1,
+        snapshot: snapshotGameState(),
+      });
+      pageHideHandler = () => {
+        const snapshot = snapshotGameState();
+        if (snapshot && localRunMetadata) {
+          localStore.saveLocalRun?.({
+            ...localRunMetadata,
+            mode: "local",
+            snapshotVersion: 1,
+            snapshot,
+          });
+        }
+      };
+      windowRef.addEventListener?.("pagehide", pageHideHandler);
+    } else {
+      localRunMetadata = null;
+      lastLocalSnapshotAt = -Infinity;
+    }
     hideRoot();
 
     const context = canvas?.getContext?.("2d");
@@ -637,6 +724,22 @@ function createAppController(options = {}) {
           lastSnapshotAt = nextState.elapsedMs;
           runSync?.saveSnapshot(snapshotGameState());
         }
+        if (
+          state.runMode === "local" &&
+          localRunMetadata &&
+          nextState.elapsedMs - lastLocalSnapshotAt >= 1000
+        ) {
+          const snapshot = snapshotGameState();
+          if (snapshot) {
+            getLocalRunStore().saveLocalRun?.({
+              ...localRunMetadata,
+              mode: "local",
+              snapshotVersion: 1,
+              snapshot,
+            });
+            lastLocalSnapshotAt = nextState.elapsedMs;
+          }
+        }
       },
       onStep: (nextState) => {
         updateWorldEntities(nextState, patternStream);
@@ -649,7 +752,12 @@ function createAppController(options = {}) {
     gameLoop = loop;
     pauseController = createPauseController(loop, audioManager, {
       settingsPanel,
-      onRestart: () => startGame(state.catId || "black", { runMode: state.runMode || "local" }),
+      onRestart: () => {
+        if (state.runMode === "local") {
+          getLocalRunStore().clearLocalRun?.();
+        }
+        startGame(state.catId || "black", { runMode: state.runMode || "local" });
+      },
     });
     pauseController.mount(gameShell);
     const initialRender = renderer?.render(gameState);
@@ -666,11 +774,16 @@ function createAppController(options = {}) {
   }
 
   async function startGame(catId = "black", runOptions = {}) {
+    const resumeLocalRun =
+      runOptions.resumed === true &&
+      typeof runOptions.runId === "string" &&
+      runOptions.runId.startsWith("local-");
     return initializeGame(catId, {
       ...runOptions,
       runMode: "local",
-      resumed: false,
-      snapshot: undefined,
+      resumed: resumeLocalRun,
+      seed: resumeLocalRun ? runOptions.seed : undefined,
+      snapshot: resumeLocalRun ? runOptions.snapshot : undefined,
     });
   }
 
