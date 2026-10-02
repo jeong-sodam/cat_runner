@@ -12,7 +12,7 @@
 ## Status
 - T01 auth-choice and local fallback implemented, validated, and committed as d65a3a6
 - T02 local active-run store implemented, validated, and committed as 1d271e3
-- T03 local run persistence, resume, and cleanup implemented and validated; commit pending
+- T03 local run persistence, resume, and cleanup implemented, validated, and committed as 184c2c5
 
 ## Next Step (IMPORTANT)
 Read T04's blueprint, then update README.md and docs/manual-acceptance.md for configuration-free local play and run the specified regression suite.
