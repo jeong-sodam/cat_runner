@@ -4,7 +4,7 @@ Cat Runner is a browser endless runner. Choose one of six cats, jump over indoor
 
 ## Prerequisites
 
-- Node.js LTS (20 or newer)
+- Node.js 22 or 24 LTS
 - npm
 
 ## Local setup
