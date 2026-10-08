@@ -1,6 +1,6 @@
 # Task: T01 Render Service Blueprint
 
-## Status: in_progress
+## Status: done
 
 ## Goal
 
@@ -61,10 +61,10 @@ Add a Render Blueprint at the repository root that describes the agreed free Cat
 
 ## Acceptance Criteria
 
-- [ ] Root `render.yaml` declares exactly one Node web service using the selected Free plan and Singapore region.
-- [ ] Blueprint deploys `main` automatically with `npm ci` and `npm start` only after linked CI checks pass (`autoDeployTrigger: checksPass`).
-- [ ] Blueprint health check points to the existing `/api/health` route.
-- [ ] No secret, shared datastore, persistent disk, or custom domain is introduced.
+- [x] Root `render.yaml` declares exactly one Node web service using the selected Free plan and Singapore region.
+- [x] Blueprint deploys `main` automatically with `npm ci` and `npm start` only after linked CI checks pass (`autoDeployTrigger: checksPass`).
+- [x] Blueprint health check points to the existing `/api/health` route.
+- [x] No secret, shared datastore, persistent disk, or custom domain is introduced.
 
 ## Validation
 
@@ -87,15 +87,13 @@ Task: T01-render-service-blueprint
 ## Progress
 
 - [x] Implementation complete
-- [ ] Validation passed
+- [x] Validation passed
 - commit: pending
 
 ### Validation Notes
 
-- Confirmed `package-lock.json` is present and `npm start` runs `node src/server.js`.
-- Confirmed `src/config.js` reads `PORT`, `src/server.js` listens on `config.port`, and `/api/health` returns HTTP 200 with `{ "ok": true, "service": "cat-runner" }`.
-- Confirmed the Blueprint field values against the [Render Blueprint specification](https://render.com/docs/blueprint-spec).
-- `npm.cmd test` under Node v24.21.0: 145 passed; `integration.test.js`, `run-resume.test.js`, and `security-regression.test.js` fail during native SQLite addon cleanup with `Assertion failed: (env) != nullptr` in `node::RemoveEnvironmentCleanupHook`. Re-running those files reproduced the failures.
-- Retried the full suite with Node's `--test-isolation=none` and `--test-force-exit` options; neither avoided the native cleanup failure.
-- The local project dependency is `better-sqlite3` 11.10.0, and Node v24.21.0 is the only installed Node runtime. This failure is consistent with reports of native `ObjectWrap` cleanup incompatibility on newer Node 24 releases ([Node.js issue #63923](https://github.com/nodejs/node/issues/63923)); no application or dependency changes were made because this task is limited to deployment configuration.
-- Render CLI is not installed, and the Blueprint has not yet been validated through a Render Blueprint connection.
+- Confirmed `package-lock.json` is present, `npm start` runs `node src/server.js`, and `engines.node` supports `^22 || ^24`.
+- Confirmed `src/config.js` reads `PORT`, `src/server.js` listens on the configured port, and the existing health endpoint test verifies HTTP 200 with `{ "ok": true, "service": "cat-runner" }`.
+- `node --version`: v24.21.0; `npm.cmd test`: 162 passed, 0 failed.
+- `git diff --check`: passed. Inspected `render.yaml` for exactly one service and the agreed runtime, plan, region, branch, commands, `checksPass` trigger, health path, and `NODE_ENV` setting.
+- Confirmed `checksPass` behavior in the [Render Blueprint specification](https://render.com/docs/blueprint-spec). Render account/Blueprint connection validation remains for the publish task because this repository is not connected to Render yet.
