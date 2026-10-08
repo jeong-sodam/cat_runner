@@ -96,6 +96,16 @@ Each run starts with a fresh cat choice. The six available cats are black, white
 
 In browser-local mode, completed scores are stored only in that browser and shown as personal records; they are not uploaded or shared. The server leaderboard belongs to the optional authenticated backend. When a local run is active, its snapshot is saved about once per second and on page exit. Reopening the game offers **이어하기** or **새 게임**; local progress has no time-based expiry and is cleared when completed or discarded.
 
+## Public deployment on Render
+
+Cat Runner is configured as a Render Blueprint managed Node web service on the Free plan in Singapore. To publish it, sign in to Render, connect GitHub access to `jeong-sodam/cat_runner`, create a new Blueprint from the repository's root `render.yaml`, review the service settings, and apply the Blueprint. The service builds with `npm ci`, starts with `npm start`, and checks `/api/health`. Deploys from `main` begin only after the linked CI checks pass.
+
+After the first deploy completes, copy the HTTPS address Render assigns, such as the service's `onrender.com` URL. The actual address is assigned by Render and is not fixed in this repository. Follow the [public deployment acceptance checklist](docs/manual-acceptance.md#public-render-deployment) to verify the page, health endpoint, and local records.
+
+Visitors only need a modern browser. Open the assigned URL and choose local play; no VS Code, Node.js, download, or account is required. Each browser keeps its own personal scores and in-progress game data. Records do not sync to other browsers or devices, and this deployment does not provide a shared leaderboard.
+
+The Render Free service sleeps after 15 minutes without inbound traffic. Its next request can take about a minute while the service starts. Server-side files, including SQLite data, are temporary and can be lost when the service sleeps, restarts, or redeploys. Personal scores for local play are stored in the visitor's browser instead. See [Render's Free instance limits](https://render.com/docs/free) for current platform details.
+
 ## Manual acceptance
 
 Use [docs/manual-acceptance.md](docs/manual-acceptance.md) for the complete repeatable gameplay and recovery checklist. For the visual refresh smoke test, verify the following at <http://localhost:3000>:

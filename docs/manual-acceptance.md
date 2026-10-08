@@ -73,3 +73,13 @@ Run `npm.cmd install` and `npm.cmd start` without creating or editing `.env`, th
 - [ ] Submit malformed JSON, an oversized request, an invalid cat ID, and an invalid event type; verify stable error codes/messages and no stack or filesystem path leakage.
 - [ ] Attempt to access another user’s run events, snapshot, completion, and abandon endpoints; verify each request is rejected.
 - [ ] Visit an unknown `/api/*` route and verify JSON `{ error: { code, message, retryable } }` is returned.
+
+## Public Render deployment
+
+Use the HTTPS URL assigned by Render after the Blueprint is connected and deployed. A first request after idle can take about a minute while the Free service starts; retry once before diagnosing a failure.
+
+- [ ] Open the assigned HTTPS URL in a private/incognito window and confirm the game choice screen renders.
+- [ ] Choose local play, complete a run, and confirm the personal record appears in the same browser.
+- [ ] Open the URL in a separate browser profile and confirm its personal records are independent; there is no server-shared leaderboard.
+- [ ] Open `https://<service-name>.onrender.com/api/health` and confirm HTTP 200 JSON with `ok: true`.
+- [ ] Confirm the service can wake from idle and the game remains playable after the loading delay.
