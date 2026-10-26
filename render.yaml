@@ -10,5 +10,7 @@ services:
     autoDeployTrigger: checksPass
     healthCheckPath: /api/health
     envVars:
+      - key: NODE_VERSION
+        value: 22.x
       - key: NODE_ENV
         value: production
