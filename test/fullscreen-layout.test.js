@@ -4,7 +4,9 @@ const path = require("node:path");
 const { test } = require("node:test");
 
 const root = path.join(__dirname, "..");
-const styles = fs.readFileSync(path.join(root, "public", "styles.css"), "utf8");
+const styles = fs
+  .readFileSync(path.join(root, "public", "styles.css"), "utf8")
+  .replace(/\r\n/g, "\n");
 const index = fs.readFileSync(path.join(root, "public", "index.html"), "utf8");
 
 function rule(selector) {
