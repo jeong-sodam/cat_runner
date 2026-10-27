@@ -6,21 +6,40 @@ Cat Runner는 브라우저에서 즐기는 무한 달리기 게임입니다. 여
 
 - Node.js 22 또는 24 LTS
 - npm
+- Windows x64 또는 Intel·Apple Silicon Mac
+
+지원하는 Windows와 Mac 환경에서는 SQLite용 미리 빌드된 파일을 사용하므로 Python이나 C/C++ 컴파일 도구를 따로 설치할 필요가 없습니다. Node.js와 npm은 먼저 설치되어 있어야 합니다.
 
 ## 로컬에서 실행하기
+
+Windows PowerShell에서 의존성을 설치합니다.
 
 ```powershell
 npm.cmd install
 ```
 
+macOS 터미널에서는 다음 명령을 사용합니다.
+
+```sh
+npm install
+```
+
 로컬 플레이를 실행하는 데 `.env` 파일이나 계정 설정은 필요하지 않습니다. 앱을 실행한 뒤 <http://localhost:3000>을 여세요. 고양이 선택 화면으로 넘어가려면 **로컬로 플레이**를 선택합니다. **로그인 (개발 예정)**을 누르면 개발 중 안내가 표시됩니다. 로그인 기능은 아직 제공되지 않습니다.
 
-서버를 실행합니다.
+서버를 실행합니다. Windows PowerShell에서는 다음 명령을 사용합니다.
 
 ```powershell
 npm.cmd start
 # or, during development:
 npm.cmd run dev   # development mode with Node watch
+```
+
+macOS 터미널에서는 다음 명령을 사용합니다.
+
+```sh
+npm start
+# or, during development:
+npm run dev
 ```
 
 <http://localhost:3000>을 여세요. 기본 데이터베이스 경로는 `data/cat-runner.sqlite`입니다. 로컬 진행 기록을 초기화하려면 서버를 중지한 뒤 데이터베이스 파일을 삭제하세요.
