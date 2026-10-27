@@ -64,5 +64,5 @@ Task: T02-platform-ci-matrix
 ## Progress
 - [x] Implementation complete
 - [x] Local validation passed (`npm.cmd ci`, `npm.cmd test` 162/162, and 8-pair matrix assertion).
-- Remote GitHub Actions jobs are pending a push or pull request; this local task did not write to the remote repository.
+- Remote validation passed: GitHub Actions run [40481308278](https://github.com/jeong-sodam/cat_runner/actions/runs/40481308278) completed successfully; all eight Node/platform jobs passed.
 - commit: see Git history

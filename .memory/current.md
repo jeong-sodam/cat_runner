@@ -11,7 +11,7 @@ None — all tasks in the active plan are complete.
 
 ## Status
 - P01의 모든 Task 완료 (3/3)
-- GitHub 원격 macOS 러너 결과는 변경 push 또는 PR 이후 실행 예정
+- GitHub Actions에서 Node 22/24 × Windows/Ubuntu/macOS Intel/Apple Silicon 8개 잡 모두 통과
 
 ## Next Step (IMPORTANT)
-계획이 완료되었습니다. 원격 macOS CI 결과는 변경 push 또는 PR 이후 확인합니다.
+계획이 완료되었습니다. 원격 CI 검증도 모두 통과했습니다.
