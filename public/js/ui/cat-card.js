@@ -1,11 +1,9 @@
 import { CAT_STAT_KEYS } from "../game/constants.js";
 
 const STAT_LABELS = Object.freeze({
-  jump: "점프력",
   speed: "속도",
   health: "체력",
   itemDuration: "아이템 지속",
-  magnetRange: "자석 범위",
 });
 
 function formatMultiplier(value) {

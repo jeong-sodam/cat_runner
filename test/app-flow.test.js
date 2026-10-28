@@ -520,10 +520,11 @@ test("character selection renders six cats and defaults each new run to black", 
   for (const card of cards) {
     const stats = card.children[4];
     assert.equal(stats.tagName, "UL");
-    assert.equal(stats.children.length, 5);
+    assert.equal(card.dataset.statCount, "3");
+    assert.equal(stats.children.length, 3);
     assert.deepEqual(
       Array.from(stats.children, (row) => row.dataset.statKey),
-      ["jump", "speed", "health", "itemDuration", "magnetRange"],
+      ["speed", "health", "itemDuration"],
     );
     assert.equal(textOf(stats).includes("슬라이드"), false);
     assert.equal(textOf(stats).includes("낙사 저항"), false);

@@ -97,4 +97,4 @@ Task: T01-gameplay-stat-model
 ## Progress
 - [x] Implementation complete
 - [x] Validation passed (`node --test test/game-core.test.js test/game-systems.test.js test/score-validation.test.js`: 59 passed, 0 failed; `git diff --check` clean).
-- commit: recorded in Git history with this Task's commit
+- commit: `a7ab5d4`

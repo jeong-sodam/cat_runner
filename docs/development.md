@@ -122,7 +122,8 @@ Render Free 서비스는 15분간 요청이 없으면 절전 상태가 되고, �
 ### Character selection and movement
 
 - [ ] Confirm all six choices are available: black, white, calico, cheese, mackerel, and chaos.
-- [ ] Select each cat and confirm its visible speed, jump, slide, item-duration, and health modifiers change as documented on the card.
+- [ ] Select each cat and confirm its visible speed, health, and item-duration ratings match the card; verify every cat has the same jump strength.
+- [ ] Compare the magnet effect for different cats under the same setup and confirm its attraction range does not change with the selected cat.
 - [ ] Start a run, press `W`, and verify a jump. Press `W` again while airborne and verify the second jump; holding `W` must not create unlimited jumps.
 - [ ] Hold `S` on the ground and verify the cat slides with a shorter hitbox. Release `S` and verify the normal hitbox returns.
 - [ ] Hit an obstacle and verify health decreases once. Continue until health reaches zero and verify game over.
