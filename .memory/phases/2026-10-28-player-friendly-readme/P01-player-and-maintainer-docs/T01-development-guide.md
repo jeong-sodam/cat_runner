@@ -66,4 +66,4 @@ Task: T01-development-guide
 ## Progress
 - [x] Implementation complete
 - [x] Validation passed (`git diff --check`; verified all 56 acceptance items were transferred; checked the existing README anchors resolve through the compatibility pointer and confirmed deployment facts against `render.yaml`).
-- commit: pending
+- commit: `53a23b4`

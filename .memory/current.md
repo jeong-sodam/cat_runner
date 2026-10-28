@@ -1,17 +1,16 @@
 # Current Context
 
 ## Active Plan
-[Python-Free Clone and Run Setup](./plans/2026-10-27-python-free-install.md)
+[Player-Friendly README](./plans/2026-10-28-player-friendly-readme.md)
 
 ## Active Phase
-[P01 Cross-Platform Install](./phases/2026-10-27-python-free-install/P01-cross-platform-install/phase.md)
+[P01 Player and Maintainer Docs](./phases/2026-10-28-player-friendly-readme/P01-player-and-maintainer-docs/phase.md)
 
 ## Active Task
 None — all tasks in the active plan are complete.
 
 ## Status
-- P01의 모든 Task 완료 (3/3)
-- GitHub Actions에서 Node 22/24 × Windows/Ubuntu/macOS Intel/Apple Silicon 8개 잡 모두 통과
+- P01의 모든 Task 완료 (2/2)
 
 ## Next Step (IMPORTANT)
-계획이 완료되었습니다. 원격 CI 검증도 모두 통과했습니다.
+계획이 완료되었습니다. T01 개발자 안내 통합과 T02 플레이어용 README 작성이 모두 끝났습니다.
