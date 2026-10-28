@@ -1073,18 +1073,14 @@ test("formation mice collect individually and use the full magnet range", async 
   });
 
   assert.equal(
-    modules.getMagnetRangePixels(modules.getStatMultiplier(1)),
-    208,
-  );
-  assert.equal(
-    modules.getMagnetRangePixels(modules.getStatMultiplier(5)),
-    312,
+    modules.getMagnetRangePixels(),
+    260,
   );
   state.activeEffect = { type: modules.EFFECT_TYPES.MAGNET, expiresAtMs: 5000 };
   const inside = {
     id: "formation-inside",
     type: "mouse",
-    x: state.player.x + 207,
+    x: state.player.x + 260,
     y: 610,
     width: 42,
     height: 42,
@@ -1095,12 +1091,12 @@ test("formation mice collect individually and use the full magnet range", async 
   const outside = {
     ...inside,
     id: "formation-outside",
-    x: state.player.x + 209,
+    x: state.player.x + 261,
     formationCell: { column: 2, row: 1 },
   };
   const beforeOutside = outside.x;
   modules.updateActiveEffect(state, 1000, [inside, outside]);
-  assert.ok(inside.x < state.player.x + 207);
+  assert.ok(inside.x < state.player.x + 260);
   assert.equal(outside.x, beforeOutside);
 });
 
@@ -1108,11 +1104,14 @@ test("effect duration applies to positive effects only", async () => {
   const modules = await loadSystems();
   const cheese = createState(modules, "cheese");
   const black = createState(modules, "black");
+  const white = createState(modules, "white");
 
   modules.applyEffect(cheese, modules.EFFECT_TYPES.MAGNET, 100);
   modules.applyEffect(black, modules.EFFECT_TYPES.MAGNET, 100);
-  assert.equal(cheese.activeEffect.expiresAtMs, 6100);
-  assert.equal(black.activeEffect.expiresAtMs, 4100);
+  modules.applyEffect(white, modules.EFFECT_TYPES.MAGNET, 100);
+  assert.equal(cheese.activeEffect.expiresAtMs, 5100);
+  assert.equal(black.activeEffect.expiresAtMs, 3100);
+  assert.equal(white.activeEffect.expiresAtMs, 6600);
 
   modules.applyEffect(cheese, modules.EFFECT_TYPES.SLOW_MISS, 100);
   assert.equal(cheese.activeEffect.expiresAtMs, 5100);

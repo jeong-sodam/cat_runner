@@ -14,34 +14,28 @@ const RHYTHM_FIELDS = Object.freeze([
 ]);
 const CAT_STATS = Object.freeze({
   black: {
-    healthRating: 2,
-    itemDurationMultiplier: 0.8,
-    magnetRangeMultiplier: 1.1,
+    healthRating: 3,
+    itemDurationMs: 3000,
   },
   white: {
     healthRating: 3,
-    itemDurationMultiplier: 1.1,
-    magnetRangeMultiplier: 0.8,
+    itemDurationMs: 6500,
   },
   calico: {
     healthRating: 5,
-    itemDurationMultiplier: 1,
-    magnetRangeMultiplier: 1,
+    itemDurationMs: 5000,
   },
   cheese: {
     healthRating: 3,
-    itemDurationMultiplier: 1.2,
-    magnetRangeMultiplier: 1.1,
+    itemDurationMs: 5000,
   },
   mackerel: {
-    healthRating: 2,
-    itemDurationMultiplier: 0.8,
-    magnetRangeMultiplier: 1,
+    healthRating: 3,
+    itemDurationMs: 4000,
   },
   chaos: {
     healthRating: 1,
-    itemDurationMultiplier: 1.1,
-    magnetRangeMultiplier: 1.1,
+    itemDurationMs: 5000,
   },
 });
 
@@ -200,7 +194,7 @@ function validateEventStream(run, events, { clientFinishedAt } = {}) {
           throw validationError("EFFECT_MISMATCH", "Grass effect does not match the server roll.");
         }
         const duration = POSITIVE_EFFECTS.has(effectType)
-          ? 5000 * catStats.itemDurationMultiplier
+          ? catStats.itemDurationMs
           : 5000;
         activeEffect = {
           type: effectType,

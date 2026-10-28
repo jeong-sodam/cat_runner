@@ -90,11 +90,9 @@ test("game state contains the six cats and valid lifecycle transitions", async (
   const modules = await loadGameModules();
   const expectedCats = ["black", "white", "calico", "cheese", "mackerel", "chaos"];
   assert.deepEqual(modules.CAT_STAT_KEYS, [
-    "jump",
     "speed",
     "health",
     "itemDuration",
-    "magnetRange",
   ]);
   assert.deepEqual(Object.keys(modules.CAT_DEFINITIONS), expectedCats);
   for (const cat of Object.values(modules.CAT_DEFINITIONS)) {
@@ -111,24 +109,35 @@ test("game state contains the six cats and valid lifecycle transitions", async (
   const ratingTotals = Object.values(modules.CAT_DEFINITIONS).map((cat) =>
     Object.values(cat.statRatings).reduce((sum, value) => sum + value, 0),
   );
-  assert.ok(Math.max(...ratingTotals) - Math.min(...ratingTotals) <= 1);
+  assert.deepEqual(ratingTotals, [9, 9, 9, 9, 9, 9]);
+  assert.deepEqual(
+    [1, 2, 3, 4, 5].map((rating) => modules.getSpeedMultiplier(rating)),
+    [0.75, 0.875, 1, 1.15, 1.3],
+  );
+  assert.deepEqual(
+    [1, 2, 3, 4, 5].map((rating) => modules.getItemDurationMs(rating)),
+    [3000, 4000, 5000, 6500, 8000],
+  );
+  assert.equal(modules.GAME_CONFIG.jumpMultiplier, 1.2);
+  assert.ok(Object.values(modules.CAT_DEFINITIONS).every((cat) => !("jumpMultiplier" in cat)));
+  assert.ok(Object.values(modules.CAT_DEFINITIONS).every((cat) => !("magnetRangeMultiplier" in cat)));
 
   const state = modules.createGameState({ catId: "black", seed: 123 });
   assert.equal(state.status, modules.GAME_STATUSES.READY);
-  assert.equal(state.maxHealth, 2);
-  assert.equal(state.health, 2);
+  assert.equal(state.maxHealth, 3);
+  assert.equal(state.health, 3);
   assert.equal(state.player.airSlideUsed, false);
   assert.deepEqual(
     Object.fromEntries(
       Object.entries(modules.CAT_DEFINITIONS).map(([catId, cat]) => [catId, cat.statRatings]),
     ),
     {
-      black: { jump: 3, speed: 5, health: 2, itemDuration: 1, magnetRange: 4 },
-      white: { jump: 5, speed: 2, health: 3, itemDuration: 4, magnetRange: 1 },
-      calico: { jump: 3, speed: 1, health: 5, itemDuration: 3, magnetRange: 3 },
-      cheese: { jump: 1, speed: 2, health: 3, itemDuration: 5, magnetRange: 4 },
-      mackerel: { jump: 5, speed: 4, health: 2, itemDuration: 1, magnetRange: 3 },
-      chaos: { jump: 1, speed: 5, health: 1, itemDuration: 4, magnetRange: 4 },
+      black: { speed: 5, health: 3, itemDuration: 1 },
+      white: { speed: 2, health: 3, itemDuration: 4 },
+      calico: { speed: 1, health: 5, itemDuration: 3 },
+      cheese: { speed: 3, health: 3, itemDuration: 3 },
+      mackerel: { speed: 4, health: 3, itemDuration: 2 },
+      chaos: { speed: 5, health: 1, itemDuration: 3 },
     },
   );
   modules.transitionGameState(state, modules.GAME_STATUSES.RUNNING);
@@ -157,9 +166,10 @@ test("new runs reset their zone while restored snapshots preserve it", async () 
   assert.equal(restored.zoneId, "home_day");
 });
 
-test("rating one jump reaches above every basic obstacle", async () => {
+test("all cats share a strong jump that clears every basic obstacle in one jump", async () => {
   const modules = await loadGameModules();
   const harness = createHarness(modules, "cheese");
+  assert.equal(modules.GAME_CONFIG.jumpMultiplier, 1.2);
 
   harness.target.dispatch("keydown", "w");
   for (let frame = 0; frame < 6; frame += 1) {
@@ -215,7 +225,7 @@ test("the second W preserves the current airborne position", async () => {
 
   const expectedY =
     yBeforeSecondJump +
-    (modules.GAME_CONFIG.jumpVelocity * modules.CAT_DEFINITIONS.white.jumpMultiplier +
+    (modules.GAME_CONFIG.jumpVelocity * modules.GAME_CONFIG.jumpMultiplier +
       modules.GAME_CONFIG.gravity * (modules.GAME_CONFIG.fixedStepMs / 1000)) *
       (modules.GAME_CONFIG.fixedStepMs / 1000);
   assert.equal(harness.state.player.jumpsUsed, 2);
@@ -279,6 +289,10 @@ test("S changes the hitbox after fast airborne descent lands", async () => {
   harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
   harness.target.dispatch("keydown", "s");
   harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  for (let frame = 0; frame < 10 && !harness.state.player.isGrounded; frame += 1) {
+    harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  }
+  assert.equal(harness.state.player.isGrounded, true);
   assert.equal(harness.state.player.isSliding, true);
   assert.equal(harness.state.player.height, modules.GAME_CONFIG.slideHeight);
   harness.destroy();

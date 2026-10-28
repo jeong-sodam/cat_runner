@@ -9,11 +9,11 @@ const { calculateVerifiedResult } = require("../src/services/run-validation-serv
 
 const EFFECTS = ["magnet", "invincible", "double_score", "slow_miss"];
 const HEALTH_BY_CAT = Object.freeze({
-  black: 2,
+  black: 3,
   white: 3,
   calico: 5,
   cheese: 3,
-  mackerel: 2,
+  mackerel: 3,
   chaos: 1,
 });
 
@@ -286,6 +286,31 @@ test("double score and invincibility are recalculated from grass rolls", () => {
     { seq: 9, type: "run_gameover", occurredAtMs: 6500, payload: {} },
   ];
   assert.equal(calculateVerifiedResult(invincibleRun, events, { clientFinishedAt: 10000 }).health, 0);
+});
+
+test("server replay uses cat-specific beneficial effect durations", () => {
+  const double = findSeedForEffect("double_score");
+  const blackRun = makeRun(double.seed, "black");
+  const blackEvents = makeGameoverEvents(blackRun, { grass: double.grass, distanceM: 4 });
+  blackEvents.find((event) => event.type === "mouse_collected").occurredAtMs = 3100;
+  blackEvents.find((event) => event.type === "distance_checkpoint").occurredAtMs = 3200;
+  for (const event of blackEvents.filter((item) => item.type === "obstacle_collision")) {
+    event.occurredAtMs = 3300;
+  }
+  blackEvents.at(-1).occurredAtMs = 3400;
+  const blackResult = calculateVerifiedResult(blackRun, blackEvents, { clientFinishedAt: 5000 });
+  assert.equal(blackResult.score, 14);
+
+  const whiteRun = makeRun(double.seed, "white");
+  const whiteEvents = makeGameoverEvents(whiteRun, { grass: double.grass, distanceM: 4 });
+  whiteEvents.find((event) => event.type === "mouse_collected").occurredAtMs = 3100;
+  whiteEvents.find((event) => event.type === "distance_checkpoint").occurredAtMs = 3200;
+  for (const event of whiteEvents.filter((item) => item.type === "obstacle_collision")) {
+    event.occurredAtMs = 3300;
+  }
+  whiteEvents.at(-1).occurredAtMs = 3400;
+  const whiteResult = calculateVerifiedResult(whiteRun, whiteEvents, { clientFinishedAt: 5000 });
+  assert.equal(whiteResult.score, 24);
 });
 
 test("server v10 manifest mirrors client route entities, gap ids, widths, and actions", async () => {

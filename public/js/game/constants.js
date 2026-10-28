@@ -6,6 +6,7 @@ const GAME_CONFIG = Object.freeze({
   baseWorldSpeed: 360,
   gravity: 2400,
   jumpVelocity: -900,
+  jumpMultiplier: 1.2,
   maxJumps: 2,
   playerWidth: 90,
   playerHeight: 110,
@@ -33,96 +34,98 @@ const GAME_CONFIG = Object.freeze({
 });
 
 const CAT_STAT_KEYS = Object.freeze([
-  "jump",
   "speed",
   "health",
   "itemDuration",
-  "magnetRange",
 ]);
 
-const STAT_RATING_MULTIPLIERS = Object.freeze({
-  1: 0.8,
-  2: 0.9,
+const SPEED_MULTIPLIERS = Object.freeze({
+  1: 0.75,
+  2: 0.875,
   3: 1,
-  4: 1.1,
-  5: 1.2,
+  4: 1.15,
+  5: 1.3,
 });
 
-function getStatMultiplier(rating) {
-  return STAT_RATING_MULTIPLIERS[Math.max(1, Math.min(5, Math.round(rating)))] || 1;
+const ITEM_DURATION_MS_BY_RATING = Object.freeze({
+  1: 3000,
+  2: 4000,
+  3: 5000,
+  4: 6500,
+  5: 8000,
+});
+
+function normalizeRating(rating) {
+  return Math.max(1, Math.min(5, Math.round(Number(rating) || 1)));
+}
+
+function getSpeedMultiplier(rating) {
+  return SPEED_MULTIPLIERS[normalizeRating(rating)];
+}
+
+function getItemDurationMs(rating) {
+  return ITEM_DURATION_MS_BY_RATING[normalizeRating(rating)];
 }
 
 function getMaxHealthForRating(rating) {
-  return Math.max(1, Math.min(5, Math.round(Number(rating) || 1)));
+  return normalizeRating(rating);
 }
 
 const CAT_DEFINITIONS = Object.freeze({
   black: Object.freeze({
     id: "black",
     label: "검정",
-    jumpMultiplier: getStatMultiplier(3),
-    speedMultiplier: getStatMultiplier(5),
-    itemDurationMultiplier: getStatMultiplier(1),
-    magnetRangeMultiplier: getStatMultiplier(4),
-    statRatings: Object.freeze({ jump: 3, speed: 5, health: 2, itemDuration: 1, magnetRange: 4 }),
-    advantage: "이동 속도·자석 범위",
-    weakness: "체력",
+    speedMultiplier: getSpeedMultiplier(5),
+    itemDurationMs: getItemDurationMs(1),
+    statRatings: Object.freeze({ speed: 5, health: 3, itemDuration: 1 }),
+    advantage: "이동 속도",
+    weakness: "아이템 지속 시간",
   }),
   white: Object.freeze({
     id: "white",
     label: "하양",
-    jumpMultiplier: getStatMultiplier(5),
-    speedMultiplier: getStatMultiplier(2),
-    itemDurationMultiplier: getStatMultiplier(4),
-    magnetRangeMultiplier: getStatMultiplier(1),
-    statRatings: Object.freeze({ jump: 5, speed: 2, health: 3, itemDuration: 4, magnetRange: 1 }),
-    advantage: "점프력·아이템 지속",
-    weakness: "자석 범위",
+    speedMultiplier: getSpeedMultiplier(2),
+    itemDurationMs: getItemDurationMs(4),
+    statRatings: Object.freeze({ speed: 2, health: 3, itemDuration: 4 }),
+    advantage: "아이템 지속 시간",
+    weakness: "이동 속도",
   }),
   calico: Object.freeze({
     id: "calico",
     label: "삼색",
-    jumpMultiplier: getStatMultiplier(3),
-    speedMultiplier: getStatMultiplier(1),
-    itemDurationMultiplier: getStatMultiplier(3),
-    magnetRangeMultiplier: getStatMultiplier(3),
-    statRatings: Object.freeze({ jump: 3, speed: 1, health: 5, itemDuration: 3, magnetRange: 3 }),
+    speedMultiplier: getSpeedMultiplier(1),
+    itemDurationMs: getItemDurationMs(3),
+    statRatings: Object.freeze({ speed: 1, health: 5, itemDuration: 3 }),
     advantage: "체력",
     weakness: "이동 속도",
   }),
   cheese: Object.freeze({
     id: "cheese",
     label: "치즈",
-    jumpMultiplier: getStatMultiplier(1),
-    speedMultiplier: getStatMultiplier(2),
-    itemDurationMultiplier: getStatMultiplier(5),
-    magnetRangeMultiplier: getStatMultiplier(4),
-    statRatings: Object.freeze({ jump: 1, speed: 2, health: 3, itemDuration: 5, magnetRange: 4 }),
-    advantage: "아이템 지속·자석 범위",
-    weakness: "점프력",
+    speedMultiplier: getSpeedMultiplier(3),
+    itemDurationMs: getItemDurationMs(3),
+    statRatings: Object.freeze({ speed: 3, health: 3, itemDuration: 3 }),
+    advantage: "균형 잡힌 능력",
+    weakness: "뚜렷한 약점 없음",
   }),
   mackerel: Object.freeze({
     id: "mackerel",
     label: "고등어",
-    jumpMultiplier: getStatMultiplier(5),
-    speedMultiplier: getStatMultiplier(4),
-    itemDurationMultiplier: getStatMultiplier(1),
-    magnetRangeMultiplier: getStatMultiplier(3),
-    statRatings: Object.freeze({ jump: 5, speed: 4, health: 2, itemDuration: 1, magnetRange: 3 }),
-    advantage: "점프력·이동 속도",
-    weakness: "아이템 지속",
+    speedMultiplier: getSpeedMultiplier(4),
+    itemDurationMs: getItemDurationMs(2),
+    statRatings: Object.freeze({ speed: 4, health: 3, itemDuration: 2 }),
+    advantage: "이동 속도",
+    weakness: "아이템 지속 시간",
   }),
   chaos: Object.freeze({
     id: "chaos",
     label: "카오스",
     englishName: "Mayhem",
-    jumpMultiplier: getStatMultiplier(1),
-    speedMultiplier: getStatMultiplier(5),
-    itemDurationMultiplier: getStatMultiplier(4),
-    magnetRangeMultiplier: getStatMultiplier(4),
-    statRatings: Object.freeze({ jump: 1, speed: 5, health: 1, itemDuration: 4, magnetRange: 4 }),
-    advantage: "이동 속도·아이템 지속",
-    weakness: "점프력",
+    speedMultiplier: getSpeedMultiplier(5),
+    itemDurationMs: getItemDurationMs(3),
+    statRatings: Object.freeze({ speed: 5, health: 1, itemDuration: 3 }),
+    advantage: "이동 속도",
+    weakness: "체력",
   }),
 });
 
@@ -146,7 +149,9 @@ export {
   EFFECT_TYPES,
   GAME_CONFIG,
   GAME_STATUSES,
-  STAT_RATING_MULTIPLIERS,
+  SPEED_MULTIPLIERS,
+  ITEM_DURATION_MS_BY_RATING,
+  getItemDurationMs,
   getMaxHealthForRating,
-  getStatMultiplier,
+  getSpeedMultiplier,
 };

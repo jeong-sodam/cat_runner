@@ -70,7 +70,7 @@ function createGameLoop({
         state.player.y = GAME_CONFIG.groundY - state.player.height;
         state.player.airSlideUsed = false;
       }
-      state.player.vy = GAME_CONFIG.jumpVelocity * cat.jumpMultiplier;
+      state.player.vy = GAME_CONFIG.jumpVelocity * GAME_CONFIG.jumpMultiplier;
       state.player.isGrounded = false;
       state.player.isSliding = false;
       state.player.jumpsUsed += 1;
