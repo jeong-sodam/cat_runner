@@ -115,4 +115,4 @@ Task: T04-rendering-performance
 - [x] 구현 완료
 - [x] 자동 검증 통과 (`npm.cmd test`: 110/110)
 - [ ] Chrome/Edge FPS 실측 — 사용자 PC에서 첫 10초 및 3분 이후 구간 필요
-- commit: pending
+- commit: `e278cc1`

@@ -7,10 +7,10 @@
 [P01 Static Game and Performance](./phases/2026-10-29-github-pages-performance-cleanup/P01-static-game-performance/phase.md)
 
 ## Active Task
-[T04 Rendering Performance](./phases/2026-10-29-github-pages-performance-cleanup/P01-static-game-performance/T04-rendering-performance.md)
+None — all four implementation tasks are committed locally.
 
 ## Status
-- T01 done and committed as `d9f6a07`; T02 done and committed as `ae15b4c`; T03 implemented and validated. P01 has 3/4 tasks complete. T04 is active.
+- T01 `d9f6a07`, T02 `ae15b4c`, T03 `935494f`, and T04 `e278cc1` are committed locally. All implementation tasks are complete. Push to `main` has not been approved; desktop Chrome/Edge FPS profiling is still unverified.
 
 ## Next Step (IMPORTANT)
-Read the T04 blueprint. Optimize world rendering to preserve ordered entities and skip off-screen draws; also optimize image assets while preserving visual quality, updating manifests, and verifying rendered appearance.
+After user approval, push the prepared commits to `main` to trigger GitHub Pages deployment. Once the deployed page is reachable, verify the page and perform desktop Chrome/Edge FPS profiling; repository Pages Source must be set to GitHub Actions.

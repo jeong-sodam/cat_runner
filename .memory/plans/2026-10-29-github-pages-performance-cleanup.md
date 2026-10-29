@@ -6,7 +6,7 @@ Serve Cat Runner as a browser-only game at the repository's GitHub Pages URL, re
 ## Phases
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Convert the app to local-only static play, remove server infrastructure, publish the `public` directory through Pages, and optimize the per-frame renderer. | [P01](../phases/2026-10-29-github-pages-performance-cleanup/P01-static-game-performance/phase.md) |
+| P01 | `implementation_complete` | Convert the app to local-only static play, remove server infrastructure, configure Pages publishing, and optimize the per-frame renderer and image assets. Remote publishing approval and desktop FPS capture are pending. | [P01](../phases/2026-10-29-github-pages-performance-cleanup/P01-static-game-performance/phase.md) |
 
 ## Confirmed decisions
 - Static hosting is GitHub Pages; deploy automatically from `main` after CI passes.
