@@ -39,14 +39,14 @@ function canDrawCatSprite(ctx, sprite) {
   return typeof ctx.drawImage === "function" && width >= 3 && height > 0;
 }
 
-function getItemPresentation(entity, state) {
+function getItemPresentation(entity, state, screenX = entity.x) {
   if (entity.type !== "mouse" && entity.type !== "grass") {
     return { y: entity.y, brightness: 1 };
   }
 
   const phase = entity.type === "grass" ? 180 : 260;
-  const bob = Math.sin(((state.elapsedMs || 0) + entity.x) / phase) * 2;
-  const brightness = 0.96 + Math.sin(((state.elapsedMs || 0) + entity.x) / 320) * 0.04;
+  const bob = Math.sin(((state.elapsedMs || 0) + screenX) / phase) * 2;
+  const brightness = 0.96 + Math.sin(((state.elapsedMs || 0) + screenX) / 320) * 0.04;
   return { y: entity.y + bob, brightness };
 }
 
@@ -163,32 +163,28 @@ function createSceneRenderer(ctx, assets = {}) {
     );
   }
 
-  function drawEntity(entity, state) {
-    const screenEntity = {
-      ...entity,
-      x: entity.x - state.worldOffset,
-    };
+  function drawEntity(entity, state, screenX) {
     const sprite = assetProvider.getItemSprite(entity.type, entity.variant);
     if (sprite && ctx.drawImage) {
-      const presentation = getItemPresentation(screenEntity, state);
+      const presentation = getItemPresentation(entity, state, screenX);
       ctx.save();
       ctx.filter = `brightness(${presentation.brightness})`;
       ctx.drawImage(
         sprite,
-        screenEntity.x,
+        screenX,
         presentation.y,
-        screenEntity.width,
-        screenEntity.height,
+        entity.width,
+        entity.height,
       );
       ctx.restore();
       return;
     }
     if (entity.type === "obstacle") {
-      drawObstacle(ctx, screenEntity);
+      drawObstacle(ctx, entity, screenX);
     } else if (entity.type === "mouse") {
-      drawMouse(ctx, screenEntity);
+      drawMouse(ctx, entity, screenX);
     } else if (entity.type === "grass") {
-      drawGrass(ctx, screenEntity);
+      drawGrass(ctx, entity, screenX);
     }
   }
 
@@ -202,11 +198,18 @@ function createSceneRenderer(ctx, assets = {}) {
     for (const gap of state.worldGaps || []) {
       drawGap(ctx, gap, state);
     }
-    for (const entity of [...world].sort((first, second) => first.x - second.x)) {
+    for (const entity of world) {
+      const screenX = entity.x - state.worldOffset;
+      if (screenX > GAME_CONFIG.canvasWidth) {
+        break;
+      }
+      if (screenX + entity.width < 0) {
+        continue;
+      }
       if (entity.collected) {
         continue;
       }
-      drawEntity(entity, state);
+      drawEntity(entity, state, screenX);
     }
     drawCatScene(state);
     drawRhythmTargets(ctx, state.rhythm);

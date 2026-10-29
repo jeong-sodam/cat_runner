@@ -222,7 +222,16 @@ test("local character selection offers resume and new-game actions", async () =>
     catId: "white",
     seed: "saved-seed",
     snapshotVersion: 1,
-    snapshot: { status: "paused", score: 77, elapsedMs: 450, zoneId: "outside" },
+    snapshot: {
+      status: "paused",
+      score: 77,
+      elapsedMs: 450,
+      zoneId: "outside",
+      worldEntities: [
+        { type: "obstacle", variant: "box", x: 900, y: 620, width: 80, height: 80 },
+        { type: "obstacle", variant: "box", x: 100, y: 620, width: 80, height: 80 },
+      ],
+    },
     savedAt: 100,
   };
   let activeRun = candidate;
@@ -262,6 +271,10 @@ test("local character selection offers resume and new-game actions", async () =>
   assert.equal(controller.getState().gameState.score, 77);
   assert.equal(controller.getState().gameState.zoneId, "outside");
   assert.equal(controller.getState().gameState.elapsedMs, 450);
+  assert.deepEqual(
+    controller.getState().gameState.worldEntities.map((entity) => entity.x),
+    [100, 900],
+  );
   assert.equal(controller.getState().gameState.status, "running");
   assert.equal(activeRun.runId, "local-saved-run");
   controller.destroy();

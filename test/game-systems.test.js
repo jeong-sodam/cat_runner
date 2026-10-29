@@ -556,10 +556,14 @@ test("world spawns safe logical entities and removes entities behind the player"
 
   assert.ok(entities.length > 0);
   assert.ok(entities.every((entity) => entity.x > state.worldOffset));
+  assert.ok(entities.every((entity, index) => index === 0 || entities[index - 1].x <= entity.x));
   assert.ok(state.patternIndex > 0);
 
   state.worldOffset = 10000;
   modules.updateWorldEntities(state, stream);
+  assert.ok(state.worldEntities.every((entity, index, current) =>
+    index === 0 || current[index - 1].x <= entity.x,
+  ));
   assert.equal(
     state.worldEntities.some(
       (entity) => entity.x - state.worldOffset <= state.player.x - 200,
@@ -608,6 +612,9 @@ test("world connects consecutive patterns with continuous ground mice", async ()
   const stream = { next: () => patterns[index++] };
   modules.spawnNextPattern(state, stream);
   modules.spawnNextPattern(state, stream);
+  assert.ok(state.worldEntities.every((entity, index, entities) =>
+    index === 0 || entities[index - 1].x <= entity.x,
+  ));
   const connectors = state.worldEntities
     .filter((entity) => entity.routeKind === "connector")
     .sort((left, right) => left.x - right.x);
@@ -663,6 +670,9 @@ test("world maps normal formation cells into the reserved corridor", async () =>
   };
 
   const spawned = modules.spawnNextPattern(state, { next: () => pattern });
+  assert.ok(state.worldEntities.every((entity, index, entities) =>
+    index === 0 || entities[index - 1].x <= entity.x,
+  ));
   const mice = spawned.entities.filter((entity) => entity.formationId === "heart");
   assert.equal(mice.length, formation.cells.length);
   assert.ok(mice.every((entity) => entity.patternId === pattern.id));

@@ -98,7 +98,10 @@ function spawnNextPattern(state, patternStream) {
         ...entity,
         patternId: `bridge-${pattern.id}`,
       }));
-  state.worldEntities.push(...bridgeEntities, ...entities);
+  const spawnedEntities = bridgeEntities
+    .concat(entities)
+    .sort((first, second) => first.x - second.x);
+  state.worldEntities.push(...spawnedEntities);
   state.worldGaps.push(...gaps);
   state.nextPatternX = startX + pattern.width + resolvePatternSpacing(pattern);
   state.lastPatternEndX = startX + pattern.width;

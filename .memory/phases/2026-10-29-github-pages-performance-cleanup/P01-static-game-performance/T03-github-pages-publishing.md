@@ -81,4 +81,4 @@ Task: T03-github-pages-publishing
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`npm.cmd test`: 109/109)
-- commit: pending
+- commit: `935494f`

@@ -343,6 +343,9 @@ function createAppController(options = {}) {
         seed,
         status: runOptions.resumed ? "ready" : gameState.status,
       });
+      if (Array.isArray(gameState.worldEntities)) {
+        gameState.worldEntities.sort((first, second) => first.x - second.x);
+      }
     }
     state.gameState = gameState;
     const localStore = getLocalRunStore();

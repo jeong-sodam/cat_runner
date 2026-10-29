@@ -165,6 +165,34 @@ test("renderer draws every entity variant and returns a pause hit area", async (
   );
 });
 
+test("renderer culls off-screen entities without sorting or mutating the world", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const renderer = modules.createSceneRenderer(context);
+  const state = createState(modules);
+  state.worldOffset = 0;
+  const world = [-100, 10, 80, 1601].map((x) => ({
+    id: `box-${x}`,
+    type: "obstacle",
+    variant: "box",
+    x,
+    y: 520,
+    width: 20,
+    height: 20,
+  }));
+  const originalOrder = world.slice();
+  const originalXs = world.map((entity) => entity.x);
+
+  renderer.render(state, world);
+
+  const drawnXs = context.calls
+    .filter((call) => call.name === "translate" && call.args[1] === 520)
+    .map((call) => call.args[0]);
+  assert.deepEqual(drawnXs, [10, 80]);
+  assert.deepEqual(world, originalOrder);
+  assert.deepEqual(world.map((entity) => entity.x), originalXs);
+});
+
 test("renderer sends every formation cell through the ordinary mouse fallback", async () => {
   const modules = await loadRenderModules();
   const context = createFakeContext();

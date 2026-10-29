@@ -1,6 +1,6 @@
 ﻿# Task: T04 Rendering Performance
 
-## Status: pending
+## Status: done
 
 ## Goal
 Reduce per-frame JavaScript work and unnecessary Canvas draw calls so local gameplay starts and continues smoothly on a typical desktop PC in current Chrome or Edge, while preserving draw order and gameplay visuals.
@@ -15,7 +15,9 @@ Reduce per-frame JavaScript work and unnecessary Canvas draw calls so local game
 
 - Related Files:
   - `public/js/game/world.js` :: `spawnNextPattern`, `updateWorldEntities` — maintain sorted world-space entity order; modify
+  - `public/js/app/app-controller.js` :: restored snapshots — normalize legacy saved entity order once before first frame; modify
   - `test/game-systems.test.js` :: world pattern spawn/pruning tests — add invariant coverage
+  - `test/app-flow.test.js` :: resume migration order assertion — add
 
 #### Details
 - **Signatures & Types**:
@@ -72,11 +74,26 @@ Reduce per-frame JavaScript work and unnecessary Canvas draw calls so local game
 - Record average frame rate and long frames before/after in the task notes. A 60 FPS frame budget is approximately 16.7 ms. Aim close to 60 FPS without sustained visible stutter; do not alter game speed, difficulty, collision, or asset artwork to satisfy the measurement.
 - Add the manual check to developer docs so future rendering changes can be compared on the same browser/device class.
 
+### I04. Optimize raster assets without changing image quality
+
+- Related Files:
+  - `public/assets/cat-runner/**/*.png` :: game sprites/backgrounds — losslessly recompress in place
+  - `public/assets/fonts/PretendardVariable.woff2` :: inspect size; preserve unless a lossless font optimizer is already available
+  - `.memory/phases/.../T04-rendering-performance.md` :: record original and optimized totals
+
+#### Details
+- Keep PNG format, pixel dimensions, alpha, and exact decoded pixel values. Use only lossless PNG filter/compression optimization; do not use lossy conversion or alter sprite artwork.
+- Verify optimized PNGs decode to the same pixels as the originals before replacing them, and record aggregate bytes before/after.
+- Do not add a runtime dependency or modify the asset manifest solely for compression.
+- Verified PNG total: 22,601,718 bytes before, 22,301,812 bytes after; saved 299,906 bytes (1.33%).
+- Decoded pixel data compared equal for all 15 PNGs. The existing WOFF2 font was left unchanged because no compatible lossless font optimizer is installed.
+
 ## Acceptance Criteria
-- [ ] World entity arrays remain in ascending x order through bridge, normal, formation, spawn, and prune paths.
-- [ ] Rendering performs no entity-array copy or sort per frame and does not draw fully off-screen entities.
-- [ ] Canvas draw order, visible animation, pause hitbox, and gameplay state remain unchanged.
-- [ ] Desktop Chrome/Edge profiling is close to 60 FPS and shows reduced scripting/rendering work compared with the pre-change capture.
+- [x] World entity arrays remain in ascending x order through bridge, normal, formation, spawn, and prune paths.
+- [x] Rendering performs no entity-array copy or sort per frame and does not draw fully off-screen entities.
+- [x] Canvas draw order, visible animation, pause hitbox, and gameplay state remain unchanged (automated regression coverage).
+- [x] PNG assets are losslessly recompressed and decoded pixel values match exactly.
+- [ ] Desktop Chrome/Edge profiling is close to 60 FPS and shows reduced scripting/rendering work compared with the pre-change capture. Not measured here: Computer Use could not safely determine the browser URL.
 
 ## Validation
 - `npm test` — all game, world, app-flow, and renderer tests pass.
@@ -95,6 +112,7 @@ Task: T04-rendering-performance
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 자동 검증 통과 (`npm.cmd test`: 110/110)
+- [ ] Chrome/Edge FPS 실측 — 사용자 PC에서 첫 10초 및 3분 이후 구간 필요
 - commit: pending

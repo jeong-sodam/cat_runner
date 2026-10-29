@@ -1,6 +1,6 @@
-function drawObstacle(ctx, entity) {
+function drawObstacle(ctx, entity, screenX = entity.x) {
   ctx.save();
-  ctx.translate(entity.x, entity.y);
+  ctx.translate(screenX, entity.y);
   ctx.shadowColor = "rgba(63, 43, 43, 0.2)";
   ctx.shadowBlur = 10;
   ctx.shadowOffsetY = 6;
@@ -48,9 +48,9 @@ function drawObstacle(ctx, entity) {
   ctx.restore();
 }
 
-function drawMouse(ctx, entity) {
+function drawMouse(ctx, entity, screenX = entity.x) {
   ctx.save();
-  ctx.translate(entity.x, entity.y);
+  ctx.translate(screenX, entity.y);
   ctx.shadowColor = "rgba(63, 43, 43, 0.2)";
   ctx.shadowBlur = 9;
   ctx.shadowOffsetY = 5;
@@ -84,9 +84,9 @@ function drawMouse(ctx, entity) {
   ctx.restore();
 }
 
-function drawGrass(ctx, entity) {
+function drawGrass(ctx, entity, screenX = entity.x) {
   ctx.save();
-  ctx.translate(entity.x, entity.y);
+  ctx.translate(screenX, entity.y);
   ctx.shadowColor = "rgba(63, 43, 43, 0.16)";
   ctx.shadowBlur = 8;
   ctx.shadowOffsetY = 4;
