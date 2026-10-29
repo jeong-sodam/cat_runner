@@ -10,7 +10,7 @@
 None — all four implementation tasks are committed locally.
 
 ## Status
-- T01 `d9f6a07`, T02 `ae15b4c`, T03 `935494f`, and T04 `e278cc1` are committed locally. All implementation tasks are complete. Push to `main` has not been approved; desktop Chrome/Edge FPS profiling is still unverified.
+- T01 `d9f6a07`, T02 `ae15b4c`, T03 `935494f`, and T04 `e278cc1` are implemented and pushed. GitHub Actions run #4 (`40829636243`) passed all four Node 24 jobs and Pages deployment. Desktop Chrome/Edge FPS profiling is still unverified.
 
 ## Next Step (IMPORTANT)
-After user approval, push the prepared commits to `main` to trigger GitHub Pages deployment. Once the deployed page is reachable, verify the page and perform desktop Chrome/Edge FPS profiling; repository Pages Source must be set to GitHub Actions.
+If performance profiling is requested, capture first-10-second and 3-minute Chrome/Edge DevTools runs on a desktop PC. The live site is https://jeong-sodam.github.io/cat_runner/.

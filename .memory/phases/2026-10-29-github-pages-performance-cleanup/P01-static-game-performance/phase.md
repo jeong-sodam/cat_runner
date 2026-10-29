@@ -1,6 +1,6 @@
 ﻿# Phase: P01 Static Game and Performance
 
-## Status: implementation complete; awaiting Pages publication approval and desktop FPS capture
+## Status: implementation and Pages deployment complete; desktop FPS capture remains unverified
 
 ## Tasks
 | Task | Status | Summary | Blueprint |
