@@ -1,19 +1,20 @@
 # Current Context
 
 ## Active Plan
-[Game-over Actions, Escape Pause, and Lower Jump](./plans/2026-10-29-game-over-controls-jump.md)
+[Rhythm Feedback and Local-Play Copy](./plans/2026-10-29-rhythm-feedback-and-local-copy.md)
 
 ## Active Phase
-[P01 Results, Controls, and Jump](./phases/2026-10-29-game-over-controls-jump/P01-results-controls-and-jump/phase.md)
+[P01 Feedback and Copy](./phases/2026-10-29-rhythm-feedback-and-local-copy/P01-feedback-and-copy/phase.md)
 
 ## Active Task
-None. All tasks are complete.
+None. All tasks in this plan are complete.
 
 ## Status
-- T01 complete: `e6f6c49` (`refactor(ui): remove duplicate personal records screen`)
-- T02 complete: `46e31d5` (`feat(input): use Escape to pause the game`)
-- T03 complete: `809f345` (`balance(game): lower the shared jump height`)
-- All 109 tests pass; `git diff --check` passes.
+- T01 complete: `cfd7b12` (`refactor(ui): remove local-play guidance copy`)
+- T02 complete: `a03b6a8` (`feat(rhythm): count misses and record feedback events`)
+- T03 complete: `26a12b1` (`feat(ui): animate rhythm hit and miss feedback`)
+- All 113 tests pass; `git diff --check` passes.
+- Mobile-specific controls are excluded from scope; secondary targets continue to use right-click.
 
 ## Next Step
 No remaining tasks in this plan.

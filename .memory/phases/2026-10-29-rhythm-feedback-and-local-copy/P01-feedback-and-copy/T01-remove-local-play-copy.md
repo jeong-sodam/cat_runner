@@ -85,4 +85,4 @@ Task: T01-remove-local-play-copy
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`npm.cmd test`: 109/109; `git diff --check`; local-play copy scan)
-- commit: pending
+- commit: `cfd7b12`

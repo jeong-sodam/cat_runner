@@ -74,4 +74,4 @@ Task: T03-animate-rhythm-feedback
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`npm.cmd test`: 113/113; `git diff --check`)
-- commit: pending
+- commit: `26a12b1`

@@ -95,4 +95,4 @@ Task: T02-record-rhythm-misses
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`npm.cmd test`: 111/111; `git diff --check`)
-- commit: pending
+- commit: `a03b6a8`
