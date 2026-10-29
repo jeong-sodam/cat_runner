@@ -1,6 +1,6 @@
 ﻿# Task: T03 GitHub Pages Publishing
 
-## Status: pending
+## Status: done
 
 ## Goal
 Serve the repository's static game correctly from `https://jeong-sodam.github.io/cat_runner/` and deploy the contents of `public/` automatically from `main` after the existing Node 24 CI matrix passes.
@@ -18,7 +18,8 @@ Serve the repository's static game correctly from `https://jeong-sodam.github.io
   - `public/styles.css` :: `@font-face` source — modify
   - `public/js/render/asset-manifest.js` :: `CAT_ASSET_MANIFEST`, `BACKGROUND_ASSET_MANIFEST`, `ITEM_ASSET_MANIFEST` — modify
   - `test/render.test.js` :: asset manifest assertions — modify
-  - `test/app-flow.test.js` :: public startup remains fetch-free — read-only
+  - `test/app-flow.test.js` :: character image paths — modify
+  - `test/font-layout.test.js` :: relative stylesheet path assertion — modify
 
 #### Details
 - **Signatures & Types**:
@@ -54,9 +55,9 @@ Serve the repository's static game correctly from `https://jeong-sodam.github.io
 - **Error & Exception Handling**: The deploy job must be skipped for pull requests and must not run when any matrix test fails. If Pages is not enabled in repository settings, document the exact setting rather than silently treating a failed deployment as success.
 
 ## Acceptance Criteria
-- [ ] All CSS, font, script, and sprite assets resolve under the `/cat_runner/` prefix.
-- [ ] Pull requests run tests without deploying; successful pushes to `main` deploy `public/` only after the entire test matrix passes.
-- [ ] Repository setup instructions identify GitHub Actions as the Pages source.
+- [x] All CSS, font, script, and sprite assets resolve under the `/cat_runner/` prefix.
+- [x] Pull requests run tests without deploying; successful pushes to `main` deploy `public/` only after the entire test matrix passes.
+- [x] Repository setup instructions identify GitHub Actions as the Pages source.
 - [ ] The deployed welcome screen and local game work without Node or API calls in the visitor's browser.
 
 ## Validation
@@ -78,6 +79,6 @@ Task: T03-github-pages-publishing
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과 (`npm.cmd test`: 109/109)
 - commit: pending

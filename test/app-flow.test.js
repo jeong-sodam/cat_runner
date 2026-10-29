@@ -343,7 +343,7 @@ test("character selection renders six cats and defaults each new run to black", 
   assert.match(cards[0].className, /selected/);
   assert.equal(cards[0].children[0].tagName, "IMG");
   assert.equal(cards[0].children[0].alt, "검정 고양이 모습");
-  assert.equal(cards[5].children[0].src, "/assets/cat-runner/cats/chaos.png");
+  assert.ok(cards[5].children[0].src.endsWith("/assets/cat-runner/cats/chaos.png"));
   assert.equal(cards[5].dataset.catId, "chaos");
   assert.equal(cards[5].dataset.englishName, "Mayhem");
   for (const card of cards) {

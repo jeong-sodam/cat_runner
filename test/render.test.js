@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { fileURLToPath } = require("node:url");
 const { test } = require("node:test");
 
 async function loadRenderModules() {
@@ -533,16 +534,26 @@ test("storybook asset manifest covers every playable cat and game zone", async (
   assert.deepEqual(modules.CAT_POSES, ["run", "jump", "slide"]);
   assert.deepEqual(Object.keys(modules.CAT_ASSET_MANIFEST), catIds);
   assert.deepEqual(Object.keys(modules.BACKGROUND_ASSET_MANIFEST), zoneIds);
+  const assertPagesAsset = (source, expectedPath) => {
+    const sourceUrl = new URL(source);
+    assert.equal(sourceUrl.protocol, "file:");
+    assert.ok(sourceUrl.pathname.includes("/public/assets/cat-runner/"));
+    assert.ok(fs.existsSync(fileURLToPath(sourceUrl)));
+    const publicPath = sourceUrl.pathname.split("/public/").at(-1);
+    const deployedUrl = new URL(publicPath, "https://jeong-sodam.github.io/cat_runner/");
+    assert.ok(deployedUrl.pathname.startsWith("/cat_runner/assets/cat-runner/"));
+    assert.ok(deployedUrl.pathname.endsWith(expectedPath));
+  };
   for (const definition of Object.values(modules.CAT_ASSET_MANIFEST)) {
     assert.equal(definition.frameCount, 3);
     assert.ok(definition.frameWidth > 0);
     assert.ok(definition.frameHeight > 0);
-    assert.ok(fs.existsSync(path.join(__dirname, "..", "public", definition.src.slice(1))));
+    assertPagesAsset(definition.src, `/cats/${path.basename(fileURLToPath(definition.src))}`);
   }
   for (const definition of Object.values(modules.BACKGROUND_ASSET_MANIFEST)) {
     assert.ok(definition.width > 0);
     assert.ok(definition.height > 0);
-    assert.ok(fs.existsSync(path.join(__dirname, "..", "public", definition.src.slice(1))));
+    assertPagesAsset(definition.src, `/backgrounds/${path.basename(fileURLToPath(definition.src))}`);
   }
   assert.deepEqual(
     Object.fromEntries(
@@ -557,7 +568,15 @@ test("storybook asset manifest covers every playable cat and game zone", async (
     for (const definition of Object.values(variants)) {
       assert.ok(definition.width > 0);
       assert.ok(definition.height > 0);
-      assert.ok(fs.existsSync(path.join(__dirname, "..", "public", definition.src.slice(1))));
+      assertPagesAsset(definition.src, `/items/${path.basename(fileURLToPath(definition.src))}`);
     }
   }
+});
+
+test("static entry points and font resolve relative to the Pages project path", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
+  const css = fs.readFileSync(path.join(__dirname, "..", "public", "styles.css"), "utf8");
+  assert.match(html, /href="\.\/styles\.css"/);
+  assert.match(html, /src="\.\/js\/app\/main\.js"/);
+  assert.match(css, /url\("\.\/assets\/fonts\/PretendardVariable\.woff2"\)/);
 });

@@ -92,4 +92,4 @@ Task: T02-remove-server-and-runtime
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`npm.cmd ci`, `npm.cmd test`: 108/108)
-- commit: pending
+- commit: `ae15b4c`

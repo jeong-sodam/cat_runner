@@ -22,9 +22,15 @@ npm test
 
 프로젝트에는 게임 기능을 묶는 Node 의존성이 없습니다. Node 24는 Node 내장 테스트 러너를 실행하기 위한 개발 도구입니다.
 
+## GitHub Pages 배포 설정
+
+저장소 관리자는 최초 한 번 GitHub 저장소의 **Settings → Pages → Build and deployment → Source**에서 **GitHub Actions**를 선택합니다. 이후 `main`에 푸시하면 4개 운영체제의 Node 24 테스트가 전부 성공한 뒤 `public/` 디렉터리가 자동 배포됩니다. 테스트가 실패하거나 Pull Request 이벤트이면 배포 작업은 실행되지 않습니다.
+
+배포 주소는 <https://jeong-sodam.github.io/cat_runner/>입니다. 페이지 소스는 빌드 과정 없이 `public/`에서 직접 제공됩니다.
+
 ## 브라우저 수동 확인
 
-공개 게임 주소를 Chrome 또는 Edge에서 열어 다음 흐름을 확인합니다.
+공개 게임 주소 <https://jeong-sodam.github.io/cat_runner/>를 Chrome 또는 Edge에서 열어 다음 흐름을 확인합니다.
 
 - 첫 화면에서 로컬 플레이를 누르면 고양이 선택이 열립니다.
 - 여섯 고양이 미리보기와 기본 선택, 이동/점프/미끄러지기, 일시정지가 동작합니다.

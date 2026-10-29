@@ -53,5 +53,5 @@ test("character selection scroll is scoped to the inner panel", () => {
 
 test("index provides the responsive viewport and stylesheet", () => {
   assert.match(index, /name="viewport"/);
-  assert.match(index, /href="\/styles\.css"/);
+  assert.match(index, /href="\.\/styles\.css"/);
 });
