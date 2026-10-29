@@ -74,4 +74,4 @@ Task: T02-switch-pause-shortcut-to-escape
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`npm.cmd test`: 109/109; `git diff --check`; P shortcut scan)
-- commit: pending
+- commit: `46e31d5`

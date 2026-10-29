@@ -80,4 +80,4 @@ Task: T01-deduplicate-personal-records-ui
 ## Progress
 - [x] 구현 완료
 - [x] 검증 통과 (`npm.cmd test`: 109/109; `git diff --check`; duplicate-screen reference scan)
-- commit: pending
+- commit: `e6f6c49`

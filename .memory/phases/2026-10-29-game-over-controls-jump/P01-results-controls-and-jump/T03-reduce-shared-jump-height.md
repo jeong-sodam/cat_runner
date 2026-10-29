@@ -78,6 +78,6 @@ Task: T03-reduce-shared-jump-height
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: `809f345`
