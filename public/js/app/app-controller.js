@@ -1,7 +1,11 @@
 import { createAudioManager } from "../audio/audio-manager.js";
 import { createGameLoop } from "../game/game-loop.js";
 import { createInputController } from "../game/input-controller.js";
-import { getRhythmSummary, resolveRhythmTarget } from "../game/rhythm-targets.js";
+import {
+  getRhythmSummary,
+  recordRhythmMisclick,
+  resolveRhythmTarget,
+} from "../game/rhythm-targets.js";
 import { updateScore } from "../game/scoring.js";
 import { createPatternStream } from "../game/patterns.js";
 import { resolveEntityCollisions } from "../game/collision.js";
@@ -319,6 +323,9 @@ function createAppController(options = {}) {
         seed,
         status: runOptions.resumed ? "ready" : gameState.status,
       });
+      if (gameState.rhythm && typeof gameState.rhythm === "object") {
+        gameState.rhythm.feedbackEvents = [];
+      }
       if (Array.isArray(gameState.worldEntities)) {
         gameState.worldEntities.sort((first, second) => first.x - second.x);
       }
@@ -382,6 +389,13 @@ function createAppController(options = {}) {
           nowMs: gameState.elapsedMs,
         });
         if (target) {
+          updateScore(gameState);
+        } else {
+          recordRhythmMisclick(gameState.rhythm, {
+            x,
+            y,
+            nowMs: gameState.elapsedMs,
+          });
           updateScore(gameState);
         }
       },

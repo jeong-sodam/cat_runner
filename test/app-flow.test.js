@@ -230,6 +230,16 @@ test("local character selection offers resume and new-game actions", async () =>
       score: 77,
       elapsedMs: 450,
       zoneId: "outside",
+      rhythm: {
+        targets: [
+          { id: "resume-target", x: 300, y: 220, radius: 30, button: "primary", status: "active", expiresAtMs: 900 },
+        ],
+        feedbackEvents: [
+          { type: "hit", x: 250, y: 180, createdAtMs: 400, expiresAtMs: 800 },
+        ],
+        hitCount: 2,
+        missCount: 1,
+      },
       worldEntities: [
         { type: "obstacle", variant: "box", x: 900, y: 620, width: 80, height: 80 },
         { type: "obstacle", variant: "box", x: 100, y: 620, width: 80, height: 80 },
@@ -274,6 +284,10 @@ test("local character selection offers resume and new-game actions", async () =>
   assert.equal(controller.getState().gameState.score, 77);
   assert.equal(controller.getState().gameState.zoneId, "outside");
   assert.equal(controller.getState().gameState.elapsedMs, 450);
+  assert.equal(controller.getState().gameState.rhythm.hitCount, 2);
+  assert.equal(controller.getState().gameState.rhythm.missCount, 1);
+  assert.equal(controller.getState().gameState.rhythm.targets[0].status, "active");
+  assert.deepEqual(controller.getState().gameState.rhythm.feedbackEvents, []);
   assert.deepEqual(
     controller.getState().gameState.worldEntities.map((entity) => entity.x),
     [100, 900],
@@ -339,6 +353,65 @@ test("local runs save initial, one-second, and pagehide snapshots", async () => 
   documentRef.defaultView.dispatch("pagehide");
   assert.equal(savedRuns.length, 3);
   assert.equal(savedRuns[2].snapshot.elapsedMs, 1500);
+  controller.destroy();
+});
+
+test("gameplay misclicks lower accuracy and leave rhythm targets available", async () => {
+  const { createAppController } = await import("../public/js/app/app-controller.js");
+  const documentRef = createAppDocument();
+  const controller = createAppController({
+    documentRef,
+    localRunStore: {
+      loadLocalRun: () => null,
+      saveLocalRun: () => true,
+      clearLocalRun() {},
+    },
+    audioManagerFactory: () => ({
+      unlock: async () => {},
+      startMusic() {},
+      stopMusic() {},
+      playSfx() {},
+      destroy() {},
+    }),
+    settingsPanelFactory: () => ({ mount() {} }),
+    gameClock: {
+      now: () => 0,
+      requestFrame: () => 1,
+      cancelFrame() {},
+    },
+  });
+
+  await controller.startGame("black");
+  const gameState = controller.getState().gameState;
+  const target = {
+    id: "test-target",
+    x: 500,
+    y: 200,
+    radius: 30,
+    button: "primary",
+    status: "active",
+    expiresAtMs: 5000,
+  };
+  gameState.rhythm.targets = [target];
+  const canvas = documentRef.getElementById("game-canvas");
+
+  canvas.dispatch("pointerdown", { button: 0, clientX: 10, clientY: 10 });
+  assert.equal(gameState.rhythm.missCount, 1);
+  assert.equal(target.status, "active");
+  assert.deepEqual(
+    [gameState.rhythm.feedbackEvents[0].type, gameState.rhythm.feedbackEvents[0].x, gameState.rhythm.feedbackEvents[0].y],
+    ["miss", 10, 10],
+  );
+
+  canvas.dispatch("pointerdown", { button: 0, clientX: 500, clientY: 200 });
+  assert.equal(gameState.rhythm.hitCount, 1);
+  assert.equal(gameState.rhythm.missCount, 1);
+  assert.equal(target.status, "hit");
+  assert.equal(gameState.rhythm.feedbackEvents[1].type, "hit");
+
+  canvas.dispatch("pointerdown", { button: 0, clientX: 20, clientY: 30 });
+  assert.equal(gameState.rhythm.missCount, 2);
+  assert.equal(gameState.rhythm.feedbackEvents[2].type, "miss");
   controller.destroy();
 });
 

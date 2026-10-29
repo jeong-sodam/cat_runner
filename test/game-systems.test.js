@@ -1258,6 +1258,7 @@ test("rhythm targets use single-target zone tempo, button matching, and bonus po
   assert.equal(modules.RHYTHM_CONFIG.targetLifetimeMs, 1000);
   assert.equal(modules.RHYTHM_CONFIG.baseSpawnIntervalMs, 1000);
   assert.equal(modules.RHYTHM_CONFIG.targetScale, 1.5625);
+  assert.equal(modules.RHYTHM_CONFIG.feedbackDurationMs, 400);
   assert.equal(modules.RHYTHM_CONFIG.placement.minimumDistance, 100);
   assert.deepEqual(
     Object.fromEntries(Object.entries(modules.RHYTHM_CONFIG.zones).map(([zoneId, config]) => [zoneId, {
@@ -1299,6 +1300,11 @@ test("rhythm targets use single-target zone tempo, button matching, and bonus po
     canvasHeight: 120,
   });
   assert.equal(home.targets[0].status, "miss");
+  assert.equal(home.missCount, 1);
+  assert.equal(home.feedbackEvents[0].type, "miss");
+  assert.equal(home.feedbackEvents[0].x, home.targets[0].x);
+  assert.equal(home.feedbackEvents[0].createdAtMs, 1000);
+  assert.equal(home.feedbackEvents[0].expiresAtMs, 1400);
 
   const outside = modules.createRhythmState({ randomSource: () => 0.9 });
   modules.updateRhythmTargets(outside, { nowMs: 0, zoneId: "outside", canvasWidth: 800, canvasHeight: 600 });
@@ -1321,6 +1327,14 @@ test("rhythm targets use single-target zone tempo, button matching, and bonus po
   });
   assert.equal(wrongButton, null);
   assert.equal(outside.hitCount, 0);
+  const wrongButtonEvent = modules.recordRhythmMisclick(outside, {
+    x: outside.targets[1].x,
+    y: outside.targets[1].y,
+    nowMs: 100,
+  });
+  assert.equal(wrongButtonEvent.type, "miss");
+  assert.equal(outside.missCount, 2);
+  assert.equal(outside.targets[1].status, "active");
   modules.resolveRhythmTarget(outside, {
     x: outside.targets[1].x,
     y: outside.targets[1].y,
@@ -1328,6 +1342,7 @@ test("rhythm targets use single-target zone tempo, button matching, and bonus po
     nowMs: 900,
   });
   assert.equal(outside.hitCount, 1);
+  assert.equal(modules.getRhythmSummary(outside).accuracy, 1 / 3);
 
   const night = modules.createRhythmState({ randomSource: () => 0.9 });
   modules.updateRhythmTargets(night, { nowMs: 0, zoneId: "home_night", canvasWidth: 800, canvasHeight: 600 });
@@ -1386,6 +1401,57 @@ test("rhythm targets use single-target zone tempo, button matching, and bonus po
   assert.equal(summary.bonusPoints, 5);
   assert.equal(summary.accuracy, 1);
   assert.equal(summary.scoreMultiplier, 1.5);
+});
+
+test("rhythm misclicks lower accuracy, keep targets active, and feedback expires once", async () => {
+  const modules = await loadSystems();
+  const state = modules.createRhythmState({ randomSource: () => 0.9 });
+  modules.updateRhythmTargets(state, {
+    nowMs: 0,
+    zoneId: "home_day",
+    canvasWidth: 800,
+    canvasHeight: 600,
+  });
+  const target = state.targets[0];
+
+  const misclick = modules.recordRhythmMisclick(state, {
+    x: 12,
+    y: 24,
+    nowMs: 100,
+  });
+  assert.equal(misclick.type, "miss");
+  assert.deepEqual([misclick.x, misclick.y, misclick.createdAtMs, misclick.expiresAtMs], [12, 24, 100, 500]);
+  assert.equal(state.missCount, 1);
+  assert.equal(target.status, "active");
+  assert.equal(modules.getRhythmSummary(state).accuracy, 0);
+
+  const hit = modules.resolveRhythmTarget(state, {
+    x: target.x,
+    y: target.y,
+    button: target.button,
+    nowMs: 200,
+  });
+  assert.equal(hit, target);
+  assert.equal(target.status, "hit");
+  assert.equal(state.hitCount, 1);
+  assert.equal(modules.getRhythmSummary(state).accuracy, 0.5);
+  assert.equal(state.feedbackEvents[1].type, "hit");
+
+  const timeout = modules.createRhythmState({ randomSource: () => 0.9 });
+  modules.updateRhythmTargets(timeout, { nowMs: 0, zoneId: "home_day" });
+  const timedOutTarget = timeout.targets[0];
+  modules.updateRhythmTargets(timeout, { nowMs: 1000, zoneId: "home_day" });
+  assert.equal(timeout.missCount, 1);
+  assert.equal(timeout.feedbackEvents.length, 1);
+  assert.deepEqual(
+    [timeout.feedbackEvents[0].x, timeout.feedbackEvents[0].y],
+    [timedOutTarget.x, timedOutTarget.y],
+  );
+  modules.updateRhythmTargets(timeout, { nowMs: 1100, zoneId: "home_day" });
+  assert.equal(timeout.missCount, 1);
+  modules.updateRhythmTargets(timeout, { nowMs: 1400, zoneId: "home_day" });
+  assert.equal(timeout.feedbackEvents.length, 0);
+  assert.equal(timeout.missCount, 1);
 });
 
 test("rhythm targets stay in the HUD-safe area and space consecutive candidates", async () => {

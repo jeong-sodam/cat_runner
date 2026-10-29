@@ -10,6 +10,7 @@ const RHYTHM_CONFIG = Object.freeze({
   accuracyMax: 1,
   scoreMultiplierMin: 0.5,
   scoreMultiplierMax: 1.5,
+  feedbackDurationMs: 400,
   placement: Object.freeze({
     left: 120,
     right: 120,
@@ -59,6 +60,7 @@ function calculateRhythmScoreMultiplier(accuracy) {
 function createRhythmState({ randomSource = Math.random } = {}) {
   const state = {
     targets: [],
+    feedbackEvents: [],
     hitCount: 0,
     missCount: 0,
     bonusHitCount: 0,
@@ -76,11 +78,28 @@ function createRhythmState({ randomSource = Math.random } = {}) {
   return state;
 }
 
+function addFeedbackEvent(state, type, x, y, nowMs) {
+  if (!Array.isArray(state.feedbackEvents)) {
+    state.feedbackEvents = [];
+  }
+  const createdAtMs = Number.isFinite(Number(nowMs)) ? Number(nowMs) : 0;
+  const event = {
+    type,
+    x,
+    y,
+    createdAtMs,
+    expiresAtMs: createdAtMs + RHYTHM_CONFIG.feedbackDurationMs,
+  };
+  state.feedbackEvents.push(event);
+  return event;
+}
+
 function expireTargets(state, nowMs) {
   for (const target of state.targets) {
     if (target.status === "active" && nowMs >= target.expiresAtMs) {
       target.status = "miss";
       state.missCount += 1;
+      addFeedbackEvent(state, "miss", target.x, target.y, nowMs);
     }
   }
 }
@@ -160,6 +179,13 @@ function updateRhythmTargets(
 ) {
   const config = zoneConfig(zoneId);
   expireTargets(state, nowMs);
+  if (!Array.isArray(state.feedbackEvents)) {
+    state.feedbackEvents = [];
+  } else {
+    state.feedbackEvents = state.feedbackEvents.filter(
+      (event) => Number.isFinite(event?.expiresAtMs) && event.expiresAtMs > nowMs,
+    );
+  }
   const activeTargets = () => state.targets.filter((target) => target.status === "active").length;
   const initialFill = state.lastSpawnAtMs === null;
   const intervalReady = state.lastSpawnAtMs === null ||
@@ -185,11 +211,17 @@ function resolveRhythmTarget(state, { x, y, button, nowMs = 0 } = {}) {
   }
   target.status = "hit";
   state.hitCount += 1;
+  addFeedbackEvent(state, "hit", target.x, target.y, nowMs);
   if (target.button === "secondary") {
     state.bonusHitCount += 1;
     state.bonusPoints += RHYTHM_CONFIG.bonusPoints;
   }
   return target;
+}
+
+function recordRhythmMisclick(state, { x, y, nowMs = 0 } = {}) {
+  state.missCount += 1;
+  return addFeedbackEvent(state, "miss", x, y, nowMs);
 }
 
 function getRhythmSummary(state = createRhythmState()) {
@@ -213,6 +245,7 @@ export {
   calculateRhythmScoreMultiplier,
   createRhythmState,
   getRhythmSummary,
+  recordRhythmMisclick,
   resolveRhythmTarget,
   updateRhythmTargets,
 };
