@@ -275,13 +275,11 @@ test("HUD renders the complete health capacity for two and five health cats", as
   }
 });
 
-test("HUD omits duplicate local labels even when state has server mode fields", async () => {
+test("HUD renders without obsolete connection mode metadata", async () => {
   const modules = await loadRenderModules();
   const context = createFakeContext();
   const renderer = modules.createSceneRenderer(context);
   const state = createState(modules);
-  state.connectionMode = "server";
-  state.runMode = "server";
   renderer.render(state);
 
   const labels = context.calls

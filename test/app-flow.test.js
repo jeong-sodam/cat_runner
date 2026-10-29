@@ -1,4 +1,4 @@
-﻿const assert = require("node:assert/strict");
+const assert = require("node:assert/strict");
 const { test } = require("node:test");
 
 class FakeElement {
@@ -552,7 +552,7 @@ test("local gameover saves the latest result and opens personal records offline"
     },
   });
 
-  await controller.startGame("black", { runMode: "local" });
+  await controller.startGame("black");
   controller.getState().gameState.health = 0;
   frameTime = 0;
   frameCallback(frameTime);

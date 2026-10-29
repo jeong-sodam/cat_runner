@@ -1,6 +1,6 @@
 ﻿# Task: T02 Remove Server and Runtime Stack
 
-## Status: pending
+## Status: done
 
 ## Goal
 Remove the unused Node/Express application and server-only dependencies/configuration while leaving a clean Node 24 test command for contributors and updating project instructions to describe browser-local play.
@@ -17,6 +17,7 @@ Remove the unused Node/Express application and server-only dependencies/configur
   - `src/**` — all Express, Entra authentication, SQLite, API routes, server validation, and server services — delete
   - `test/auth.test.js`, `test/db.test.js`, `test/integration.test.js`, `test/leaderboard.test.js`, `test/run-resume.test.js`, `test/score-validation.test.js`, `test/security-regression.test.js`, `test/server.test.js` — backend-only suites — delete
   - `test/helpers/fake-auth.js`, `test/helpers/test-database.js` — backend test helpers — delete
+  - `test/local-run-store.test.js` :: localStorage-backed run/score history tests migrated out of the mixed server `run-resume` suite — new
   - `.env.example` — server environment variables — delete
   - `render.yaml` — Render Node web service — delete
   - `.gitignore` — remove only obsolete `.env.example`, SQLite data, and server log ignore entries; modify
@@ -26,10 +27,11 @@ Remove the unused Node/Express application and server-only dependencies/configur
   - Remove the server-owned SQLite `users`, `runs`, `run_events`, `sessions`, and leaderboard schemas with their entire backend directory; browser localStorage records are not part of this deletion.
 - **Execution Flow / Logic**:
   1. Delete the complete `src/` tree; no file under `public/` or retained game tests imports it after T01.
-  2. Delete the listed server test suites and helpers. In `test/app-flow.test.js`, retain only the local scenarios specified by T01.
-  3. Delete `.env.example` and `render.yaml`; keep historical decision records under `.memory/decisions/` as audit history.
-  4. Remove `.env`, `.env.*`, `!.env.example`, `data/*.sqlite*`, and `logs/` ignore rules from `.gitignore`; keep the `node_modules` rule.
-  5. Keep `.nvmrc` at `24` and the existing Node compatibility test workflow's Node 24 matrix; these serve contributors and test runners.
+  2. Before deleting `test/run-resume.test.js`, move its nine browser-local store tests into `test/local-run-store.test.js`: local active runs persist without a user id; generated run id; invalid run cleanup; clearing active run preserves completed scores; best record replacement; score history top-five view; legacy data migration/malformed cleanup; migration of an existing top-five array; in-memory availability when storage writes fail.
+  3. Delete the listed server test suites and helpers. In `test/app-flow.test.js`, retain only the local scenarios specified by T01.
+  4. Delete `.env.example` and `render.yaml`; keep historical decision records under `.memory/decisions/` as audit history.
+  5. Remove `.env`, `.env.*`, `!.env.example`, `data/*.sqlite*`, and `logs/` ignore rules from `.gitignore`; keep the `node_modules` rule.
+  6. Keep `.nvmrc` at `24` and the existing Node compatibility test workflow's Node 24 matrix; these serve contributors and test runners.
 - **Error & Exception Handling**: No server fallback or local database is recreated. Browser-local persistence remains available through `public/js/sync/local-run-store.js`.
 
 ### I02. Reduce package metadata to the retained test runner and rewrite developer guidance
@@ -69,6 +71,7 @@ Remove the unused Node/Express application and server-only dependencies/configur
 - [ ] Root package has no runtime dependencies and retains Node 24 test metadata.
 - [ ] README and developer guide describe static local play, local records, and contributor-only Node testing.
 - [ ] Retained browser game tests still run from a clean install.
+- [x] No SQLite runtime data or obsolete run/connection mode fields remain in the static game.
 
 ## Validation
 - `npm ci` — installs the dependency-free test project from the lockfile.
@@ -87,6 +90,6 @@ Task: T02-remove-server-and-runtime
 ```
 
 ## Progress
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과 (`npm.cmd ci`, `npm.cmd test`: 108/108)
 - commit: pending

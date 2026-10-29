@@ -7,10 +7,10 @@
 [P01 Static Game and Performance](./phases/2026-10-29-github-pages-performance-cleanup/P01-static-game-performance/phase.md)
 
 ## Active Task
-[T01 Local-Only Browser Flow](./phases/2026-10-29-github-pages-performance-cleanup/P01-static-game-performance/T01-local-only-browser-flow.md)
+[T02 Remove Server and Runtime Stack](./phases/2026-10-29-github-pages-performance-cleanup/P01-static-game-performance/T02-remove-server-and-runtime.md)
 
 ## Status
-- T01 implementation start ready; P01 has 0/4 tasks complete.
+- T01 done and committed as `d9f6a07`; P01 has 1/4 tasks complete. T02 is active.
 
 ## Next Step (IMPORTANT)
-Read the T01 blueprint and implement the browser-only welcome, gameplay, and local persistence flow in `public/js/app/app-controller.js` and its UI module; remove browser API/auth dependencies while preserving local records and resume.
+Read the T02 blueprint and remove the Node/Express backend, backend-only tests, environment/Render configuration, and server dependencies. Retain Node 24 test tooling and rewrite README/developer guidance for browser-local play.

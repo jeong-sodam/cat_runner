@@ -1,4 +1,4 @@
-﻿import { createAudioManager } from "../audio/audio-manager.js";
+import { createAudioManager } from "../audio/audio-manager.js";
 import { createGameLoop } from "../game/game-loop.js";
 import { createInputController } from "../game/input-controller.js";
 import { getRhythmSummary, resolveRhythmTarget } from "../game/rhythm-targets.js";
@@ -42,7 +42,6 @@ function createAppController(options = {}) {
   const state = {
     screen: SCREEN_NAMES.LOADING,
     catId: null,
-    runMode: null,
     gameState: null,
     lastResult: null,
   };
@@ -272,7 +271,7 @@ function createAppController(options = {}) {
     try {
       savedResult = localStore.saveLocalResult(scoreRecord) || savedResult;
     } catch {
-      // The result screen reports a local save failure without entering server retry flow.
+      // The result screen reports a local save failure.
     }
     try {
       lastResultSaved = localStore.saveLastResult(scoreRecord) !== false;
@@ -333,14 +332,11 @@ function createAppController(options = {}) {
   function initializeGame(catId = "black", runOptions = {}) {
     destroyGame();
     state.catId = catId;
-    state.runMode = "local";
     setScreen(SCREEN_NAMES.GAME);
     completionInProgress = false;
     finalGameState = null;
     const seed = runOptions.seed || String(Date.now()) + ":" + catId;
     const gameState = createGameState({ catId, seed });
-    gameState.runMode = state.runMode;
-    gameState.connectionMode = state.runMode;
     if (runOptions.snapshot && typeof runOptions.snapshot === "object") {
       Object.assign(gameState, runOptions.snapshot, {
         catId,
