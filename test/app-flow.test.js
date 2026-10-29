@@ -167,11 +167,14 @@ test("bootstrap renders the welcome screen without fetch", async () => {
   await controller.bootstrap();
 
   assert.equal(controller.getState().screen, SCREEN_NAMES.WELCOME);
-  assert.match(textOf(documentRef.getElementById("screen-root")), /로컬로 플레이/);
+  const screen = documentRef.getElementById("screen-root");
+  assert.doesNotMatch(textOf(screen), /로컬 플레이|로컬로 플레이/);
+  assert.equal(findAll(screen, (element) => element.tagName === "BUTTON")[0].textContent, "게임 시작");
+  assert.equal(findAll(screen, (element) => element.tagName === "SMALL").length, 0);
   controller.destroy();
 });
 
-test("welcome local-play action enters character selection without network calls", async () => {
+test("welcome start action enters character selection without network calls", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
   let fetchCalls = 0;
@@ -184,9 +187,9 @@ test("welcome local-play action enters character selection without network calls
 
   const screen = documentRef.getElementById("screen-root");
   assert.equal(controller.getState().screen, SCREEN_NAMES.WELCOME);
-  const localButton = findAll(screen, (element) => element.textContent === "로컬로 플레이")[0];
+  const startButton = findAll(screen, (element) => element.textContent === "게임 시작")[0];
   assert.equal(findAll(screen, (element) => element.tagName === "BUTTON").length, 1);
-  localButton.dispatch("click");
+  startButton.dispatch("click");
   assert.equal(controller.getState().screen, SCREEN_NAMES.CHARACTER_SELECT);
   assert.equal(fetchCalls, 0);
   assert.doesNotMatch(textOf(screen), /\/auth\/guest/);
@@ -676,7 +679,6 @@ test("local result shows save failure without server retry and exposes separate 
       saved: false,
       localOnly: true,
       rank: null,
-      errorMessage: "local only",
     },
     {
       onLeaderboard: () => { localScoresOpened += 1; },
@@ -684,9 +686,9 @@ test("local result shows save failure without server retry and exposes separate 
     { documentRef },
   ).mount(root);
 
-  assert.equal(findAll(root, (element) => element.className === "local-mode-badge").length, 1);
-  assert.match(textOf(root), /local only/);
-  assert.match(textOf(root), /저장 실패/);
+  assert.equal(findAll(root, (element) => element.className === "local-mode-badge").length, 0);
+  assert.match(textOf(root), /내 기록에 저장하지 못했습니다/);
+  assert.doesNotMatch(textOf(root), /로컬 플레이/);
   assert.equal(findAll(root, (element) => element.tagName === "BUTTON").length, 2);
   const buttons = findAll(root, (element) => element.tagName === "BUTTON");
   assert.deepEqual(buttons.map((button) => button.textContent), ["캐릭터 선택", "내 기록"]);

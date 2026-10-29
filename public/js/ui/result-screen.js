@@ -52,14 +52,6 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
     section.className = "flow-card result-screen";
     const heading = documentRef.createElement("h1");
     heading.className = "fit-title";
-    const badge = documentRef.createElement("span");
-    badge.className = "local-mode-badge";
-    badge.textContent = result.saved === false
-      ? "로컬 플레이 · 저장 실패"
-      : result.storageWarning === true
-        ? "로컬 플레이 · 세션 기록"
-        : "로컬 플레이 · 내 기록 저장";
-    section.append(badge);
     heading.textContent = "달리기 완료";
     const stats = documentRef.createElement("dl");
     stats.className = "result-stats";

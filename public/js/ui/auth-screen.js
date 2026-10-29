@@ -33,18 +33,12 @@ function renderWelcomeScreen(root, options = {}) {
     "p",
     "쥐 인형을 모으고 장애물을 피해 가장 멀리 달려보세요.",
   );
-  const localPlay = documentRef.createElement("button");
-  localPlay.type = "button";
-  localPlay.className = "game-button primary";
-  localPlay.textContent = "로컬로 플레이";
-  localPlay.addEventListener("click", () => options.onLocalPlay?.());
-  section.append(localPlay);
-  appendText(
-    documentRef,
-    section,
-    "small",
-    "로컬 플레이는 로그인 없이 브라우저에 기록을 저장합니다.",
-  );
+  const startButton = documentRef.createElement("button");
+  startButton.type = "button";
+  startButton.className = "game-button primary";
+  startButton.textContent = "게임 시작";
+  startButton.addEventListener("click", () => options.onLocalPlay?.());
+  section.append(startButton);
   root.append(section);
   fitSingleLineText(heading, { container: section });
   return section;
