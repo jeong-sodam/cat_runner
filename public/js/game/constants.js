@@ -6,7 +6,7 @@ const GAME_CONFIG = Object.freeze({
   baseWorldSpeed: 360,
   gravity: 2400,
   jumpVelocity: -900,
-  jumpMultiplier: 1.2,
+  jumpMultiplier: 1.0,
   maxJumps: 2,
   playerWidth: 90,
   playerHeight: 110,

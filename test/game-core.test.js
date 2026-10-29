@@ -118,7 +118,7 @@ test("game state contains the six cats and valid lifecycle transitions", async (
     [1, 2, 3, 4, 5].map((rating) => modules.getItemDurationMs(rating)),
     [3000, 4000, 5000, 6500, 8000],
   );
-  assert.equal(modules.GAME_CONFIG.jumpMultiplier, 1.2);
+  assert.equal(modules.GAME_CONFIG.jumpMultiplier, 1.0);
   assert.ok(Object.values(modules.CAT_DEFINITIONS).every((cat) => !("jumpMultiplier" in cat)));
   assert.ok(Object.values(modules.CAT_DEFINITIONS).every((cat) => !("magnetRangeMultiplier" in cat)));
 
@@ -166,10 +166,10 @@ test("new runs reset their zone while restored snapshots preserve it", async () 
   assert.equal(restored.zoneId, "home_day");
 });
 
-test("all cats share a strong jump that clears every basic obstacle in one jump", async () => {
+test("all cats share a reduced jump that clears every basic obstacle in one jump", async () => {
   const modules = await loadGameModules();
   const harness = createHarness(modules, "cheese");
-  assert.equal(modules.GAME_CONFIG.jumpMultiplier, 1.2);
+  assert.equal(modules.GAME_CONFIG.jumpMultiplier, 1.0);
 
   harness.target.dispatch("keydown", "w");
   for (let frame = 0; frame < 6; frame += 1) {
@@ -239,7 +239,9 @@ test("airborne S starts one fast descent without consuming the second jump", asy
 
   harness.target.dispatch("keydown", "w");
   harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
-  harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  for (let frame = 0; frame < 10; frame += 1) {
+    harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);
+  }
   const yBeforeSlide = harness.state.player.y;
 
   harness.target.dispatch("keydown", "s");
