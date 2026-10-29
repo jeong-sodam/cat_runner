@@ -1,10 +1,10 @@
-﻿# Cat Runner
+﻿# 썬더런 (Thunder Run)
 
-고양이를 골라 장애물을 피하고 쥐 장난감을 모으는 브라우저 러너 게임입니다.
+썬더런 (Thunder Run)은 고양이를 골라 장애물을 피하고 쥐 장난감을 모으는 브라우저 러너 게임입니다.
 
 ## 플레이하기
 
-[Cat Runner 열기](https://jeong-sodam.github.io/cat_runner/)
+[썬더런 (Thunder Run) 열기](https://jeong-sodam.github.io/cat_runner/)
 
 최신 데스크톱 브라우저에서 바로 실행됩니다. 방문자는 Node.js나 별도 설치가 필요하지 않습니다. 게임 기록과 진행 중인 플레이는 현재 브라우저에 저장되며 다른 기기나 브라우저와 공유되지 않습니다.
 

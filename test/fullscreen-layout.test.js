@@ -69,6 +69,9 @@ test("flow cards grow vertically without changing wide-card panels", () => {
 
 test("index keeps the responsive viewport and fullscreen layout anchors", () => {
   assert.match(index, /<meta\s+name="viewport"\s+content="width=device-width,\s*initial-scale=1">/);
+  assert.match(index, /<title>썬더런<\/title>/);
+  assert.match(index, /<main\s+id="game-shell"\s+aria-label="썬더런 게임">/);
+  assert.match(index, /<h1>썬더런<\/h1>/);
   assert.match(index, /id="game-shell"/);
   assert.match(index, /id="screen-root"/);
   assert.match(index, /id="game-canvas"/);

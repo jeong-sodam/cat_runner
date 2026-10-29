@@ -1,6 +1,6 @@
-﻿# Cat Runner 개발 안내
+﻿# 썬더런 (Thunder Run) 개발 안내
 
-Cat Runner는 HTML, CSS, 브라우저 JavaScript로 동작하는 정적 게임입니다. 방문자는 GitHub Pages 주소를 열면 되며 Node.js를 설치할 필요가 없습니다.
+썬더런 (Thunder Run)은 HTML, CSS, 브라우저 JavaScript로 동작하는 정적 게임입니다. 방문자는 GitHub Pages 주소를 열면 되며 Node.js를 설치할 필요가 없습니다.
 
 ## 자동 테스트
 

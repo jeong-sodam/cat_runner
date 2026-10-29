@@ -150,12 +150,14 @@ test("bootstrap waits for font readiness and opens the welcome screen without AP
   const bootstrapping = controller.bootstrap();
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(controller.getState().screen, SCREEN_NAMES.LOADING);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /썬더런 불러오는 중\.\.\./);
   assert.equal(fetchCalls, 0);
 
   resolveFonts();
   await bootstrapping;
   assert.equal(controller.getState().screen, SCREEN_NAMES.WELCOME);
   assert.equal(documentRef.getElementById("game-shell").dataset.screen, SCREEN_NAMES.WELCOME);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /썬더런/);
   assert.equal(fetchCalls, 0);
 });
 
@@ -168,6 +170,7 @@ test("bootstrap renders the welcome screen without fetch", async () => {
 
   assert.equal(controller.getState().screen, SCREEN_NAMES.WELCOME);
   const screen = documentRef.getElementById("screen-root");
+  assert.match(textOf(screen), /썬더런/);
   assert.doesNotMatch(textOf(screen), /로컬 플레이|로컬로 플레이/);
   assert.equal(findAll(screen, (element) => element.tagName === "BUTTON")[0].textContent, "게임 시작");
   assert.equal(findAll(screen, (element) => element.tagName === "SMALL").length, 0);

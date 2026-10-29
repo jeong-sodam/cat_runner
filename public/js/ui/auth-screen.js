@@ -25,7 +25,7 @@ function renderWelcomeScreen(root, options = {}) {
   clearRoot(root);
   const section = documentRef.createElement("section");
   section.className = "welcome-screen flow-card";
-  appendText(documentRef, section, "p", "고양이 러너", "eyebrow");
+  appendText(documentRef, section, "p", "썬더런", "eyebrow");
   const heading = appendText(documentRef, section, "h1", "집 밖으로, 고양이 출동! ", "fit-title");
   appendText(
     documentRef,
@@ -52,7 +52,7 @@ function renderLoadingScreen(root, options = {}) {
   clearRoot(root);
   const section = documentRef.createElement("section");
   section.className = "flow-card loading-card";
-  const heading = appendText(documentRef, section, "h1", "고양이 러너 불러오는 중...", "fit-title");
+  const heading = appendText(documentRef, section, "h1", "썬더런 불러오는 중...", "fit-title");
   root.append(section);
   fitSingleLineText(heading, { container: section });
   return section;
