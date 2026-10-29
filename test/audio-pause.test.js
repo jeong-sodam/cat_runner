@@ -123,7 +123,7 @@ test("audio unlock failure is swallowed", async () => {
   assert.doesNotThrow(() => manager.playSfx("jump"));
 });
 
-test("pause controller uses one toggle for resume and pause button", async () => {
+test("pause controller resumes through the overlay button and shared toggle", async () => {
   const { createPauseController } = await import("../public/js/ui/pause-controller.js");
   const events = [];
   const state = { status: "running" };
@@ -146,30 +146,17 @@ test("pause controller uses one toggle for resume and pause button", async () =>
   const root = new FakeElement("main");
   const controller = createPauseController(gameLoop, audioManager, { documentRef });
   const overlay = controller.mount(root);
+  const resumeButton = overlay.children[0].children.find((element) => element.tagName === "BUTTON");
 
   assert.equal(overlay.hidden, true);
   assert.equal(overlay.getAttribute("aria-hidden"), "true");
   assert.equal(root.children.find((element) => element.className === "pause-button game-button"), undefined);
+  assert.equal(resumeButton.textContent, "▶ 계속하기");
   controller.togglePause();
   assert.equal(state.status, "paused");
   assert.equal(overlay.hidden, false);
   assert.equal(overlay.getAttribute("aria-hidden"), "false");
-  controller.togglePause();
-  assert.equal(state.status, "running");
-  assert.equal(overlay.hidden, true);
-  assert.equal(overlay.getAttribute("aria-hidden"), "true");
-  assert.deepEqual(events, ["pause", "music-stop", "resume", "music-start"]);
-  return;
-  const pauseButton = root.children.find((element) => element.className === "pause-button game-button");
-  assert.equal(pauseButton.textContent, "Ⅱ 일시정지");
-  assert.equal(pauseButton.getAttribute("aria-label"), "게임 일시정지");
-
-  controller.togglePause();
-  assert.equal(state.status, "paused");
-  assert.equal(overlay.hidden, false);
-  assert.equal(overlay.getAttribute("aria-hidden"), "false");
-  assert.equal(pauseButton.textContent, "▶ 계속");
-  controller.togglePause();
+  resumeButton.listeners.get("click")[0]();
   assert.equal(state.status, "running");
   assert.equal(overlay.hidden, true);
   assert.equal(overlay.getAttribute("aria-hidden"), "true");
