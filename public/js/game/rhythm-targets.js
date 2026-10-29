@@ -28,13 +28,13 @@ const RHYTHM_CONFIG = Object.freeze({
     }),
     outside: Object.freeze({
       activeCount: 1,
-      difficultyScale: 1.5,
+      difficultyScale: 1.25,
       spawnIntervalMs: 800,
       targetLifetimeMs: 800,
     }),
     home_night: Object.freeze({
       activeCount: 1,
-      difficultyScale: 2,
+      difficultyScale: 1.5,
       spawnIntervalMs: 600,
       targetLifetimeMs: 600,
     }),

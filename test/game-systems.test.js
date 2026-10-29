@@ -1263,13 +1263,14 @@ test("rhythm targets use single-target zone tempo, button matching, and bonus po
   assert.deepEqual(
     Object.fromEntries(Object.entries(modules.RHYTHM_CONFIG.zones).map(([zoneId, config]) => [zoneId, {
       activeCount: config.activeCount,
+      difficultyScale: config.difficultyScale,
       spawnIntervalMs: config.spawnIntervalMs,
       targetLifetimeMs: config.targetLifetimeMs,
     }])),
     {
-      home_day: { activeCount: 1, spawnIntervalMs: 1000, targetLifetimeMs: 1000 },
-      outside: { activeCount: 1, spawnIntervalMs: 800, targetLifetimeMs: 800 },
-      home_night: { activeCount: 1, spawnIntervalMs: 600, targetLifetimeMs: 600 },
+      home_day: { activeCount: 1, difficultyScale: 1, spawnIntervalMs: 1000, targetLifetimeMs: 1000 },
+      outside: { activeCount: 1, difficultyScale: 1.25, spawnIntervalMs: 800, targetLifetimeMs: 800 },
+      home_night: { activeCount: 1, difficultyScale: 1.5, spawnIntervalMs: 600, targetLifetimeMs: 600 },
     },
   );
 
@@ -1310,6 +1311,7 @@ test("rhythm targets use single-target zone tempo, button matching, and bonus po
   modules.updateRhythmTargets(outside, { nowMs: 0, zoneId: "outside", canvasWidth: 800, canvasHeight: 600 });
   assert.equal(outside.targets.filter((target) => target.status === "active").length, 1);
   assert.equal(outside.targets[0].expiresAtMs, 800);
+  assert.equal(outside.targets[0].radius, 42.5);
   assert.ok(outside.targets[0].radius < home.targets[0].radius);
   modules.updateRhythmTargets(outside, { nowMs: 799, zoneId: "outside", canvasWidth: 800, canvasHeight: 600 });
   assert.equal(outside.targets.length, 1);
@@ -1347,13 +1349,24 @@ test("rhythm targets use single-target zone tempo, button matching, and bonus po
   const night = modules.createRhythmState({ randomSource: () => 0.9 });
   modules.updateRhythmTargets(night, { nowMs: 0, zoneId: "home_night", canvasWidth: 800, canvasHeight: 600 });
   assert.equal(night.targets.filter((target) => target.status === "active").length, 1);
-  assert.equal(night.targets[0].radius, 28.125);
+  assert.equal(night.targets[0].radius, 53.125 / 1.5);
   assert.equal(night.targets[0].expiresAtMs, 600);
   modules.updateRhythmTargets(night, { nowMs: 599, zoneId: "home_night", canvasWidth: 800, canvasHeight: 600 });
   assert.equal(night.targets.length, 1);
   modules.updateRhythmTargets(night, { nowMs: 600, zoneId: "home_night", canvasWidth: 800, canvasHeight: 600 });
   assert.equal(night.targets[0].status, "miss");
   assert.equal(night.targets.filter((target) => target.status === "active").length, 1);
+
+  const stageTransition = modules.createRhythmState({ randomSource: () => 0.9 });
+  modules.updateRhythmTargets(stageTransition, { nowMs: 0, zoneId: "outside", canvasWidth: 800, canvasHeight: 600 });
+  assert.equal(stageTransition.targets[0].radius, 42.5);
+  modules.updateRhythmTargets(stageTransition, { nowMs: 100, zoneId: "home_night", canvasWidth: 800, canvasHeight: 600 });
+  assert.equal(stageTransition.targets[0].status, "active");
+  assert.equal(stageTransition.targets[0].radius, 42.5);
+  modules.updateRhythmTargets(stageTransition, { nowMs: 800, zoneId: "home_night", canvasWidth: 800, canvasHeight: 600 });
+  assert.equal(stageTransition.targets[0].status, "miss");
+  assert.equal(stageTransition.targets[1].radius, 53.125 / 1.5);
+  assert.equal(stageTransition.targets[1].expiresAtMs, 1400);
 
   const hitArea = modules.createRhythmState({ randomSource: () => 0.9 });
   modules.updateRhythmTargets(hitArea, {
