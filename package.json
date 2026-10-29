@@ -10,7 +10,7 @@
     "test": "node --test --test-concurrency=1"
   },
   "engines": {
-    "node": "^22 || ^24"
+    "node": "^24"
   },
   "dependencies": {
     "@azure/msal-node": "^3.8.1",

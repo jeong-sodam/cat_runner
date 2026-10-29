@@ -1,16 +1,16 @@
-# Current Context
+﻿# Current Context
 
 ## Active Plan
-[Cat Stat Rebalance](./plans/2026-10-28-cat-stat-rebalance.md)
+[Node 24 Runtime Alignment](./plans/2026-10-29-node24-runtime-alignment.md)
 
 ## Active Phase
-[P01 Three-Stat Cat Profiles](./phases/2026-10-28-cat-stat-rebalance/P01-three-stat-cat-profiles/phase.md)
+[P01 Node 24 Runtime Setup](./phases/2026-10-29-node24-runtime-alignment/P01-node24-runtime-setup/phase.md)
 
 ## Active Task
-None — all tasks in the active plan are complete.
+[T01 Runtime Version Metadata](./phases/2026-10-29-node24-runtime-alignment/P01-node24-runtime-setup/T01-runtime-version-metadata.md)
 
 ## Status
-- P01의 모든 Task 완료 (2/2); T01 커밋 `a7ab5d4`, T02 문서/UI 및 전체 테스트 통과
+- T01 implementation ready to begin.
 
 ## Next Step (IMPORTANT)
-계획이 완료되었습니다. 세 능력치 고양이 모델, 공통 점프/자석 동작, 선택 화면과 안내 문서가 모두 반영되었습니다.
+Read the T01 blueprint and align `package.json`, `package-lock.json`, `.nvmrc`, and `.github/workflows/node-compatibility.yml` to Node 24.
