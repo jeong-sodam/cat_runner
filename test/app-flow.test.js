@@ -408,7 +408,6 @@ test("result screen shows local save failure without a server retry or rank", as
     {
       onRestart: () => { restarted += 1; },
       onLeaderboard: () => { opened += 1; },
-      onPersonalRecords() {},
     },
     { documentRef },
   ).mount(root);
@@ -418,7 +417,9 @@ test("result screen shows local save failure without a server retry or rank", as
   assert.match(textOf(root), /50%/);
   assert.match(textOf(root), /x1\.00/);
   const buttons = findAll(root, (element) => element.tagName === "BUTTON");
-  assert.equal(buttons.length, 3);
+  assert.equal(buttons.length, 2);
+  assert.deepEqual(buttons.map((button) => button.textContent), ["캐릭터 선택", "내 기록"]);
+  assert.doesNotMatch(textOf(root), /개인기록표/);
   assert.equal(buttons.some((button) => button.textContent === "저장 재시도"), false);
   buttons.find((button) => button.textContent === "캐릭터 선택").dispatch("click");
   buttons.find((button) => button.textContent === "내 기록").dispatch("click");
@@ -438,7 +439,14 @@ test("local leaderboard renders personal top five and latest result without serv
           { score: 50, distanceM: 20, catId: "white", rhythmAccuracy: 0.9, rhythmMultiplier: 1.4, achievedAt: 1 },
           { score: 40, distanceM: 18, catId: "black", rhythmAccuracy: 0.8, rhythmMultiplier: 1.3, achievedAt: 2 },
         ],
-        getLastResult: () => ({ score: 5, distanceM: 3, catId: "chaos", achievedAt: 3 }),
+        getLastResult: () => ({
+          score: 5,
+          distanceM: 3,
+          catId: "chaos",
+          rhythmAccuracy: 0.25,
+          rhythmMultiplier: 0.75,
+          achievedAt: 3,
+        }),
       },
     },
   );
@@ -446,8 +454,41 @@ test("local leaderboard renders personal top five and latest result without serv
   assert.match(textOf(root), /내 기록 상위 5개/);
   assert.match(textOf(root), /방금 기록/);
   assert.match(textOf(root), /점수 5/);
+  assert.match(textOf(root), /정확도 25%/);
+  assert.match(textOf(root), /정확도 보정 x0\.75/);
+  assert.match(textOf(root), /90%/);
+  assert.match(textOf(root), /x1\.40/);
+  assert.match(textOf(root), /80%/);
+  assert.match(textOf(root), /x1\.30/);
   assert.equal(findAll(root, (element) => element.tagName === "TR").length, 3);
   assert.equal(findAll(root, (element) => element.className === "current-result").length, 1);
+});
+
+test("local leaderboard clamps accuracy and formats a zero multiplier", async () => {
+  const { createLeaderboardPanel } = await import("../public/js/ui/leaderboard.js");
+  const documentRef = createAppDocument();
+  const root = documentRef.createElement("section");
+  createLeaderboardPanel(
+    {},
+    {
+      documentRef,
+      localStore: {
+        getLocalScores: () => [{
+          score: 8,
+          distanceM: 2,
+          catId: "black",
+          rhythmAccuracy: 1.5,
+          rhythmMultiplier: 0,
+          achievedAt: 1,
+        }],
+        getLastResult: () => null,
+      },
+    },
+  ).mount(root);
+
+  assert.match(textOf(root), /정확도/);
+  assert.match(textOf(root), /100%/);
+  assert.match(textOf(root), /x0\.00/);
 });
 
 test("empty local leaderboard shows a non-error state", async () => {
@@ -467,59 +508,7 @@ test("empty local leaderboard shows a non-error state", async () => {
   assert.equal(findAll(root, (element) => element.textContent === "다시 시도").length, 0);
 });
 
-test("personal records renders local top five and latest rank without server calls", async () => {
-  const { createPersonalRecordsPanel } = await import("../public/js/ui/personal-records.js");
-  const documentRef = createAppDocument();
-  const root = documentRef.createElement("section");
-  const panel = createPersonalRecordsPanel(
-    {},
-    {
-      documentRef,
-      localStore: {
-        getLocalScores: () => [
-          { score: 50, distanceM: 20, rhythmAccuracy: 0.9, rhythmMultiplier: 1.4, achievedAt: 1 },
-          { score: 40, distanceM: 18, rhythmAccuracy: 0.8, rhythmMultiplier: 1.3, achievedAt: 2 },
-          { score: 30, distanceM: 16, rhythmAccuracy: 0.7, rhythmMultiplier: 1.2, achievedAt: 3 },
-          { score: 20, distanceM: 14, rhythmAccuracy: 0.6, rhythmMultiplier: 1.1, achievedAt: 4 },
-          { score: 10, distanceM: 12, rhythmAccuracy: 0.5, rhythmMultiplier: 1, achievedAt: 5 },
-        ],
-        getLastResult: () => ({ score: 5, distanceM: 3, rhythmAccuracy: 0.25, rhythmMultiplier: 0.75, achievedAt: 6 }),
-        getLocalRank: () => 6,
-      },
-    },
-  );
-  panel.mount(root);
-
-  assert.match(textOf(root), /개인기록표/);
-  assert.match(textOf(root), /개인 최고 기록 5개/);
-  assert.doesNotMatch(textOf(root), /LOCAL 플레이/);
-  assert.match(textOf(root), /방금 기록/);
-  assert.match(textOf(root), /개인 순위 6위/);
-  assert.match(textOf(root), /정확도 25%/);
-  assert.match(textOf(root), /정확도 보정 x0.75/);
-  assert.equal(findAll(root, (element) => element.tagName === "TR").length, 6);
-  assert.equal(findAll(root, (element) => element.className === "latest-local-result").length, 1);
-  assert.equal(findAll(root, (element) => element.className === "leaderboard-empty personal-records-empty")[0].hidden, true);
-});
-
-test("empty personal records renders a safe non-error state", async () => {
-  const { createPersonalRecordsPanel } = await import("../public/js/ui/personal-records.js");
-  const documentRef = createAppDocument();
-  const root = documentRef.createElement("section");
-  createPersonalRecordsPanel(
-    {},
-    {
-      documentRef,
-      localStore: { getLocalScores: () => [], getLastResult: () => null },
-    },
-  ).mount(root);
-
-  assert.match(textOf(root), /아직 저장된 개인 기록이 없습니다/);
-  assert.equal(findAll(root, (element) => element.className.includes("personal-records-empty"))[0].hidden, false);
-  assert.equal(findAll(root, (element) => element.textContent === "다시 시도").length, 0);
-});
-
-test("local gameover saves the latest result and opens personal records offline", async () => {
+test("local gameover saves the latest result and opens My Records offline", async () => {
   const { createAppController, SCREEN_NAMES } = await import("../public/js/app/app-controller.js");
   const documentRef = createAppDocument();
   const records = [];
@@ -577,22 +566,22 @@ test("local gameover saves the latest result and opens personal records offline"
   assert.equal(lastResultCalls, 1);
   assert.equal(activeRunClearCalls, 1);
   assert.equal(controller.getState().screen, SCREEN_NAMES.RESULT);
-  assert.match(textOf(documentRef.getElementById("screen-root")), /개인기록표에 저장되었습니다/);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /내 기록에 저장되었습니다/);
   assert.match(textOf(documentRef.getElementById("screen-root")), /개인 순위: 1위/);
   const resultButtons = findAll(documentRef.getElementById("screen-root"), (element) => element.tagName === "BUTTON");
-  resultButtons.find((button) => button.textContent === "개인기록표").dispatch("click");
+  assert.deepEqual(resultButtons.map((button) => button.textContent), ["캐릭터 선택", "내 기록"]);
+  resultButtons.find((button) => button.textContent === "내 기록").dispatch("click");
   await new Promise((resolve) => setTimeout(resolve, 0));
 
-  assert.equal(controller.getState().screen, SCREEN_NAMES.PERSONAL_RECORDS);
-  assert.match(textOf(documentRef.getElementById("screen-root")), /개인기록표/);
-  assert.match(textOf(documentRef.getElementById("screen-root")), /방금 기록/);
-  findAll(documentRef.getElementById("screen-root"), (element) => element.textContent === "뒤로")[0].dispatch("click");
-  const resultScreen = documentRef.getElementById("screen-root");
-  findAll(resultScreen, (element) => element.tagName === "BUTTON")
-    .find((button) => button.textContent === "내 기록")
-    .dispatch("click");
   assert.equal(controller.getState().screen, SCREEN_NAMES.LEADERBOARD);
-  assert.match(textOf(resultScreen), /내 기록 상위 5개/);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /내 기록 상위 5개/);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /방금 기록/);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /정확도 \d+%/);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /정확도 보정 x\d+\.\d{2}/);
+  assert.equal(findAll(documentRef.getElementById("screen-root"), (element) => element.tagName === "TR").length, 2);
+  findAll(documentRef.getElementById("screen-root"), (element) => element.textContent === "뒤로")[0].dispatch("click");
+  assert.equal(controller.getState().screen, SCREEN_NAMES.RESULT);
+  assert.match(textOf(documentRef.getElementById("screen-root")), /개인 순위: 1위/);
   controller.destroy();
 });
 
@@ -663,13 +652,14 @@ test("local fallback result keeps rank and explains session-only persistence", a
   assert.match(textOf(screen), /현재 세션에 기록되었습니다/);
   assert.doesNotMatch(textOf(screen), /저장 재시도/);
 
+  assert.match(textOf(screen), /현재 세션에 기록되었습니다/);
   findAll(screen, (element) => element.tagName === "BUTTON")
-    .find((button) => button.textContent === "개인기록표")
+    .find((button) => button.textContent === "내 기록")
     .dispatch("click");
-  assert.equal(controller.getState().screen, SCREEN_NAMES.PERSONAL_RECORDS);
-  assert.equal(findAll(screen, (element) => element.className === "local-storage-warning")[0].hidden, false);
+  assert.equal(controller.getState().screen, SCREEN_NAMES.LEADERBOARD);
   assert.equal(findAll(screen, (element) => element.tagName === "TR").length, 3);
   assert.match(textOf(screen), /방금 기록/);
+  assert.match(textOf(screen), /80% x1\.30/);
   controller.destroy();
 });
 
@@ -677,7 +667,6 @@ test("local result shows save failure without server retry and exposes separate 
   const { createResultScreen } = await import("../public/js/ui/result-screen.js");
   const documentRef = createAppDocument();
   const root = documentRef.createElement("section");
-  let personalOpened = 0;
   let localScoresOpened = 0;
   createResultScreen(
     {
@@ -690,7 +679,6 @@ test("local result shows save failure without server retry and exposes separate 
       errorMessage: "local only",
     },
     {
-      onPersonalRecords: () => { personalOpened += 1; },
       onLeaderboard: () => { localScoresOpened += 1; },
     },
     { documentRef },
@@ -699,10 +687,11 @@ test("local result shows save failure without server retry and exposes separate 
   assert.equal(findAll(root, (element) => element.className === "local-mode-badge").length, 1);
   assert.match(textOf(root), /local only/);
   assert.match(textOf(root), /저장 실패/);
-  assert.equal(findAll(root, (element) => element.tagName === "BUTTON").length, 3);
+  assert.equal(findAll(root, (element) => element.tagName === "BUTTON").length, 2);
   const buttons = findAll(root, (element) => element.tagName === "BUTTON");
-  buttons.find((button) => button.textContent === "개인기록표").dispatch("click");
+  assert.deepEqual(buttons.map((button) => button.textContent), ["캐릭터 선택", "내 기록"]);
+  assert.doesNotMatch(textOf(root), /개인기록표/);
   buttons.find((button) => button.textContent === "내 기록").dispatch("click");
-  assert.deepEqual({ personalOpened, localScoresOpened }, { personalOpened: 1, localScoresOpened: 1 });
+  assert.equal(localScoresOpened, 1);
   assert.equal(findAll(root, (element) => element.className === "result-rank").length, 0);
 });

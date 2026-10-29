@@ -58,7 +58,7 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
       ? "로컬 플레이 · 저장 실패"
       : result.storageWarning === true
         ? "로컬 플레이 · 세션 기록"
-        : "로컬 플레이 · 개인기록표 저장";
+        : "로컬 플레이 · 내 기록 저장";
     section.append(badge);
     heading.textContent = "달리기 완료";
     const stats = documentRef.createElement("dl");
@@ -76,13 +76,13 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
         ? "result-status storage-warning"
         : "result-status";
     if (result.saved === false) {
-      status.textContent = result.errorMessage || "개인기록표에 저장하지 못했습니다. 브라우저 저장소를 확인해주세요.";
+      status.textContent = result.errorMessage || "내 기록에 저장하지 못했습니다. 브라우저 저장소를 확인해주세요.";
     } else if (result.storageWarning === true) {
       status.textContent = "현재 세션에 기록되었습니다. 새로고침하거나 브라우저를 닫으면 기록이 사라질 수 있습니다.";
     } else {
       status.textContent = result.isPersonalBest
-        ? "개인 최고 기록! 개인기록표에 저장되었습니다."
-        : "개인기록표에 저장되었습니다.";
+        ? "개인 최고 기록! 내 기록에 저장되었습니다."
+        : "내 기록에 저장되었습니다.";
     }
     section.append(heading, stats, status);
 
@@ -104,15 +104,6 @@ function createResultScreen(result = {}, callbacks = {}, options = {}) {
     restartButton.textContent = "캐릭터 선택";
     restartButton.addEventListener("click", () => callbacks.onRestart?.());
     actions.append(restartButton);
-
-    if (callbacks.onPersonalRecords) {
-      const personalRecordsButton = documentRef.createElement("button");
-      personalRecordsButton.type = "button";
-      personalRecordsButton.className = "game-button primary";
-      personalRecordsButton.textContent = "개인기록표";
-      personalRecordsButton.addEventListener("click", () => callbacks.onPersonalRecords?.());
-      actions.append(personalRecordsButton);
-    }
 
     if (callbacks.onLeaderboard) {
       const localScoresButton = documentRef.createElement("button");

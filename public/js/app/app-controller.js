@@ -16,7 +16,6 @@ import { createSettingsPanel } from "../ui/settings-panel.js";
 import { renderWelcomeScreen, renderLoadingScreen } from "../ui/auth-screen.js";
 import { createCharacterSelect } from "../ui/character-select.js";
 import { createLeaderboardPanel } from "../ui/leaderboard.js";
-import { createPersonalRecordsPanel } from "../ui/personal-records.js";
 import { createResultScreen } from "../ui/result-screen.js";
 import { createLocalRunStore } from "../sync/local-run-store.js";
 import { waitForFonts } from "../ui/font-loader.js";
@@ -28,7 +27,6 @@ const SCREEN_NAMES = Object.freeze({
   CHARACTER_SELECT: "character-select",
   GAME: "game",
   RESULT: "result",
-  PERSONAL_RECORDS: "personal-records",
   LEADERBOARD: "leaderboard",
 });
 
@@ -188,33 +186,11 @@ function createAppController(options = {}) {
       result,
       {
         onRestart: () => showCharacterSelect({ allowResume: false }),
-        onPersonalRecords: () => showPersonalRecords(),
         onLeaderboard: () => showLeaderboard(),
       },
       { documentRef },
     );
     resultScreen.mount(screenRoot);
-  }
-
-  function showPersonalRecords() {
-    destroyGame();
-    setScreen(SCREEN_NAMES.PERSONAL_RECORDS);
-    showRoot();
-    const localStore = getLocalRunStore();
-    const personalRecords = createPersonalRecordsPanel(
-      {
-        onBack: () => showResult(
-          state.lastResult || localStore?.getLastResult?.() || { saved: false },
-        ),
-        onRestart: () => showCharacterSelect({ allowResume: false }),
-      },
-      {
-        documentRef,
-        localStore,
-        currentResult: state.lastResult,
-      },
-    );
-    personalRecords.mount(screenRoot);
   }
 
   function showLeaderboard() {
@@ -302,7 +278,7 @@ function createAppController(options = {}) {
       achievedAt,
       errorMessage: saved
         ? undefined
-        : "개인기록표에 저장하지 못했습니다. 브라우저 저장소를 확인해주세요.",
+        : "내 기록에 저장하지 못했습니다. 브라우저 저장소를 확인해주세요.",
     });
     completionInProgress = false;
     return;

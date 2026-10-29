@@ -18,6 +18,23 @@ function createLeaderboardPanel(callbacks = {}, options = {}) {
     return Number.isFinite(date.getTime()) ? date.toLocaleDateString("ko-KR") : "-";
   }
 
+  function accuracyText(value) {
+    const number = Number(value);
+    const accuracy = Number.isFinite(number) ? Math.min(1, Math.max(0, number)) : 0;
+    return Math.round(accuracy * 100) + "%";
+  }
+
+  function multiplierText(value, accuracy) {
+    const number = Number(value);
+    const normalizedAccuracy = Number(accuracy);
+    const multiplier = Number.isFinite(number)
+      ? number
+      : 0.5 + (Number.isFinite(normalizedAccuracy)
+        ? Math.min(1, Math.max(0, normalizedAccuracy))
+        : 0);
+    return "x" + multiplier.toFixed(2);
+  }
+
   function appendCell(row, value) {
     const cell = documentRef.createElement("td");
     cell.textContent = String(value ?? "");
@@ -33,6 +50,8 @@ function createLeaderboardPanel(callbacks = {}, options = {}) {
       appendCell(row, catLabel(entry.catId));
       appendCell(row, entry.score);
       appendCell(row, Number(entry.distanceM || 0).toLocaleString("ko-KR") + "m");
+      appendCell(row, accuracyText(entry.rhythmAccuracy));
+      appendCell(row, multiplierText(entry.rhythmMultiplier, entry.rhythmAccuracy));
       appendCell(row, dateText(entry.achievedAt));
       body?.append(row);
     }
@@ -58,6 +77,8 @@ function createLeaderboardPanel(callbacks = {}, options = {}) {
       catLabel(result.catId),
       "· 점수 " + String(result.score ?? 0),
       "· 거리 " + Number(result.distanceM || 0).toLocaleString("ko-KR") + "m",
+      "· 정확도 " + accuracyText(result.rhythmAccuracy),
+      "· 정확도 보정 " + multiplierText(result.rhythmMultiplier, result.rhythmAccuracy),
     ].join(" ");
     currentResultElement.append(heading, summary);
   }
@@ -86,7 +107,7 @@ function createLeaderboardPanel(callbacks = {}, options = {}) {
     table.className = "leaderboard-table";
     const head = documentRef.createElement("thead");
     const headerRow = documentRef.createElement("tr");
-    for (const label of ["순위", "고양이", "점수", "거리", "달성일"]) {
+    for (const label of ["순위", "고양이", "점수", "거리", "정확도", "정확도 보정", "달성일"]) {
       const cell = documentRef.createElement("th");
       cell.scope = "col";
       cell.textContent = label;
