@@ -90,4 +90,4 @@ Task: T01-rename-player-facing-game-name
 ## Progress
 - [x] Implementation complete.
 - [x] Validation passed.
-- commit: pending
+- commit: `dadcddf` (`feat(brand): rename game to Thunder Run`)
