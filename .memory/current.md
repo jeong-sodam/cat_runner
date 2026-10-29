@@ -7,10 +7,10 @@
 [P01 Node 24 Runtime Setup](./phases/2026-10-29-node24-runtime-alignment/P01-node24-runtime-setup/phase.md)
 
 ## Active Task
-[T01 Runtime Version Metadata](./phases/2026-10-29-node24-runtime-alignment/P01-node24-runtime-setup/T01-runtime-version-metadata.md)
+None — all tasks in the active plan are complete.
 
 ## Status
-- T01 implementation ready to begin.
+- P01 complete (2/2). T01 committed as `dcdca88`; T02 complete.
 
 ## Next Step (IMPORTANT)
-Read the T01 blueprint and align `package.json`, `package-lock.json`, `.nvmrc`, and `.github/workflows/node-compatibility.yml` to Node 24.
+Plan complete. No active task remains.

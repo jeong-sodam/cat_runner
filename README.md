@@ -4,16 +4,16 @@
 
 ## 준비물
 
-- Node.js 22 또는 24 LTS와 npm
+- Node.js 24 LTS와 npm
 - Windows x64 또는 Intel/Apple Silicon Mac
 
 위 환경에서는 Python이나 C/C++ 빌드 도구를 따로 설치하지 않아도 됩니다.
 
 ## 설치하고 실행하기
 
-### Windows PowerShell
+### Windows (PowerShell or Git Bash)
 
-```powershell
+```
 git clone https://github.com/jeong-sodam/cat_runner.git
 cd cat_runner
 npm.cmd install
@@ -30,6 +30,11 @@ npm start
 ```
 
 서버가 시작되면 브라우저에서 <http://localhost:3000>을 여세요. 로컬 플레이에는 `.env` 파일, 계정, 로그인이 필요하지 않습니다.
+
+## 설치 중 문제가 생기면
+
+- `ENOENT` 오류에 `package.json`이 언급되면 저장소 폴더 안에서 명령을 실행하는지 확인하세요. `git clone` 뒤 `cd cat_runner`로 이동하면 됩니다. Git Bash 프롬프트가 `~`로만 표시되면 아직 홈 폴더에 있을 수 있습니다.
+- 지원 대상인 Windows x64 또는 Mac에서 Node.js 24를 사용 중인데 C++ 빌드 도구 오류가 나오면, Python이나 컴파일러를 설치하지 말고 npm이 출력한 전체 디버그 로그 경로와 `node --version`, 운영체제 및 CPU 종류를 확인해 공유하세요. 설치된 SQLite 사전 빌드를 사용하지 못한 원인을 확인할 수 있습니다.
 
 ## 게임 방법
 

@@ -4,9 +4,9 @@
 
 ## 로컬 개발
 
-Node.js 22 또는 24와 npm을 사용합니다. Windows PowerShell에서는 `npm.cmd`, macOS/Linux 터미널에서는 `npm`을 실행하세요.
+Node.js 24와 npm을 사용합니다. Windows PowerShell 또는 Git Bash에서는 `npm.cmd`, macOS/Linux 터미널에서는 `npm`을 실행하세요. Windows x64와 Intel/Apple Silicon Mac에서는 잠금된 SQLite 사전 빌드를 사용하므로 Python이나 C/C++ 빌드 도구가 필요하지 않습니다.
 
-```powershell
+```
 npm.cmd install
 npm.cmd start
 ```

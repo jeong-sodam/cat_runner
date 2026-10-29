@@ -17,7 +17,7 @@ Standardize the project on Node.js 24 and make the documented clone-and-run path
 
 | Phase | Status | Summary | Blueprint |
 | :--- | :--- | :--- | :--- |
-| P01 | `in_progress` | Align runtime metadata, CI, and clone-and-run guidance to Node 24 and the Node/npm-only setup requirement | [P01](../phases/2026-10-29-node24-runtime-alignment/P01-node24-runtime-setup/phase.md) |
+| P01 | `done` | Align runtime metadata, CI, and clone-and-run guidance to Node 24 and the Node/npm-only setup requirement | [P01](../phases/2026-10-29-node24-runtime-alignment/P01-node24-runtime-setup/phase.md) |
 
 ## Out of Scope
 
