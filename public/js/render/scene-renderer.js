@@ -73,7 +73,7 @@ function drawTiledBackground(ctx, sprite, offset, alpha = 1) {
   return true;
 }
 
-function drawRhythmTargets(ctx, rhythmState) {
+function drawRhythmTargets(ctx, rhythmState, nowMs = 0) {
   for (const target of rhythmState?.targets || []) {
     if (target.status !== "active") {
       continue;
@@ -98,6 +98,52 @@ function drawRhythmTargets(ctx, rhythmState) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     fitCanvasText(ctx, isSecondary ? "R" : "L", target.x, target.y, Math.max(20, target.radius * 1.4), { maxPx: 20 });
+    ctx.restore();
+  }
+
+  for (const event of rhythmState?.feedbackEvents || []) {
+    const { type, x, y, createdAtMs, expiresAtMs } = event || {};
+    const durationMs = expiresAtMs - createdAtMs;
+    const ageMs = nowMs - createdAtMs;
+    if (
+      (type !== "hit" && type !== "miss") ||
+      !Number.isFinite(x) ||
+      !Number.isFinite(y) ||
+      !Number.isFinite(createdAtMs) ||
+      !Number.isFinite(expiresAtMs) ||
+      !Number.isFinite(nowMs) ||
+      durationMs <= 0 ||
+      ageMs < 0 ||
+      ageMs >= durationMs
+    ) {
+      continue;
+    }
+    const progress = Math.min(1, Math.max(0, ageMs / durationMs));
+    ctx.save();
+    ctx.globalAlpha = 1 - progress;
+    ctx.strokeStyle = type === "hit"
+      ? PALETTE.rhythm.feedbackHit
+      : PALETTE.rhythm.feedbackMiss;
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    if (type === "hit") {
+      ctx.arc(x, y, 14 + 46 * progress, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - 12, y);
+      ctx.lineTo(x - 3, y + 9);
+      ctx.lineTo(x + 14, y - 12);
+      ctx.stroke();
+    } else {
+      const arm = 28 * (1 - progress);
+      ctx.moveTo(x - arm, y - arm);
+      ctx.lineTo(x + arm, y + arm);
+      ctx.moveTo(x + arm, y - arm);
+      ctx.lineTo(x - arm, y + arm);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 }
@@ -212,7 +258,7 @@ function createSceneRenderer(ctx, assets = {}) {
       drawEntity(entity, state, screenX);
     }
     drawCatScene(state);
-    drawRhythmTargets(ctx, state.rhythm);
+    drawRhythmTargets(ctx, state.rhythm, state.elapsedMs);
     return drawHudScene(state);
   }
 
@@ -223,7 +269,7 @@ function createSceneRenderer(ctx, assets = {}) {
     drawObstacle: (entity, state) => drawEntity(entity, state),
     drawMouse: (entity, state) => drawEntity(entity, state),
     drawGrass: (entity, state) => drawEntity(entity, state),
-    drawRhythmTargets: (rhythmState) => drawRhythmTargets(ctx, rhythmState),
+    drawRhythmTargets: (rhythmState, nowMs = 0) => drawRhythmTargets(ctx, rhythmState, nowMs),
     drawHud: drawHudScene,
   };
 }

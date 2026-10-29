@@ -288,6 +288,68 @@ test("renderer draws primary and bonus rhythm targets without mutating them", as
   assert.deepEqual(JSON.stringify(state), before);
 });
 
+test("rhythm hit and miss feedback animate from game time without mutating state", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const renderer = modules.createSceneRenderer(context);
+  const state = createState(modules);
+  state.elapsedMs = 300;
+  state.rhythm.targets = [];
+  state.rhythm.feedbackEvents = [
+    { type: "hit", x: 100, y: 100, createdAtMs: 100, expiresAtMs: 500 },
+    { type: "miss", x: 200, y: 100, createdAtMs: 100, expiresAtMs: 500 },
+    { type: "miss", x: 300, y: 100, createdAtMs: 100, expiresAtMs: 500 },
+  ];
+  const before = JSON.stringify(state);
+  renderer.render(state);
+
+  assert.ok(context.calls.some((call) =>
+    call.name === "arc" &&
+    call.args[0] === 100 &&
+    call.args[1] === 100 &&
+    call.args[2] === 37,
+  ));
+  assert.ok(context.calls.some((call) =>
+    call.name === "lineTo" && call.args[0] === 97 && call.args[1] === 109,
+  ));
+  assert.ok(context.calls.some((call) =>
+    call.name === "lineTo" && call.args[0] === 214 && call.args[1] === 114,
+  ));
+  assert.deepEqual(JSON.stringify(state), before);
+
+  const hitContext = createFakeContext();
+  modules.drawRhythmTargets(hitContext, { feedbackEvents: [state.rhythm.feedbackEvents[0]] }, 300);
+  assert.equal(hitContext.strokeStyle, modules.PALETTE.rhythm.feedbackHit);
+  assert.equal(hitContext.globalAlpha, 0.5);
+
+  const laterMissContext = createFakeContext();
+  modules.drawRhythmTargets(
+    laterMissContext,
+    { feedbackEvents: [state.rhythm.feedbackEvents[1]] },
+    350,
+  );
+  assert.equal(laterMissContext.strokeStyle, modules.PALETTE.rhythm.feedbackMiss);
+  assert.equal(laterMissContext.globalAlpha, 0.375);
+  assert.ok(laterMissContext.calls.some((call) =>
+    call.name === "lineTo" && call.args[0] === 210.5 && call.args[1] === 110.5,
+  ));
+});
+
+test("rhythm renderer skips feedback outside its valid animation lifetime", async () => {
+  const modules = await loadRenderModules();
+  const context = createFakeContext();
+  const events = [
+    { type: "hit", x: 20, y: 20, createdAtMs: 300, expiresAtMs: 700 },
+    { type: "miss", x: 40, y: 20, createdAtMs: 0, expiresAtMs: 200 },
+    { type: "hit", x: Number.NaN, y: 20, createdAtMs: 0, expiresAtMs: 400 },
+    { type: "unknown", x: 60, y: 20, createdAtMs: 0, expiresAtMs: 400 },
+    { type: "miss", x: 80, y: 20, createdAtMs: 0, expiresAtMs: 0 },
+  ];
+
+  assert.doesNotThrow(() => modules.drawRhythmTargets(context, { feedbackEvents: events }, 200));
+  assert.equal(context.calls.length, 0);
+});
+
 test("HUD renders the complete health capacity for two and five health cats", async () => {
   const modules = await loadRenderModules();
   for (const catId of ["black", "calico"]) {

@@ -18,6 +18,8 @@ const PALETTE = Object.freeze({
     primaryRing: "#d9e8ff",
     secondary: "#f2a65a",
     secondaryRing: "#fff0cf",
+    feedbackHit: "#32a852",
+    feedbackMiss: "#e34d4d",
   }),
   backgrounds: Object.freeze({
     home_day: Object.freeze({ sky: "#c9efff", floor: "#d7a56d", wall: "#fff6e8" }),
