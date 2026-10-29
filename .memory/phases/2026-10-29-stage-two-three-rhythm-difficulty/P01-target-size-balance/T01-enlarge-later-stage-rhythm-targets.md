@@ -99,4 +99,4 @@ Task: T01-enlarge-later-stage-rhythm-targets
 ## Progress
 - [x] Implementation complete.
 - [x] Validation passed.
-- commit: pending
+- commit: `9fc2804` (`balance(rhythm): enlarge targets in later stages`)
