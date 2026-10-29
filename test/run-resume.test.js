@@ -1,4 +1,4 @@
-const assert = require("node:assert/strict");
+﻿const assert = require("node:assert/strict");
 const { afterEach, test } = require("node:test");
 const { createApp } = require("../src/server");
 const { closeDatabase } = require("../src/db/database");
@@ -190,43 +190,6 @@ test("completion endpoint stores an authoritative score and personal best", asyn
   });
 });
 
-test("run sync preserves event order and flushes events before snapshots", async () => {
-  const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
-  const { createRunSync } = await import("../public/js/sync/run-sync.js");
-  const storage = new Map();
-  const store = createLocalRunStore({
-    getItem: (key) => storage.get(key) || null,
-    setItem: (key, value) => storage.set(key, value),
-    removeItem: (key) => storage.delete(key),
-  });
-  const calls = [];
-  const api = {
-    startRun: async () => ({ runId: "sync-run", catId: "black", seed: "seed", expiresAt: 5000 }),
-    appendEvents: async (_runId, events) => {
-      calls.push({ type: "events", events });
-      return { acceptedThroughSeq: events[events.length - 1].seq };
-    },
-    saveSnapshot: async (_runId, version, snapshot) => {
-      calls.push({ type: "snapshot", version, snapshot });
-    },
-  };
-  const sync = createRunSync(api, store, {
-    now: () => 1000,
-    autoRetry: false,
-  });
-
-  await sync.startRun({ userId: 7, catId: "black" });
-  sync.recordEvent("run_started", 0, { seed: "seed" });
-  sync.recordEvent("mouse_collected", 25, { points: 10 });
-  sync.saveSnapshot({ catId: "black", worldOffset: 300, score: 10 });
-  assert.deepEqual(store.load().pendingEvents.map((event) => event.seq), [0, 1, 2]);
-
-  assert.equal(await sync.flush(), true);
-  assert.deepEqual(calls.map((call) => call.type), ["events", "snapshot"]);
-  assert.deepEqual(calls[0].events.map((event) => event.seq), [0, 1, 2]);
-  assert.deepEqual(store.load().pendingEvents, []);
-});
-
 test("local active runs persist without a user id", async () => {
   const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
   const storage = new Map();
@@ -330,87 +293,6 @@ test("clearing a local active run preserves completed score history", async () =
 
   assert.equal(storage.has("cat-runner:active-run"), false);
   assert.equal(storage.has(LOCAL_HISTORY_KEY), true);
-});
-
-test("offline sync pauses persistence and resumes after a successful reconnect", async () => {
-  const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
-  const { createRunSync } = await import("../public/js/sync/run-sync.js");
-  const storage = new Map();
-  const store = createLocalRunStore({
-    getItem: (key) => storage.get(key) || null,
-    setItem: (key, value) => storage.set(key, value),
-    removeItem: (key) => storage.delete(key),
-  });
-  let eventCalls = 0;
-  const onlineStates = [];
-  const sync = createRunSync(
-    {
-      startRun: async () => ({ runId: "offline-run", catId: "white", seed: "seed", expiresAt: 5000 }),
-      appendEvents: async (_runId, events) => {
-        eventCalls += 1;
-        assert.deepEqual(events.map((event) => event.seq), [0, 1]);
-        return { acceptedThroughSeq: 1 };
-      },
-      saveSnapshot: async () => {},
-    },
-    store,
-    {
-      now: () => 1000,
-      autoRetry: false,
-      onOnline: (state) => onlineStates.push(state.offline),
-    },
-  );
-  await sync.startRun({ userId: 3, catId: "white" });
-  sync.recordEvent("run_started", 0, {});
-  sync.handleOffline({ catId: "white", score: 3 });
-  assert.equal(sync.getState().offline, true);
-  assert.equal(store.load().snapshot.score, 3);
-  assert.equal(await sync.handleOnline(), true);
-  assert.equal(eventCalls, 1);
-  assert.deepEqual(onlineStates, [false]);
-  assert.equal(sync.getState().offline, false);
-});
-
-test("resume candidate requires matching unexpired server and local runs", async () => {
-  const { createLocalRunStore } = await import("../public/js/sync/local-run-store.js");
-  const { createRunSync } = await import("../public/js/sync/run-sync.js");
-  const storage = new Map();
-  const store = createLocalRunStore({
-    getItem: (key) => storage.get(key) || null,
-    setItem: (key, value) => storage.set(key, value),
-    removeItem: (key) => storage.delete(key),
-  });
-  store.save({
-    runId: "resume-run",
-    userId: 9,
-    catId: "chaos",
-    expiresAt: 5000,
-    snapshotVersion: 1,
-    snapshot: { worldOffset: 900, score: 22 },
-    pendingEvents: [{ seq: 2, type: "mouse_collected", occurredAtMs: 90, payload: {} }],
-  });
-  const sync = createRunSync({}, store, { now: () => 2000, autoRetry: false });
-  const candidate = sync.getLocalResumeCandidate(
-    {
-      runId: "resume-run",
-      userId: 9,
-      catId: "chaos",
-      seed: "resume-seed",
-      expiresAt: 5000,
-      snapshot: { worldOffset: 800, score: 18 },
-      events: [{ seq: 1 }],
-    },
-    9,
-  );
-  assert.ok(candidate);
-  const restored = sync.continueRun(candidate);
-  assert.equal(restored.seed, "resume-seed");
-  assert.equal(restored.snapshot.worldOffset, 900);
-  assert.deepEqual(restored.pendingEvents.map((event) => event.seq), [2]);
-  assert.equal(
-    sync.getLocalResumeCandidate({ ...candidate.serverRun, expiresAt: 2000 }, 9),
-    null,
-  );
 });
 
 test("local best records replace only when score or earlier time improves", async () => {

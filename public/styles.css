@@ -274,13 +274,6 @@ body {
   text-transform: uppercase;
 }
 
-.auth-link {
-  display: inline-block;
-  color: #fffaf5;
-  text-decoration: none;
-  text-align: center;
-}
-
 .error-card {
   border-color: #c96c5a;
 }

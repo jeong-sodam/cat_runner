@@ -1,16 +1,13 @@
-import { CAT_DEFINITIONS } from "../game/constants.js";
+﻿import { CAT_DEFINITIONS } from "../game/constants.js";
 import { fitSingleLineText } from "./text-fitting.js";
 
-function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
+function createLeaderboardPanel(callbacks = {}, options = {}) {
   const documentRef = options.documentRef || globalThis.document;
-  const mode = options.mode || "server";
   const localStore = options.localStore || null;
   let root = null;
-  let errorElement = null;
-  let retryButton = null;
   let body = null;
-  let currentResultElement = null;
   let emptyElement = null;
+  let currentResultElement = null;
 
   function catLabel(catId) {
     return CAT_DEFINITIONS[catId]?.label || catId || "-";
@@ -27,26 +24,7 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
     row.append(cell);
   }
 
-  function renderServerRows(entries) {
-    body?.replaceChildren?.();
-    for (const entry of entries) {
-      const row = documentRef.createElement("tr");
-      for (const value of [
-        entry.rank,
-        entry.nickname,
-        entry.email,
-        entry.score,
-        entry.distanceM,
-      ]) {
-        const cell = documentRef.createElement("td");
-        cell.textContent = String(value ?? "");
-        row.append(cell);
-      }
-      body?.append(row);
-    }
-  }
-
-  function renderLocalRows(entries) {
+  function renderRows(entries) {
     body?.replaceChildren?.();
     for (const [index, entry] of entries.entries()) {
       const row = documentRef.createElement("tr");
@@ -84,41 +62,10 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
     currentResultElement.append(heading, summary);
   }
 
-  function renderLocalState() {
-    const entries = localStore?.getLocalScores?.() || [];
-    const latest = options.currentResult || localStore?.getLastResult?.() || null;
-    renderLocalRows(entries.slice(0, 5));
-    renderCurrentResult(latest);
-  }
-
-  async function load() {
-    if (mode === "local") {
-      renderLocalState();
-      return true;
-    }
-    if (!apiClient?.getLeaderboard) {
-      return false;
-    }
-    if (errorElement) {
-      errorElement.hidden = true;
-    }
-    if (retryButton) {
-      retryButton.hidden = true;
-    }
-    try {
-      const payload = await apiClient.getLeaderboard();
-      renderServerRows(Array.isArray(payload?.entries) ? payload.entries.slice(0, 10) : []);
-      return true;
-    } catch {
-      if (errorElement) {
-        errorElement.textContent = "순위표를 불러오지 못했습니다. 다시 시도해주세요.";
-        errorElement.hidden = false;
-      }
-      if (retryButton) {
-        retryButton.hidden = false;
-      }
-      return false;
-    }
+  function load() {
+    renderRows((localStore?.getLocalScores?.() || []).slice(0, 5));
+    renderCurrentResult(options.currentResult || localStore?.getLastResult?.() || null);
+    return true;
   }
 
   function mount(nextRoot) {
@@ -132,38 +79,14 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
     section.className = "flow-card wide-card leaderboard-screen";
     const heading = documentRef.createElement("h1");
     heading.className = "fit-title";
-    heading.textContent = "순위표";
-    if (mode === "local") {
-      const tabs = documentRef.createElement("div");
-      tabs.className = "leaderboard-tabs";
-      const personalTab = documentRef.createElement("button");
-      personalTab.type = "button";
-      personalTab.className = "leaderboard-tab active";
-      personalTab.dataset.tab = "personal";
-      personalTab.textContent = "내 점수순위";
-      const globalTab = documentRef.createElement("button");
-      globalTab.type = "button";
-      globalTab.className = "leaderboard-tab";
-      globalTab.dataset.tab = "global";
-      globalTab.disabled = true;
-      globalTab.setAttribute("aria-disabled", "true");
-      globalTab.textContent = "전체 순위";
-      tabs.append(personalTab, globalTab);
-      const globalNote = documentRef.createElement("p");
-      globalNote.className = "leaderboard-note";
-      globalNote.textContent = "전체 순위는 로그인 후 제공됩니다.";
-      section.append(tabs, globalNote);
-    }
+    heading.textContent = "내 기록";
     const intro = documentRef.createElement("p");
-    intro.textContent = mode === "local" ? "내 기록 상위 5개" : "상위 10개 개인 최고 기록";
+    intro.textContent = "내 기록 상위 5개";
     const table = documentRef.createElement("table");
     table.className = "leaderboard-table";
     const head = documentRef.createElement("thead");
     const headerRow = documentRef.createElement("tr");
-    const headers = mode === "local"
-      ? ["순위", "고양이", "점수", "거리", "달성일"]
-      : ["순위", "고양이 이름", "이메일", "점수", "거리"];
-    for (const label of headers) {
+    for (const label of ["순위", "고양이", "점수", "거리", "달성일"]) {
       const cell = documentRef.createElement("th");
       cell.scope = "col";
       cell.textContent = label;
@@ -179,15 +102,7 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
     currentResultElement = documentRef.createElement("div");
     currentResultElement.className = "current-result";
     currentResultElement.hidden = true;
-    errorElement = documentRef.createElement("p");
-    errorElement.className = "form-error";
-    errorElement.hidden = true;
-    retryButton = documentRef.createElement("button");
-    retryButton.type = "button";
-    retryButton.className = "game-button primary";
-    retryButton.textContent = "다시 시도";
-    retryButton.hidden = true;
-    retryButton.addEventListener("click", () => void load());
+
     const actions = documentRef.createElement("div");
     actions.className = "result-actions";
     const backButton = documentRef.createElement("button");
@@ -201,18 +116,10 @@ function createLeaderboardPanel(apiClient, callbacks = {}, options = {}) {
     restartButton.textContent = "캐릭터 선택";
     restartButton.addEventListener("click", () => callbacks.onRestart?.());
     actions.append(backButton, restartButton);
-    section.append(heading, intro, table);
-    if (mode === "local") {
-      section.append(emptyElement, currentResultElement);
-    }
-    section.append(errorElement);
-    if (mode !== "local") {
-      section.append(retryButton);
-    }
-    section.append(actions);
+    section.append(heading, intro, table, emptyElement, currentResultElement, actions);
     root.append(section);
     fitSingleLineText(heading, { container: section });
-    void load();
+    load();
     return section;
   }
 

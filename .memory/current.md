@@ -1,16 +1,16 @@
 ﻿# Current Context
 
 ## Active Plan
-[Node 24 Runtime Alignment](./plans/2026-10-29-node24-runtime-alignment.md)
+[GitHub Pages Static Game and Performance](./plans/2026-10-29-github-pages-performance-cleanup.md)
 
 ## Active Phase
-[P01 Node 24 Runtime Setup](./phases/2026-10-29-node24-runtime-alignment/P01-node24-runtime-setup/phase.md)
+[P01 Static Game and Performance](./phases/2026-10-29-github-pages-performance-cleanup/P01-static-game-performance/phase.md)
 
 ## Active Task
-None — all tasks in the active plan are complete.
+[T01 Local-Only Browser Flow](./phases/2026-10-29-github-pages-performance-cleanup/P01-static-game-performance/T01-local-only-browser-flow.md)
 
 ## Status
-- P01 complete (2/2). T01 committed as `dcdca88`; T02 complete.
+- T01 implementation start ready; P01 has 0/4 tasks complete.
 
 ## Next Step (IMPORTANT)
-Plan complete. No active task remains.
+Read the T01 blueprint and implement the browser-only welcome, gameplay, and local persistence flow in `public/js/app/app-controller.js` and its UI module; remove browser API/auth dependencies while preserving local records and resume.
