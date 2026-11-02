@@ -439,9 +439,12 @@ test("rhythm timers pause and gameover includes the rhythm summary once", async 
   assert.equal(harness.state.rhythm.missCount, 0);
 
   harness.target.dispatch("keydown", "p");
-  for (let frame = 0; frame < 25; frame += 1) {
+  let frame = 0;
+  while (target.status === "active" && frame < 40) {
     harness.loop.advance(50);
+    frame += 1;
   }
+  assert.equal(target.status, "miss");
   assert.equal(harness.state.rhythm.missCount, 1);
   harness.state.health = 0;
   harness.loop.advance(modules.GAME_CONFIG.fixedStepMs);

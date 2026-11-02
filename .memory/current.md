@@ -1,13 +1,13 @@
 # Current Context
 
 ## Active Plan
-None. [Start Screen Key Guide](./plans/2026-11-02-start-key-guide.md) is complete.
+None. [Ease osu Click Window](./plans/2026-11-02-osu-click-window.md) is complete.
 
 ## Active Phase
-None. P01 Welcome Key Instructions is complete.
+None. P01 Adjust Click Windows is complete.
 
 ## Active Task
-None. T01 Add Welcome-Screen Key Guide is complete.
+None. T01 Extend osu Click Window is complete.
 
 ## Status
 - T01 complete; all 113 tests passed and `git diff --check` reported no whitespace errors.
