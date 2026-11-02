@@ -33,6 +33,33 @@ function renderWelcomeScreen(root, options = {}) {
     "p",
     "쥐 인형을 모으고 장애물을 피해 가장 멀리 달려보세요.",
   );
+  const keyboardGuide = documentRef.createElement("section");
+  keyboardGuide.className = "keyboard-guide";
+  keyboardGuide.setAttribute("aria-label", "키보드 조작 안내");
+  appendText(documentRef, keyboardGuide, "h2", "조작 키");
+  const controls = documentRef.createElement("ul");
+  const controlRows = [
+    { keys: ["W"], description: "점프 (공중에서 한 번 더 점프 가능)" },
+    { keys: ["S"], description: "누르고 있는 동안 슬라이드" },
+    { keys: ["Esc", "P"], description: "일시정지 / 재개" },
+  ];
+  for (const control of controlRows) {
+    const row = documentRef.createElement("li");
+    row.className = "keyboard-guide-row";
+    const keys = documentRef.createElement("span");
+    keys.className = "keyboard-guide-keys";
+    for (const key of control.keys) {
+      const keyLabel = documentRef.createElement("kbd");
+      keyLabel.textContent = key;
+      keys.append(keyLabel);
+    }
+    const description = documentRef.createElement("span");
+    description.textContent = control.description;
+    row.append(keys, description);
+    controls.append(row);
+  }
+  keyboardGuide.append(controls);
+  section.append(keyboardGuide);
   const startButton = documentRef.createElement("button");
   startButton.type = "button";
   startButton.className = "game-button primary";

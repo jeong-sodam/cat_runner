@@ -172,6 +172,16 @@ test("bootstrap renders the welcome screen without fetch", async () => {
   const screen = documentRef.getElementById("screen-root");
   assert.match(textOf(screen), /썬더런/);
   assert.doesNotMatch(textOf(screen), /로컬 플레이|로컬로 플레이/);
+  const keyboardGuide = findAll(screen, (element) => element.className === "keyboard-guide")[0];
+  assert.ok(keyboardGuide);
+  assert.match(textOf(keyboardGuide), /W.*점프.*공중에서 한 번 더 점프 가능/);
+  assert.match(textOf(keyboardGuide), /S.*누르고 있는 동안 슬라이드/);
+  assert.match(textOf(keyboardGuide), /Esc.*P.*일시정지 \/ 재개/);
+  assert.equal(findAll(keyboardGuide, (element) => element.tagName === "KBD").length, 4);
+  assert.equal(keyboardGuide.getAttribute("aria-label"), "키보드 조작 안내");
+  const startButton = findAll(screen, (element) => element.textContent === "게임 시작")[0];
+  assert.ok(keyboardGuide.parentNode.children.indexOf(keyboardGuide) <
+    keyboardGuide.parentNode.children.indexOf(startButton));
   assert.equal(findAll(screen, (element) => element.tagName === "BUTTON")[0].textContent, "게임 시작");
   assert.equal(findAll(screen, (element) => element.tagName === "SMALL").length, 0);
   controller.destroy();

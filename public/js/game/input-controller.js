@@ -11,7 +11,7 @@ function createInputController(canvas, onPause, options = {}) {
 
   function onKeyDown(event) {
     const key = normalizeKey(event);
-    if (!["w", "s", "escape"].includes(key)) {
+    if (!["w", "s", "escape", "p"].includes(key)) {
       return;
     }
     event.preventDefault?.();
@@ -24,7 +24,7 @@ function createInputController(canvas, onPause, options = {}) {
       if (!event.repeat) {
         slidePressed = true;
       }
-    } else if (key === "escape" && !event.repeat) {
+    } else if ((key === "escape" || key === "p") && !event.repeat) {
       onPause?.();
     }
   }

@@ -376,7 +376,7 @@ test("pointer input converts letterboxed coordinates and maps right click to sec
   assert.equal(listeners.size, 0);
 });
 
-test("Escape pauses and resumes without advancing the simulation while paused", async () => {
+test("Escape and P pause and resume without advancing the simulation while paused", async () => {
   const modules = await loadGameModules();
   const harness = createHarness(modules);
   harness.state.zoneId = "home_night";
@@ -384,8 +384,13 @@ test("Escape pauses and resumes without advancing the simulation while paused", 
   const elapsedBeforePause = harness.state.elapsedMs;
   const distanceBeforePause = harness.state.distanceM;
 
-  const ignoredPEvent = harness.target.dispatch("keydown", "p");
-  assert.equal(ignoredPEvent.prevented, false);
+  const pEvent = harness.target.dispatch("keydown", "p");
+  assert.equal(pEvent.prevented, true);
+  assert.equal(harness.state.status, modules.GAME_STATUSES.PAUSED);
+  const repeatedP = harness.target.dispatch("keydown", "P", true);
+  assert.equal(repeatedP.prevented, true);
+  assert.equal(harness.state.status, modules.GAME_STATUSES.PAUSED);
+  harness.target.dispatch("keydown", "p");
   assert.equal(harness.state.status, modules.GAME_STATUSES.RUNNING);
 
   const pauseEvent = harness.target.dispatch("keydown", "Escape");

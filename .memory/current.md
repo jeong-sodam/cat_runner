@@ -1,19 +1,16 @@
 # Current Context
 
 ## Active Plan
-None. [Thunder Run Branding](./plans/2026-10-29-thunder-run-branding.md) is complete.
+None. [Start Screen Key Guide](./plans/2026-11-02-start-key-guide.md) is complete.
 
 ## Active Phase
-None. P01 Public Brand Name is complete.
+None. P01 Welcome Key Instructions is complete.
 
 ## Active Task
-None. T01 Rename Player-Facing Game Name is complete.
+None. T01 Add Welcome-Screen Key Guide is complete.
 
 ## Status
-- Task commit: `dadcddf` (`feat(brand): rename game to Thunder Run`).
-- Full test suite: 113 passed.
-- `git diff --check`: clean.
-- The existing Pages URL and technical identifiers were preserved.
+- T01 complete; all 113 tests passed and `git diff --check` reported no whitespace errors.
 
 ## Next Step
-No active task. Start a new plan when there is another requested change.
+No active task. Start a new plan when another change is requested.
