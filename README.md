@@ -1,14 +1,12 @@
-﻿# 썬더런 (Thunder Run)
+﻿# Cat Runner
 
-썬더런 (Thunder Run)은 고양이를 골라 장애물을 피하고 쥐 장난감을 모으는 브라우저 러너 게임입니다.
+고양이를 골라 장애물을 피하고 쥐 장난감을 모으는 브라우저 러너 게임입니다.
 
 ## 플레이하기
 
-[썬더런 (Thunder Run) 열기](https://jeong-sodam.github.io/cat_runner/)
+[Cat Runner 열기](https://jeong-sodam.github.io/cat_runner/)
 
 최신 데스크톱 브라우저에서 바로 실행됩니다. 방문자는 Node.js나 별도 설치가 필요하지 않습니다. 게임 기록과 진행 중인 플레이는 현재 브라우저에 저장되며 다른 기기나 브라우저와 공유되지 않습니다.
-
-`main`에 반영된 변경은 Node.js 24 호환성 테스트를 모두 통과한 뒤 GitHub Pages에 자동 배포됩니다. 저장소 관리자는 최초 1회 Settings → Pages → Build and deployment → Source에서 `GitHub Actions`를 선택해야 합니다.
 
 - `W`: 점프합니다. 공중에서 한 번 더 점프할 수 있습니다.
 - `S`: 누르고 있는 동안 미끄러집니다.
@@ -18,3 +16,4 @@
 ## 개발 및 테스트
 
 기여자가 자동 테스트를 실행할 때는 Node.js 24와 npm이 필요합니다. 저장소 안내는 [개발자 문서](docs/development.md)를 참고하세요. 이 요구 사항은 개발·CI용이며 사이트 방문자에게는 적용되지 않습니다.
+ 
